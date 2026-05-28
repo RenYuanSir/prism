@@ -1,0 +1,60 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "biome check --write ${FILE_PATH} 2>/dev/null || true"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo 'Running: ${COMMAND}'"
+          }
+        ]
+      }
+    ]
+  },
+  "permissions": {
+    "allow": [
+      {
+        "tool": "Bash",
+        "conditions": {
+          "command": "pnpm *"
+        }
+      },
+      {
+        "tool": "Bash",
+        "conditions": {
+          "command": "biome *"
+        }
+      },
+      {
+        "tool": "Bash",
+        "conditions": {
+          "command": "vitest *"
+        }
+      },
+      {
+        "tool": "Bash",
+        "conditions": {
+          "command": "npx *"
+        }
+      },
+      {
+        "tool": "Bash",
+        "conditions": {
+          "command": "git *"
+        }
+      }
+    ]
+  }
+}
