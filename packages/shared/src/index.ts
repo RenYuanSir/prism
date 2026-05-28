@@ -48,3 +48,47 @@ export interface ApiResponse<T = unknown> {
   data?: T;
   error?: string;
 }
+
+// Semantic diff types for AST-based change analysis
+export type ChangeType = "added" | "modified" | "removed";
+
+export interface FunctionChange {
+  name: string;
+  changeType: ChangeType;
+  oldSignature?: string;
+  newSignature?: string;
+  description?: string;
+}
+
+export interface ImportChange {
+  module: string;
+  changeType: ChangeType;
+  imports: string[];
+  isDefault?: boolean;
+}
+
+export interface ExportChange {
+  name: string;
+  changeType: ChangeType;
+  isDefault: boolean;
+}
+
+export interface FileChange {
+  filename: string;
+  status: "added" | "modified" | "removed" | "renamed";
+  additions: number;
+  deletions: number;
+  changeType: ChangeType;
+  summary: string;
+  functionChanges: FunctionChange[];
+  importChanges: ImportChange[];
+  exportChanges: ExportChange[];
+}
+
+export interface SemanticDiff {
+  fileChanges: FileChange[];
+  summary: string;
+  totalFiles: number;
+  totalAdditions: number;
+  totalDeletions: number;
+}
