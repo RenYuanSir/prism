@@ -16,7 +16,7 @@ export interface ReviewComment {
   file: string;
   line: number;
   body: string;
-  severity: 'info' | 'warning' | 'error';
+  severity: "info" | "warning" | "error";
 }
 
 export interface ReviewResult {
