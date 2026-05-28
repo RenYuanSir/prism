@@ -1,30 +1,46 @@
 // Shared types for the AI PR Review application
 
+export interface PRFile {
+  filename: string;
+  status: "added" | "modified" | "removed" | "renamed";
+  additions: number;
+  deletions: number;
+  changes: number;
+  patch?: string;
+}
+
+export interface PRCommit {
+  sha: string;
+  message: string;
+  author: string;
+  date: string;
+}
+
 export interface PullRequest {
-  id: string;
+  id: number;
   title: string;
   description: string;
   author: string;
-  repository: string;
   branch: string;
   baseBranch: string;
-  url: string;
-  createdAt: string;
+  files: PRFile[];
+  commits: PRCommit[];
 }
 
-export interface ReviewComment {
+export type ReviewIssueSeverity = "info" | "warning" | "error" | "critical";
+
+export interface ReviewIssue {
+  severity: ReviewIssueSeverity;
+  message: string;
   file: string;
   line: number;
-  body: string;
-  severity: "info" | "warning" | "error";
 }
 
 export interface ReviewResult {
-  prId: string;
+  prId: number;
   summary: string;
-  comments: ReviewComment[];
-  approved: boolean;
-  reviewedAt: string;
+  issues: ReviewIssue[];
+  score: number;
 }
 
 export interface ApiResponse<T = unknown> {
