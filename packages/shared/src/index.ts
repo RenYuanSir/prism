@@ -92,3 +92,43 @@ export interface SemanticDiff {
   totalAdditions: number;
   totalDeletions: number;
 }
+
+// AI Review Pipeline types
+export type PipelineStage = "summary" | "risk" | "suggestion";
+
+export type AIRiskSeverity = "critical" | "warning" | "info";
+
+export interface AIRiskIssue {
+  severity: AIRiskSeverity;
+  message: string;
+  file: string;
+  line: number;
+  explanation: string;
+}
+
+export interface AIFixSuggestion {
+  issue: AIRiskIssue;
+  suggestedCode: string;
+  explanation: string;
+}
+
+export interface AISummaryResult {
+  summary: string;
+  stage: "summary";
+}
+
+export interface AIRiskResult {
+  issues: AIRiskIssue[];
+  stage: "risk";
+}
+
+export interface AISuggestionResult {
+  suggestions: AIFixSuggestion[];
+  stage: "suggestion";
+}
+
+export interface AIReviewResult {
+  summary: AISummaryResult;
+  risk: AIRiskResult;
+  suggestion: AISuggestionResult;
+}
