@@ -1,9 +1,22 @@
-function App() {
-  return (
-    <div className="min-h-screen bg-gray-950 text-gray-100 flex items-center justify-center">
-      <h1 className="text-3xl font-bold">AI PR Review</h1>
-    </div>
-  );
-}
+import { RouterProvider, createBrowserRouter } from "react-router-dom";
+import { Layout } from "./components/Layout";
+import { HistoryPage } from "./pages/HistoryPage";
+import { PRList } from "./pages/PRList";
+import { ReviewResult } from "./pages/ReviewResult";
+import { SettingsPage } from "./pages/SettingsPage";
 
-export default App;
+const router = createBrowserRouter([
+  {
+    element: <Layout />,
+    children: [
+      { path: "/", element: <PRList /> },
+      { path: "/review/:owner/:repo/:pullNumber", element: <ReviewResult /> },
+      { path: "/history", element: <HistoryPage /> },
+      { path: "/settings", element: <SettingsPage /> },
+    ],
+  },
+]);
+
+export function App() {
+  return <RouterProvider router={router} />;
+}
