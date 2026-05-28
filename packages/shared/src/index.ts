@@ -132,3 +132,31 @@ export interface AIReviewResult {
   risk: AIRiskResult;
   suggestion: AISuggestionResult;
 }
+
+// Cross-file impact heatmap types
+export type ImpactLevel = "high" | "medium" | "low";
+
+export interface ImpactNode {
+  filename: string;
+  impactScore: number;
+  impactLevel: ImpactLevel;
+  directDependents: string[];
+  directDependencies: string[];
+  changedExports: string[];
+  affectedFileCount: number;
+}
+
+export interface ImpactEdge {
+  from: string;
+  to: string;
+  symbols: string[];
+}
+
+export interface ImpactGraph {
+  nodes: ImpactNode[];
+  edges: ImpactEdge[];
+  maxImpactScore: number;
+  highImpactCount: number;
+  mediumImpactCount: number;
+  lowImpactCount: number;
+}
