@@ -1,0 +1,25 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+# Conventional commit validation
+message=$(cat "$1")
+
+# Pattern: type(scope): description or type: description
+# Types: feat, fix, docs, style, refactor, test, chore, ci, build, perf
+pattern="^(feat|fix|docs|style|refactor|test|chore|ci|build|perf)(\(.+\))?: .+"
+
+if ! echo "$message" | grep -qE "$pattern"; then
+  echo ""
+  echo "❌ Invalid commit message format."
+  echo ""
+  echo "Expected format: <type>(<scope>): <description>"
+  echo ""
+  echo "Valid types: feat, fix, docs, style, refactor, test, chore, ci, build, perf"
+  echo ""
+  echo "Examples:"
+  echo "  feat: add PR diff viewer component"
+  echo "  fix(api): handle empty diff response"
+  echo "  test: add unit tests for diff parser"
+  echo ""
+  exit 1
+fi

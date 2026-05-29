@@ -1,0 +1,11 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+# Run lint-staged on staged files
+npx lint-staged
+
+# Run typecheck to catch type errors before commit
+pnpm typecheck
+
+# Run tests to ensure nothing is broken
+pnpm test

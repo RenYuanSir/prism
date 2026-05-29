@@ -7,7 +7,7 @@ import { analyzeDiff } from "./services/diff-analyzer.js";
 import { GitHubService } from "./services/github.js";
 import { analyzeImpact } from "./services/impact-analyzer.js";
 
-dotenv.config();
+dotenv.config({ path: "../../.env" });
 
 const app = express();
 const PORT = process.env.PORT ?? 3001;

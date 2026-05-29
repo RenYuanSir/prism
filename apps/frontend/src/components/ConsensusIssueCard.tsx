@@ -1,7 +1,7 @@
 import type { ConsensusIssue } from "@ai-pr-review/shared";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
 import { SeverityBadge } from "./SeverityBadge";
-import { ChevronDown, ChevronUp } from "lucide-react";
 
 interface ConsensusIssueCardProps {
   issue: ConsensusIssue;
