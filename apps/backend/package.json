@@ -19,7 +19,7 @@
     "dotenv": "^16.4.0",
     "express": "^4.19.0",
     "tree-sitter-wasms": "^0.1.13",
-    "web-tree-sitter": "^0.26.9"
+    "web-tree-sitter": "0.24.7"
   },
   "devDependencies": {
     "@types/cors": "^2.8.0",
