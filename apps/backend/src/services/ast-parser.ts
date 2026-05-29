@@ -50,11 +50,11 @@ export async function parseFile(content: string, filename?: string): Promise<Par
 
     return {
       functions: extractFunctionsFromAST(root),
-      imports: extractImports(content),
-      exports: extractExports(content),
-      classes: extractClasses(content),
-      interfaces: extractInterfaces(content),
-      types: extractTypes(content),
+      imports: extractImportsFromAST(root),
+      exports: extractExportsFromAST(root),
+      classes: extractClassesFromAST(root),
+      interfaces: extractInterfacesFromAST(root),
+      types: extractTypesFromAST(root),
     };
   } catch (error) {
     console.warn("Tree-sitter parsing failed, falling back to regex:", error);
@@ -200,6 +200,156 @@ function extractParameters(paramsNode: Parser.SyntaxNode | null): string[] {
     }
   }
   return params;
+}
+
+function extractImportsFromAST(root: Parser.SyntaxNode): ImportInfo[] {
+  const imports: ImportInfo[] = [];
+
+  function visit(node: Parser.SyntaxNode) {
+    if (node.type === "import_statement") {
+      const sourceNode = node.childForFieldName("source");
+      if (!sourceNode) return;
+
+      const module = sourceNode.text.replace(/["']/g, "");
+      const importsList: string[] = [];
+      let isDefault = false;
+
+      const clauseNode = node.children.find((c) => c.type === "import_clause");
+      if (clauseNode) {
+        // Default import: identifier child of import_clause (no field name)
+        const defaultImport = clauseNode.children.find((c) => c.type === "identifier");
+        if (defaultImport) {
+          importsList.push(defaultImport.text);
+          isDefault = true;
+        }
+
+        // Named imports: import_specifier descendants
+        const namedImports = clauseNode.descendantsOfType("import_specifier");
+        for (const spec of namedImports) {
+          const nameNode = spec.childForFieldName("name");
+          if (nameNode) {
+            importsList.push(nameNode.text);
+          }
+        }
+      }
+
+      imports.push({
+        module,
+        imports: importsList,
+        isDefault,
+      });
+    }
+
+    for (const child of node.children) {
+      visit(child);
+    }
+  }
+
+  visit(root);
+  return imports;
+}
+
+function extractExportsFromAST(root: Parser.SyntaxNode): ExportInfo[] {
+  const exports: ExportInfo[] = [];
+
+  function visit(node: Parser.SyntaxNode) {
+    if (node.type === "export_statement") {
+      const declarationNode = node.childForFieldName("declaration");
+      if (!declarationNode) return;
+
+      const isDefault = node.text.includes("export default");
+
+      // Function/class declaration: name is a direct field
+      let nameNode = declarationNode.childForFieldName("name");
+
+      // Lexical/variable declaration (export const/let/var): drill into variable_declarator
+      if (!nameNode) {
+        const declarator = declarationNode.children.find((c) => c.type === "variable_declarator");
+        if (declarator) {
+          nameNode = declarator.childForFieldName("name");
+        }
+      }
+
+      // Fallback: direct identifier child
+      if (!nameNode) {
+        nameNode = declarationNode.children.find((c) => c.type === "identifier") ?? null;
+      }
+
+      if (nameNode) {
+        exports.push({
+          name: nameNode.text,
+          isDefault,
+        });
+      }
+    }
+
+    for (const child of node.children) {
+      visit(child);
+    }
+  }
+
+  visit(root);
+  return exports;
+}
+
+function extractClassesFromAST(root: Parser.SyntaxNode): string[] {
+  const classes: string[] = [];
+
+  function visit(node: Parser.SyntaxNode) {
+    if (node.type === "class_declaration") {
+      const nameNode = node.childForFieldName("name");
+      if (nameNode) {
+        classes.push(nameNode.text);
+      }
+    }
+
+    for (const child of node.children) {
+      visit(child);
+    }
+  }
+
+  visit(root);
+  return classes;
+}
+
+function extractInterfacesFromAST(root: Parser.SyntaxNode): string[] {
+  const interfaces: string[] = [];
+
+  function visit(node: Parser.SyntaxNode) {
+    if (node.type === "interface_declaration") {
+      const nameNode = node.childForFieldName("name");
+      if (nameNode) {
+        interfaces.push(nameNode.text);
+      }
+    }
+
+    for (const child of node.children) {
+      visit(child);
+    }
+  }
+
+  visit(root);
+  return interfaces;
+}
+
+function extractTypesFromAST(root: Parser.SyntaxNode): string[] {
+  const types: string[] = [];
+
+  function visit(node: Parser.SyntaxNode) {
+    if (node.type === "type_alias_declaration") {
+      const nameNode = node.childForFieldName("name");
+      if (nameNode) {
+        types.push(nameNode.text);
+      }
+    }
+
+    for (const child of node.children) {
+      visit(child);
+    }
+  }
+
+  visit(root);
+  return types;
 }
 
 function extractFunctions(content: string): FunctionInfo[] {
