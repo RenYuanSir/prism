@@ -8,7 +8,7 @@ interface FileChangeCardProps {
 
 function ChangeTypeBadge({ type }: { type: ChangeType }) {
   const styles: Record<ChangeType, string> = {
-    added: "bg-green-500/10 text-green-400 ring-green-500/20",
+    added: "bg-linear-success/10 text-linear-success ring-linear-success/20",
     modified: "bg-yellow-500/10 text-yellow-400 ring-yellow-500/20",
     removed: "bg-red-500/10 text-red-400 ring-red-500/20",
   };
@@ -24,10 +24,10 @@ function ChangeTypeBadge({ type }: { type: ChangeType }) {
 
 function FileStatusBadge({ status }: { status: FileChange["status"] }) {
   const styles: Record<string, string> = {
-    added: "bg-green-500/10 text-green-400",
+    added: "bg-linear-success/10 text-linear-success",
     modified: "bg-yellow-500/10 text-yellow-400",
     removed: "bg-red-500/10 text-red-400",
-    renamed: "bg-purple-500/10 text-purple-400",
+    renamed: "bg-linear-brand/10 text-linear-accent",
   };
 
   return (
@@ -48,33 +48,37 @@ export function FileChangeCard({ fileChange }: FileChangeCardProps) {
     fileChange.exportChanges.length > 0;
 
   return (
-    <div className="bg-slate-800/50 border border-slate-700 rounded-lg overflow-hidden transition-colors hover:border-slate-600">
+    <div className="bg-linear-surface/50 border border-linear-elevated rounded-lg overflow-hidden transition-colors hover:border-linear-text-muted">
       <button
         type="button"
         onClick={() => hasDetails && setExpanded(!expanded)}
         className="w-full px-4 py-3 flex items-center justify-between text-left"
       >
         <div className="flex items-center gap-3 flex-1 min-w-0">
-          <FileCode className="h-4 w-4 text-slate-400 flex-shrink-0" />
-          <span className="font-mono text-sm text-slate-200 truncate">{fileChange.filename}</span>
+          <FileCode className="h-4 w-4 text-linear-text-tertiary flex-shrink-0" />
+          <span className="font-mono text-sm text-linear-text-secondary truncate">
+            {fileChange.filename}
+          </span>
           <FileStatusBadge status={fileChange.status} />
         </div>
         <div className="flex items-center gap-3 flex-shrink-0 ml-4">
-          <span className="text-xs text-green-400">+{fileChange.additions}</span>
+          <span className="text-xs text-linear-success">+{fileChange.additions}</span>
           <span className="text-xs text-red-400">-{fileChange.deletions}</span>
-          {hasDetails && <span className="text-xs text-slate-500">{expanded ? "▲" : "▼"}</span>}
+          {hasDetails && (
+            <span className="text-xs text-linear-text-muted">{expanded ? "▲" : "▼"}</span>
+          )}
         </div>
       </button>
 
       {expanded && hasDetails && (
-        <div className="px-4 pb-4 space-y-3 border-t border-slate-700/50 pt-3">
-          <p className="text-xs text-slate-400">{fileChange.summary}</p>
+        <div className="px-4 pb-4 space-y-3 border-t border-linear-elevated/50 pt-3">
+          <p className="text-xs text-linear-text-tertiary">{fileChange.summary}</p>
 
           {fileChange.functionChanges.length > 0 && (
             <div>
               <div className="flex items-center gap-2 mb-2">
-                <GitBranch className="h-3 w-3 text-slate-500" />
-                <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">
+                <GitBranch className="h-3 w-3 text-linear-text-muted" />
+                <span className="text-xs font-medium text-linear-text-tertiary uppercase tracking-wider">
                   Functions
                 </span>
               </div>
@@ -82,9 +86,9 @@ export function FileChangeCard({ fileChange }: FileChangeCardProps) {
                 {fileChange.functionChanges.map((fn) => (
                   <div key={fn.name} className="flex items-center gap-2 text-xs">
                     <ChangeTypeBadge type={fn.changeType} />
-                    <span className="font-mono text-slate-300">{fn.name}</span>
+                    <span className="font-mono text-linear-text-secondary">{fn.name}</span>
                     {fn.newSignature && (
-                      <span className="text-slate-500 truncate">{fn.newSignature}</span>
+                      <span className="text-linear-text-muted truncate">{fn.newSignature}</span>
                     )}
                   </div>
                 ))}
@@ -95,8 +99,8 @@ export function FileChangeCard({ fileChange }: FileChangeCardProps) {
           {fileChange.importChanges.length > 0 && (
             <div>
               <div className="flex items-center gap-2 mb-2">
-                <Package className="h-3 w-3 text-slate-500" />
-                <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">
+                <Package className="h-3 w-3 text-linear-text-muted" />
+                <span className="text-xs font-medium text-linear-text-tertiary uppercase tracking-wider">
                   Imports
                 </span>
               </div>
@@ -104,8 +108,8 @@ export function FileChangeCard({ fileChange }: FileChangeCardProps) {
                 {fileChange.importChanges.map((imp) => (
                   <div key={imp.module} className="flex items-center gap-2 text-xs">
                     <ChangeTypeBadge type={imp.changeType} />
-                    <span className="font-mono text-slate-300">{imp.module}</span>
-                    <span className="text-slate-500">({imp.imports.join(", ")})</span>
+                    <span className="font-mono text-linear-text-secondary">{imp.module}</span>
+                    <span className="text-linear-text-muted">({imp.imports.join(", ")})</span>
                   </div>
                 ))}
               </div>
@@ -115,8 +119,8 @@ export function FileChangeCard({ fileChange }: FileChangeCardProps) {
           {fileChange.exportChanges.length > 0 && (
             <div>
               <div className="flex items-center gap-2 mb-2">
-                <Box className="h-3 w-3 text-slate-500" />
-                <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">
+                <Box className="h-3 w-3 text-linear-text-muted" />
+                <span className="text-xs font-medium text-linear-text-tertiary uppercase tracking-wider">
                   Exports
                 </span>
               </div>
@@ -124,8 +128,8 @@ export function FileChangeCard({ fileChange }: FileChangeCardProps) {
                 {fileChange.exportChanges.map((exp) => (
                   <div key={exp.name} className="flex items-center gap-2 text-xs">
                     <ChangeTypeBadge type={exp.changeType} />
-                    <span className="font-mono text-slate-300">{exp.name}</span>
-                    {exp.isDefault && <span className="text-slate-500">(default)</span>}
+                    <span className="font-mono text-linear-text-secondary">{exp.name}</span>
+                    {exp.isDefault && <span className="text-linear-text-muted">(default)</span>}
                   </div>
                 ))}
               </div>
