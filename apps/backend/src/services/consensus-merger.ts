@@ -1,6 +1,7 @@
 import type {
   AIConsensusResult,
   AIRiskIssue,
+  AIRiskSeverity,
   ConsensusIssue,
   ModelFinding,
 } from "@ai-pr-review/shared";
@@ -61,7 +62,7 @@ function isMatch(a: ModelFinding, b: ModelFinding): boolean {
   );
 }
 
-function severityCompatible(a: string, b: string): boolean {
+function severityCompatible(a: AIRiskSeverity, b: AIRiskSeverity): boolean {
   if (a === "info" || b === "info") return a === b;
   return true; // critical and warning are compatible
 }
