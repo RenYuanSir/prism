@@ -553,3 +553,398 @@ describe("AIReviewPipeline parallel risk analysis", () => {
     expect(mockGemini.generateText).toHaveBeenCalled();
   });
 });
+
+describe("AIReviewPipeline race condition integration", () => {
+  const createRaceConditionResponse = (file: string, line: number, sharedState: string) =>
+    JSON.stringify({
+      issues: [
+        {
+          severity: "critical",
+          message: `Race condition on ${sharedState}`,
+          file,
+          line,
+          explanation: "Concurrent access to shared state",
+        },
+      ],
+      raceConditions: [
+        {
+          severity: "critical",
+          message: `Race condition on ${sharedState}`,
+          file,
+          line,
+          explanation: "Two async functions write to the same variable",
+          sharedState,
+          patternA: {
+            label: "Write path A",
+            functionName: "updateA",
+            steps: [
+              { description: "Read value", line: line - 2, isConflictPoint: false },
+              { description: "Write value", line, isConflictPoint: true },
+            ],
+          },
+          patternB: {
+            label: "Write path B",
+            functionName: "updateB",
+            steps: [
+              { description: "Read value", line: line + 5, isConflictPoint: false },
+              { description: "Write value", line: line + 8, isConflictPoint: true },
+            ],
+          },
+          conflictPoint: `Both functions modify ${sharedState} concurrently`,
+        },
+      ],
+    });
+
+  it("should return raceConditions array in run result", async () => {
+    const mockClaude = {
+      generateText: vi
+        .fn()
+        .mockResolvedValue(createRaceConditionResponse("src/order.ts", 42, "orderCount")),
+    };
+    const mockGemini = {
+      generateText: vi
+        .fn()
+        .mockResolvedValue(createRaceConditionResponse("src/order.ts", 43, "orderCount")),
+    };
+
+    const pipeline = new AIReviewPipeline({
+      summaryClient: mockGemini,
+      riskClient: mockClaude,
+      suggestionClient: mockClaude,
+    });
+
+    const pr: PullRequest = {
+      id: 1,
+      title: "Test PR",
+      description: "Test",
+      author: "test",
+      branch: "feature",
+      baseBranch: "main",
+      files: [],
+      commits: [],
+    };
+
+    const semanticDiff: SemanticDiff = {
+      fileChanges: [],
+      summary: "test",
+      totalFiles: 0,
+      totalAdditions: 0,
+      totalDeletions: 0,
+    };
+
+    const result = await pipeline.run(pr, "diff", semanticDiff);
+
+    expect(result.raceConditions).toBeDefined();
+    expect(Array.isArray(result.raceConditions)).toBe(true);
+  });
+
+  it("should merge race conditions from both models with high confidence when matched", async () => {
+    const mockClaude = {
+      generateText: vi
+        .fn()
+        .mockResolvedValue(createRaceConditionResponse("src/order.ts", 42, "orderCount")),
+    };
+    const mockGemini = {
+      generateText: vi
+        .fn()
+        .mockResolvedValue(createRaceConditionResponse("src/order.ts", 44, "orderCount")),
+    };
+
+    const pipeline = new AIReviewPipeline({
+      summaryClient: mockGemini,
+      riskClient: mockClaude,
+      suggestionClient: mockClaude,
+    });
+
+    const pr: PullRequest = {
+      id: 1,
+      title: "Test",
+      description: "",
+      author: "test",
+      branch: "feature",
+      baseBranch: "main",
+      files: [],
+      commits: [],
+    };
+
+    const semanticDiff: SemanticDiff = {
+      fileChanges: [],
+      summary: "test",
+      totalFiles: 0,
+      totalAdditions: 0,
+      totalDeletions: 0,
+    };
+
+    const result = await pipeline.run(pr, "diff", semanticDiff);
+
+    // Both models report the same race condition (file + line within 5 + same sharedState)
+    expect(result.raceConditions).toHaveLength(1);
+    expect(result.raceConditions[0].confidence).toBe("high");
+    expect(result.raceConditions[0].models).toEqual(["claude", "gemini"]);
+    expect(result.raceConditions[0].sharedState).toBe("orderCount");
+    expect(result.raceConditions[0].patternA.functionName).toBe("updateA");
+    expect(result.raceConditions[0].patternB.functionName).toBe("updateB");
+  });
+
+  it("should assign medium confidence to unmatched race conditions", async () => {
+    const mockClaude = {
+      generateText: vi
+        .fn()
+        .mockResolvedValue(createRaceConditionResponse("src/order.ts", 42, "orderCount")),
+    };
+    const mockGemini = {
+      generateText: vi
+        .fn()
+        .mockResolvedValue(createRaceConditionResponse("src/user.ts", 100, "userCache")),
+    };
+
+    const pipeline = new AIReviewPipeline({
+      summaryClient: mockGemini,
+      riskClient: mockClaude,
+      suggestionClient: mockClaude,
+    });
+
+    const pr: PullRequest = {
+      id: 1,
+      title: "Test",
+      description: "",
+      author: "test",
+      branch: "feature",
+      baseBranch: "main",
+      files: [],
+      commits: [],
+    };
+
+    const semanticDiff: SemanticDiff = {
+      fileChanges: [],
+      summary: "test",
+      totalFiles: 0,
+      totalAdditions: 0,
+      totalDeletions: 0,
+    };
+
+    const result = await pipeline.run(pr, "diff", semanticDiff);
+
+    // Different files → no match → both get medium confidence
+    expect(result.raceConditions).toHaveLength(2);
+    const claudeOnly = result.raceConditions.find((rc) => rc.sharedState === "orderCount");
+    const geminiOnly = result.raceConditions.find((rc) => rc.sharedState === "userCache");
+    expect(claudeOnly?.confidence).toBe("medium");
+    expect(claudeOnly?.models).toEqual(["claude"]);
+    expect(geminiOnly?.confidence).toBe("medium");
+    expect(geminiOnly?.models).toEqual(["gemini"]);
+  });
+
+  it("should return empty raceConditions when LLM response has no raceConditions field", async () => {
+    const mockClaude = {
+      generateText: vi.fn().mockResolvedValue(
+        JSON.stringify({
+          issues: [
+            {
+              severity: "warning",
+              message: "Some issue",
+              file: "src/test.ts",
+              line: 1,
+              explanation: "Test",
+            },
+          ],
+        }),
+      ),
+    };
+    const mockGemini = {
+      generateText: vi.fn().mockResolvedValue(JSON.stringify({ issues: [] })),
+    };
+
+    const pipeline = new AIReviewPipeline({
+      summaryClient: mockGemini,
+      riskClient: mockClaude,
+      suggestionClient: mockClaude,
+    });
+
+    const pr: PullRequest = {
+      id: 1,
+      title: "Test",
+      description: "",
+      author: "test",
+      branch: "feature",
+      baseBranch: "main",
+      files: [],
+      commits: [],
+    };
+
+    const semanticDiff: SemanticDiff = {
+      fileChanges: [],
+      summary: "test",
+      totalFiles: 0,
+      totalAdditions: 0,
+      totalDeletions: 0,
+    };
+
+    const result = await pipeline.run(pr, "diff", semanticDiff);
+
+    expect(result.raceConditions).toEqual([]);
+  });
+
+  it("should include race condition context in prompt when candidates exist", async () => {
+    const mockClient = {
+      generateText: vi.fn().mockResolvedValue(JSON.stringify({ issues: [] })),
+    };
+
+    const pipeline = new AIReviewPipeline({
+      summaryClient: mockClient,
+      riskClient: mockClient,
+      suggestionClient: mockClient,
+    });
+
+    const pr: PullRequest = {
+      id: 1,
+      title: "Test",
+      description: "",
+      author: "test",
+      branch: "feature",
+      baseBranch: "main",
+      files: [],
+      commits: [],
+    };
+
+    const semanticDiff: SemanticDiff = {
+      fileChanges: [],
+      summary: "test",
+      totalFiles: 0,
+      totalAdditions: 0,
+      totalDeletions: 0,
+    };
+
+    const raceCandidates = [
+      {
+        sharedState: "counter",
+        patterns: [
+          {
+            type: "async_function" as const,
+            file: "src/test.ts",
+            line: 10,
+            endLine: 20,
+            functionName: "incrementA",
+            sharedStateAccess: [
+              { type: "variable_write" as const, name: "counter", line: 15, isWrite: true },
+            ],
+          },
+          {
+            type: "async_function" as const,
+            file: "src/test.ts",
+            line: 22,
+            endLine: 32,
+            functionName: "incrementB",
+            sharedStateAccess: [
+              { type: "variable_write" as const, name: "counter", line: 27, isWrite: true },
+            ],
+          },
+        ],
+      },
+    ];
+
+    await pipeline.analyzeRisksWithModel(
+      mockClient,
+      "claude",
+      pr,
+      "diff",
+      semanticDiff,
+      raceCandidates,
+    );
+
+    const prompt = mockClient.generateText.mock.calls[0][0] as string;
+    expect(prompt).toContain("RACE CONDITION ANALYSIS");
+    expect(prompt).toContain("counter");
+    expect(prompt).toContain("incrementA");
+    expect(prompt).toContain("incrementB");
+    expect(prompt).toContain("raceConditions");
+  });
+
+  it("should sort merged race conditions by confidence (high first)", async () => {
+    const mockClaude = {
+      generateText: vi.fn().mockResolvedValue(
+        JSON.stringify({
+          issues: [],
+          raceConditions: [
+            {
+              severity: "warning",
+              message: "Claude-only race",
+              file: "src/a.ts",
+              line: 10,
+              explanation: "test",
+              sharedState: "stateA",
+              patternA: { label: "A", functionName: "fnA", steps: [] },
+              patternB: { label: "B", functionName: "fnB", steps: [] },
+              conflictPoint: "test",
+            },
+            {
+              severity: "critical",
+              message: "Matched race from claude",
+              file: "src/b.ts",
+              line: 20,
+              explanation: "test",
+              sharedState: "stateB",
+              patternA: { label: "A", functionName: "fnA", steps: [] },
+              patternB: { label: "B", functionName: "fnB", steps: [] },
+              conflictPoint: "test",
+            },
+          ],
+        }),
+      ),
+    };
+    const mockGemini = {
+      generateText: vi.fn().mockResolvedValue(
+        JSON.stringify({
+          issues: [],
+          raceConditions: [
+            {
+              severity: "critical",
+              message: "Matched race from gemini",
+              file: "src/b.ts",
+              line: 22,
+              explanation: "test",
+              sharedState: "stateB",
+              patternA: { label: "A", functionName: "fnA", steps: [] },
+              patternB: { label: "B", functionName: "fnB", steps: [] },
+              conflictPoint: "test",
+            },
+          ],
+        }),
+      ),
+    };
+
+    const pipeline = new AIReviewPipeline({
+      summaryClient: mockGemini,
+      riskClient: mockClaude,
+      suggestionClient: mockClaude,
+    });
+
+    const pr: PullRequest = {
+      id: 1,
+      title: "Test",
+      description: "",
+      author: "test",
+      branch: "feature",
+      baseBranch: "main",
+      files: [],
+      commits: [],
+    };
+
+    const semanticDiff: SemanticDiff = {
+      fileChanges: [],
+      summary: "test",
+      totalFiles: 0,
+      totalAdditions: 0,
+      totalDeletions: 0,
+    };
+
+    const result = await pipeline.run(pr, "diff", semanticDiff);
+
+    // High confidence (matched on src/b.ts/stateB) should come before medium (claude-only src/a.ts/stateA)
+    expect(result.raceConditions).toHaveLength(2);
+    expect(result.raceConditions[0].confidence).toBe("high");
+    expect(result.raceConditions[0].sharedState).toBe("stateB");
+    expect(result.raceConditions[1].confidence).toBe("medium");
+    expect(result.raceConditions[1].sharedState).toBe("stateA");
+  });
+});
