@@ -131,6 +131,7 @@ export interface AIReviewResult {
   summary: AISummaryResult;
   risk: AIRiskResult;
   consensus: AIConsensusResult;
+  raceConditions: RaceConditionIssue[];
   suggestion: AISuggestionResult;
 }
 
@@ -161,6 +162,62 @@ export interface AIConsensusResult {
   allAgreeCount: number;
   claudeTotal: number;
   geminiTotal: number;
+}
+
+// Race condition detection types
+export type ConcurrencyPatternType =
+  | "async_function"
+  | "promise_chain"
+  | "callback"
+  | "event_handler"
+  | "timer";
+
+export type SharedStateType =
+  | "variable_write"
+  | "db_operation"
+  | "cache_operation"
+  | "global_mutation";
+
+export interface ConcurrencyPattern {
+  type: ConcurrencyPatternType;
+  file: string;
+  line: number;
+  endLine: number;
+  functionName: string;
+  sharedStateAccess: SharedStateAccess[];
+}
+
+export interface SharedStateAccess {
+  type: SharedStateType;
+  name: string;
+  line: number;
+  isWrite: boolean;
+}
+
+export interface RaceConditionIssue {
+  severity: AIRiskSeverity;
+  message: string;
+  file: string;
+  line: number;
+  explanation: string;
+  sharedState: string;
+  patternA: ExecutionPath;
+  patternB: ExecutionPath;
+  conflictPoint: string;
+  confidence: ConsensusConfidence;
+  models: ModelName[];
+}
+
+export interface ExecutionPath {
+  label: string;
+  functionName: string;
+  steps: PathStep[];
+}
+
+export interface PathStep {
+  description: string;
+  line: number;
+  isConflictPoint: boolean;
 }
 
 // Cross-file impact heatmap types
