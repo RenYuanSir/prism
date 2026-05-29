@@ -25,7 +25,7 @@ export function ExecutionPathColumn({
 
           return (
             <div
-              key={index}
+              key={`${step.line}-${index}`}
               className={`
                 border rounded-lg p-3 transition-all
                 ${isConflict ? "bg-red-500/20 border-red-500/50 animate-pulse" : ""}
@@ -34,16 +34,12 @@ export function ExecutionPathColumn({
               `}
             >
               <div className="flex items-start gap-2">
-                <span className="text-xs font-bold text-slate-500 mt-0.5">
-                  {index + 1}.
-                </span>
+                <span className="text-xs font-bold text-slate-500 mt-0.5">{index + 1}.</span>
                 <div className="flex-1">
                   <p className="text-sm text-slate-200">{step.description}</p>
                   <p className="text-xs text-slate-500 font-mono mt-1">:{step.line}</p>
                 </div>
-                {isConflict && (
-                  <span className="text-xs font-bold text-red-400">CONFLICT</span>
-                )}
+                {isConflict && <span className="text-xs font-bold text-red-400">CONFLICT</span>}
               </div>
             </div>
           );

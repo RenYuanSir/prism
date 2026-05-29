@@ -18,8 +18,8 @@ import { type ReviewResponse, fetchImpact, triggerReview } from "../api/client";
 import { ConsensusView } from "../components/ConsensusView";
 import { FileChangeCard } from "../components/FileChangeCard";
 import { ImpactHeatmap } from "../components/ImpactHeatmap";
-import { RaceConditionTimeline } from "../components/RaceConditionTimeline";
 import { PipelineProgress } from "../components/PipelineProgress";
+import { RaceConditionTimeline } from "../components/RaceConditionTimeline";
 import { SuggestionCard } from "../components/SuggestionCard";
 
 interface PRInfo {

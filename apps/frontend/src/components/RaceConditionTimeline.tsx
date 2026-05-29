@@ -16,9 +16,7 @@ export function RaceConditionTimeline({ issues }: RaceConditionTimelineProps) {
 
   const issue = issues[currentIssueIndex];
 
-  const maxSteps = issue
-    ? Math.max(issue.patternA.steps.length, issue.patternB.steps.length)
-    : 0;
+  const maxSteps = issue ? Math.max(issue.patternA.steps.length, issue.patternB.steps.length) : 0;
 
   const hasConflict =
     !!issue &&
@@ -59,18 +57,16 @@ export function RaceConditionTimeline({ issues }: RaceConditionTimelineProps) {
     <div className="space-y-6">
       {issues.length > 1 && (
         <div className="flex gap-2 mb-4">
-          {issues.map((_, i) => (
+          {issues.map((issue, i) => (
             <button
-              key={i}
+              key={`${issue.file}-${issue.line}-${issue.sharedState}`}
               type="button"
               onClick={() => {
                 setCurrentIssueIndex(i);
                 handleReplay();
               }}
               className={`px-3 py-1 text-xs rounded ${
-                i === currentIssueIndex
-                  ? "bg-blue-500 text-white"
-                  : "bg-slate-700 text-slate-300"
+                i === currentIssueIndex ? "bg-blue-500 text-white" : "bg-slate-700 text-slate-300"
               }`}
             >
               Issue {i + 1}
@@ -85,9 +81,7 @@ export function RaceConditionTimeline({ issues }: RaceConditionTimelineProps) {
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
               <SeverityBadge severity={issue.severity} />
-              <span className="text-sm font-medium text-slate-200">
-                {issue.message}
-              </span>
+              <span className="text-sm font-medium text-slate-200">{issue.message}</span>
             </div>
             <p className="text-xs text-slate-400 font-mono mb-1">
               {issue.file}:{issue.line}
@@ -118,10 +112,7 @@ export function RaceConditionTimeline({ issues }: RaceConditionTimelineProps) {
           />
         </div>
 
-        <ConflictIndicator
-          visible={hasConflict}
-          conflictPoint={issue.conflictPoint}
-        />
+        <ConflictIndicator visible={hasConflict} conflictPoint={issue.conflictPoint} />
 
         <div className="flex items-center justify-center gap-4 mt-6">
           {animationStep === -1 && (

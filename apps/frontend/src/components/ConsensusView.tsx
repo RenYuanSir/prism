@@ -1,6 +1,6 @@
 import type { AIConsensusResult } from "@ai-pr-review/shared";
-import { ConsensusStats } from "./ConsensusStats";
 import { ConsensusIssueCard } from "./ConsensusIssueCard";
+import { ConsensusStats } from "./ConsensusStats";
 
 interface ConsensusViewProps {
   consensus: AIConsensusResult;
@@ -15,7 +15,10 @@ export function ConsensusView({ consensus }: ConsensusViewProps) {
       {consensus.consensusIssues.length > 0 && (
         <div className="space-y-3">
           {consensus.consensusIssues.map((issue, i) => (
-            <ConsensusIssueCard key={`${issue.issue.file}-${issue.issue.line}-${i}`} issue={issue} />
+            <ConsensusIssueCard
+              key={`${issue.issue.file}-${issue.issue.line}-${i}`}
+              issue={issue}
+            />
           ))}
         </div>
       )}
@@ -25,9 +28,9 @@ export function ConsensusView({ consensus }: ConsensusViewProps) {
           <h3 className="text-sm font-medium text-slate-400 uppercase tracking-wider mb-3">
             Claude Only ({consensus.claudeOnly.length})
           </h3>
-          {consensus.claudeOnly.map((finding, i) => (
+          {consensus.claudeOnly.map((finding) => (
             <ConsensusIssueCard
-              key={`claude-${i}`}
+              key={`claude-${finding.file}-${finding.line}`}
               issue={{
                 issue: {
                   severity: finding.severity,
@@ -50,9 +53,9 @@ export function ConsensusView({ consensus }: ConsensusViewProps) {
           <h3 className="text-sm font-medium text-slate-400 uppercase tracking-wider mb-3">
             Gemini Only ({consensus.geminiOnly.length})
           </h3>
-          {consensus.geminiOnly.map((finding, i) => (
+          {consensus.geminiOnly.map((finding) => (
             <ConsensusIssueCard
-              key={`gemini-${i}`}
+              key={`gemini-${finding.file}-${finding.line}`}
               issue={{
                 issue: {
                   severity: finding.severity,
