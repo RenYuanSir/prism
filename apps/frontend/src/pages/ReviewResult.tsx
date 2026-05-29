@@ -1,7 +1,6 @@
 import type { AIReviewResult, ImpactGraph, SemanticDiff } from "@ai-pr-review/shared";
 import type { PipelineStage } from "@ai-pr-review/shared";
 import {
-  AlertTriangle,
   ArrowLeft,
   FileText,
   GitBranch,
@@ -17,9 +16,9 @@ import { useParams } from "react-router-dom";
 import { Link } from "react-router-dom";
 import { type ReviewResponse, fetchImpact, triggerReview } from "../api/client";
 import { FileChangeCard } from "../components/FileChangeCard";
+import { ConsensusView } from "../components/ConsensusView";
 import { ImpactHeatmap } from "../components/ImpactHeatmap";
 import { PipelineProgress } from "../components/PipelineProgress";
-import { RiskIssueCard } from "../components/RiskIssueCard";
 import { SuggestionCard } from "../components/SuggestionCard";
 
 interface PRInfo {
@@ -251,23 +250,10 @@ function ReviewContent({ pr, semanticDiff, review, impactGraph }: ReviewContentP
         </section>
       )}
 
-      {/* Risk Issues */}
-      {review.risk.issues.length > 0 && (
-        <section>
-          <h2 className="text-lg font-semibold text-slate-200 mb-3 flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-yellow-400" />
-            Risk Issues
-            <span className="text-sm font-normal text-slate-500">
-              ({review.risk.issues.length})
-            </span>
-          </h2>
-          <div className="space-y-3">
-            {review.risk.issues.map((issue, i) => (
-              <RiskIssueCard key={`${issue.file}-${issue.line}-${i}`} issue={issue} />
-            ))}
-          </div>
-        </section>
-      )}
+      {/* Consensus View */}
+      <section>
+        <ConsensusView consensus={review.consensus} />
+      </section>
 
       {/* Fix Suggestions */}
       {review.suggestion.suggestions.length > 0 && (
