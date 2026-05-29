@@ -147,3 +147,73 @@ describe("diffExports", () => {
     expect(changes[0]?.changeType).toBe("removed");
   });
 });
+
+describe("Tree-sitter AST parsing", () => {
+  it("should extract nested functions", async () => {
+    const code = `
+function outer() {
+  function inner() {
+    return 42;
+  }
+  return inner();
+}
+    `;
+    const result = await parseFile(code, "test.ts");
+    expect(result.functions).toHaveLength(2);
+    expect(result.functions.map((f) => f.name)).toContain("outer");
+    expect(result.functions.map((f) => f.name)).toContain("inner");
+  });
+
+  it("should extract class methods with className", async () => {
+    const code = `
+class Calculator {
+  add(a: number, b: number): number {
+    return a + b;
+  }
+}
+    `;
+    const result = await parseFile(code, "test.ts");
+    expect(result.functions).toHaveLength(1);
+    expect(result.functions[0]?.name).toBe("add");
+    expect(result.functions[0]?.isMethod).toBe(true);
+    expect(result.functions[0]?.className).toBe("Calculator");
+  });
+
+  it("should detect async functions", async () => {
+    const code = `
+async function fetchData() {
+  return await fetch("/api");
+}
+    `;
+    const result = await parseFile(code, "test.ts");
+    expect(result.functions).toHaveLength(1);
+    expect(result.functions[0]?.isAsync).toBe(true);
+  });
+
+  it("should extract function body", async () => {
+    const code = `
+function calculate() {
+  const x = 10;
+  return x * 2;
+}
+    `;
+    const result = await parseFile(code, "test.ts");
+    expect(result.functions[0]?.body).toBeDefined();
+    expect(result.functions[0]?.body).toContain("const x = 10");
+  });
+
+  it("should handle multi-line function signatures", async () => {
+    const code = `
+function complex(
+  param1: string,
+  param2: number,
+  param3: boolean
+): Promise<void> {
+  return Promise.resolve();
+}
+    `;
+    const result = await parseFile(code, "test.ts");
+    expect(result.functions).toHaveLength(1);
+    expect(result.functions[0]?.parameters).toEqual(["param1", "param2", "param3"]);
+  });
+});
