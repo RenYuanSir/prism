@@ -15,53 +15,15 @@ import type {
   SemanticDiff,
 } from "@ai-pr-review/shared";
 import type { PullRequest } from "@ai-pr-review/shared";
-import Anthropic from "@anthropic-ai/sdk";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { mergeConsensus } from "./consensus-merger.js";
+import type { LLMClient } from "./llm-client.js";
+import { createPipelineClients, loadLLMConfigFromEnv } from "./llm-config.js";
 import {
   analyzeRaceConditionPatterns,
   detectRaceConditionCandidates,
 } from "./race-condition-analyzer.js";
 
-export interface LLMClient {
-  generateText(prompt: string): Promise<string>;
-}
-
-export class GeminiClient implements LLMClient {
-  private model;
-
-  constructor(apiKey: string) {
-    const genAI = new GoogleGenerativeAI(apiKey);
-    this.model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-  }
-
-  async generateText(prompt: string): Promise<string> {
-    const result = await this.model.generateContent(prompt);
-    return result.response.text();
-  }
-}
-
-export class ClaudeClient implements LLMClient {
-  private client: Anthropic;
-
-  constructor(apiKey: string) {
-    this.client = new Anthropic({ apiKey });
-  }
-
-  async generateText(prompt: string): Promise<string> {
-    const response = await this.client.messages.create({
-      model: "claude-3-5-sonnet-20241022",
-      max_tokens: 4096,
-      messages: [{ role: "user", content: prompt }],
-    });
-
-    const textBlock = response.content.find((block) => block.type === "text");
-    if (!textBlock || textBlock.type !== "text") {
-      throw new Error("No text response from Claude");
-    }
-    return textBlock.text;
-  }
-}
+export type { LLMClient } from "./llm-client.js";
 
 export interface AIReviewPipelineConfig {
   summaryClient: LLMClient;
@@ -558,19 +520,7 @@ Provide COMPLETE code replacements that can be directly applied. Include surroun
 }
 
 export function createDefaultPipeline(): AIReviewPipeline {
-  const anthropicKey = process.env.ANTHROPIC_API_KEY;
-  const googleKey = process.env.GOOGLE_API_KEY;
-
-  if (!anthropicKey) {
-    throw new Error("ANTHROPIC_API_KEY environment variable is not set");
-  }
-  if (!googleKey) {
-    throw new Error("GOOGLE_API_KEY environment variable is not set");
-  }
-
-  return new AIReviewPipeline({
-    summaryClient: new GeminiClient(googleKey),
-    riskClient: new ClaudeClient(anthropicKey),
-    suggestionClient: new ClaudeClient(anthropicKey),
-  });
+  const config = loadLLMConfigFromEnv();
+  const clients = createPipelineClients(config);
+  return new AIReviewPipeline(clients);
 }
