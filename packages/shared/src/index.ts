@@ -130,7 +130,37 @@ export interface AISuggestionResult {
 export interface AIReviewResult {
   summary: AISummaryResult;
   risk: AIRiskResult;
+  consensus: AIConsensusResult;
   suggestion: AISuggestionResult;
+}
+
+export type ModelName = "claude" | "gemini";
+
+export interface ModelFinding {
+  model: ModelName;
+  severity: AIRiskSeverity;
+  message: string;
+  file: string;
+  line: number;
+  explanation: string;
+}
+
+export type ConsensusConfidence = "high" | "medium" | "low";
+
+export interface ConsensusIssue {
+  issue: AIRiskIssue;
+  confidence: ConsensusConfidence;
+  models: ModelName[];
+  modelFindings: ModelFinding[];
+}
+
+export interface AIConsensusResult {
+  consensusIssues: ConsensusIssue[];
+  claudeOnly: ModelFinding[];
+  geminiOnly: ModelFinding[];
+  allAgreeCount: number;
+  claudeTotal: number;
+  geminiTotal: number;
 }
 
 // Cross-file impact heatmap types
