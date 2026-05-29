@@ -15,9 +15,10 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Link } from "react-router-dom";
 import { type ReviewResponse, fetchImpact, triggerReview } from "../api/client";
-import { FileChangeCard } from "../components/FileChangeCard";
 import { ConsensusView } from "../components/ConsensusView";
+import { FileChangeCard } from "../components/FileChangeCard";
 import { ImpactHeatmap } from "../components/ImpactHeatmap";
+import { RaceConditionTimeline } from "../components/RaceConditionTimeline";
 import { PipelineProgress } from "../components/PipelineProgress";
 import { SuggestionCard } from "../components/SuggestionCard";
 
@@ -247,6 +248,20 @@ function ReviewContent({ pr, semanticDiff, review, impactGraph }: ReviewContentP
           <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
             <ImpactHeatmap graph={impactGraph} />
           </div>
+        </section>
+      )}
+
+      {/* Race Conditions */}
+      {review.raceConditions && review.raceConditions.length > 0 && (
+        <section>
+          <h2 className="text-lg font-semibold text-slate-200 mb-3 flex items-center gap-2">
+            <Zap className="h-5 w-5 text-orange-400" />
+            Race Conditions Detected
+            <span className="text-sm font-normal text-slate-500">
+              ({review.raceConditions.length})
+            </span>
+          </h2>
+          <RaceConditionTimeline issues={review.raceConditions} />
         </section>
       )}
 
