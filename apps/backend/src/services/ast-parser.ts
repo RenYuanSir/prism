@@ -220,7 +220,6 @@ function extractImportsFromAST(root: Parser.SyntaxNode): ImportInfo[] {
         const defaultImport = clauseNode.children.find((c) => c.type === "identifier");
         if (defaultImport) {
           importsList.push(defaultImport.text);
-          isDefault = true;
         }
 
         // Named imports: import_specifier descendants
@@ -231,6 +230,9 @@ function extractImportsFromAST(root: Parser.SyntaxNode): ImportInfo[] {
             importsList.push(nameNode.text);
           }
         }
+
+        // isDefault is true only when there's a default import AND no named imports
+        isDefault = defaultImport !== undefined && namedImports.length === 0;
       }
 
       imports.push({
@@ -292,14 +294,14 @@ function extractExportsFromAST(root: Parser.SyntaxNode): ExportInfo[] {
   return exports;
 }
 
-function extractClassesFromAST(root: Parser.SyntaxNode): string[] {
-  const classes: string[] = [];
+function extractNamesByNodeType(root: Parser.SyntaxNode, nodeType: string): string[] {
+  const names: string[] = [];
 
   function visit(node: Parser.SyntaxNode) {
-    if (node.type === "class_declaration") {
+    if (node.type === nodeType) {
       const nameNode = node.childForFieldName("name");
       if (nameNode) {
-        classes.push(nameNode.text);
+        names.push(nameNode.text);
       }
     }
 
@@ -309,47 +311,19 @@ function extractClassesFromAST(root: Parser.SyntaxNode): string[] {
   }
 
   visit(root);
-  return classes;
+  return names;
+}
+
+function extractClassesFromAST(root: Parser.SyntaxNode): string[] {
+  return extractNamesByNodeType(root, "class_declaration");
 }
 
 function extractInterfacesFromAST(root: Parser.SyntaxNode): string[] {
-  const interfaces: string[] = [];
-
-  function visit(node: Parser.SyntaxNode) {
-    if (node.type === "interface_declaration") {
-      const nameNode = node.childForFieldName("name");
-      if (nameNode) {
-        interfaces.push(nameNode.text);
-      }
-    }
-
-    for (const child of node.children) {
-      visit(child);
-    }
-  }
-
-  visit(root);
-  return interfaces;
+  return extractNamesByNodeType(root, "interface_declaration");
 }
 
 function extractTypesFromAST(root: Parser.SyntaxNode): string[] {
-  const types: string[] = [];
-
-  function visit(node: Parser.SyntaxNode) {
-    if (node.type === "type_alias_declaration") {
-      const nameNode = node.childForFieldName("name");
-      if (nameNode) {
-        types.push(nameNode.text);
-      }
-    }
-
-    for (const child of node.children) {
-      visit(child);
-    }
-  }
-
-  visit(root);
-  return types;
+  return extractNamesByNodeType(root, "type_alias_declaration");
 }
 
 function extractFunctions(content: string): FunctionInfo[] {

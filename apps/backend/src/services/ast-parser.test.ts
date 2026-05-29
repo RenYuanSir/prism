@@ -170,6 +170,8 @@ describe("Tree-sitter import extraction", () => {
     const result = await parseFile(code, "test.ts");
     expect(result.imports[0]?.imports).toContain("React");
     expect(result.imports[0]?.imports).toContain("useState");
+    // isDefault is false when there are named imports alongside the default
+    expect(result.imports[0]?.isDefault).toBe(false);
   });
 });
 
