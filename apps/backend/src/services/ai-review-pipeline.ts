@@ -6,11 +6,13 @@ import type {
   AIRiskSeverity,
   AISuggestionResult,
   AISummaryResult,
+  ModelFinding,
   SemanticDiff,
 } from "@ai-pr-review/shared";
 import type { PullRequest } from "@ai-pr-review/shared";
 import Anthropic from "@anthropic-ai/sdk";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { mergeConsensus } from "./consensus-merger.js";
 
 export interface LLMClient {
   generateText(prompt: string): Promise<string>;
@@ -71,10 +73,29 @@ export class AIReviewPipeline {
 
   async run(pr: PullRequest, diff: string, semanticDiff: SemanticDiff): Promise<AIReviewResult> {
     const summary = await this.generateSummary(pr, semanticDiff);
-    const risk = await this.analyzeRisks(pr, diff, semanticDiff);
-    const suggestion = await this.generateSuggestions(risk.issues, diff);
 
-    return { summary, risk, suggestion };
+    // Stage 2: Parallel Risk Analysis
+    const [claudeFindings, geminiFindings] = await Promise.all([
+      this.analyzeRisksWithModel(this.riskClient, "claude", pr, diff, semanticDiff),
+      this.analyzeRisksWithModel(this.summaryClient, "gemini", pr, diff, semanticDiff),
+    ]);
+
+    // Stage 3: Consensus Merge
+    const consensus = mergeConsensus(claudeFindings, geminiFindings);
+
+    // Stage 4: Suggestions (only for high/medium confidence issues)
+    const issuesForSuggestion = consensus.consensusIssues
+      .filter((i) => i.confidence !== "low")
+      .map((i) => i.issue);
+    const suggestion = await this.generateSuggestions(issuesForSuggestion, diff);
+
+    // Build backward-compatible risk result
+    const risk: AIRiskResult = {
+      issues: consensus.consensusIssues.map((i) => i.issue),
+      stage: "risk",
+    };
+
+    return { summary, risk, consensus, suggestion };
   }
 
   async generateSummary(pr: PullRequest, semanticDiff: SemanticDiff): Promise<AISummaryResult> {
@@ -104,6 +125,28 @@ export class AIReviewPipeline {
     const response = await this.suggestionClient.generateText(prompt);
     const suggestions = this.parseSuggestionResponse(response, issues);
     return { suggestions, stage: "suggestion" };
+  }
+
+  async analyzeRisksWithModel(
+    client: LLMClient,
+    modelName: "claude" | "gemini",
+    pr: PullRequest,
+    diff: string,
+    semanticDiff: SemanticDiff,
+  ): Promise<ModelFinding[]> {
+    const prompt = this.buildRiskPrompt(pr, diff, semanticDiff);
+    const response = await client.generateText(prompt);
+    const issues = this.parseRiskResponse(response);
+
+    // Convert AIRiskIssue to ModelFinding
+    return issues.map((issue) => ({
+      model: modelName,
+      severity: issue.severity,
+      message: issue.message,
+      file: issue.file,
+      line: issue.line,
+      explanation: issue.explanation,
+    }));
   }
 
   private buildSummaryPrompt(pr: PullRequest, semanticDiff: SemanticDiff): string {

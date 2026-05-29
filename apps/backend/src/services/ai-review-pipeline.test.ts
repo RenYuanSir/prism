@@ -377,28 +377,70 @@ export function authenticate(token: string) {
   });
 
   describe("run", () => {
-    it("should execute all three pipeline stages and return combined result", async () => {
+    it("should execute all pipeline stages and return combined result with consensus", async () => {
+      // summaryClient is used for both summary and gemini risk analysis
+      let summaryCallCount = 0;
+      summaryClient.generateText = vi.fn().mockImplementation(async () => {
+        summaryCallCount++;
+        if (summaryCallCount === 1) {
+          // First call: summary
+          return "This PR implements JWT-based authentication for the API.";
+        }
+        // Second call: gemini risk analysis
+        return JSON.stringify({
+          issues: [
+            {
+              severity: "critical",
+              message: "Hardcoded secret in JWT verification",
+              file: "src/auth.ts",
+              line: 4,
+              explanation: "The JWT secret is hardcoded.",
+            },
+          ],
+        });
+      });
+
+      pipeline = new AIReviewPipeline({ summaryClient, riskClient, suggestionClient });
       const result: AIReviewResult = await pipeline.run(pr, MOCK_DIFF, semanticDiff);
 
       expect(result.summary.stage).toBe("summary");
       expect(result.summary.summary).toContain("JWT-based authentication");
 
       expect(result.risk.stage).toBe("risk");
-      expect(result.risk.issues).toHaveLength(2);
+      expect(result.risk.issues).toHaveLength(1);
+
+      expect(result.consensus).toBeDefined();
+      expect(result.consensus.consensusIssues).toHaveLength(1);
+      expect(result.consensus.consensusIssues[0].confidence).toBe("high");
 
       expect(result.suggestion.stage).toBe("suggestion");
-      expect(result.suggestion.suggestions).toHaveLength(2);
     });
 
-    it("should call clients in sequence", async () => {
+    it("should run summary first, then parallel risk, then suggestion", async () => {
       const callOrder: string[] = [];
 
+      let summaryCallCount = 0;
       summaryClient.generateText = vi.fn().mockImplementation(async () => {
-        callOrder.push("summary");
-        return "Summary text";
+        summaryCallCount++;
+        if (summaryCallCount === 1) {
+          callOrder.push("summary");
+          return "Summary text";
+        }
+        callOrder.push("gemini-risk");
+        return JSON.stringify({
+          issues: [
+            {
+              severity: "warning",
+              message: "Test issue",
+              file: "test.ts",
+              line: 1,
+              explanation: "Test",
+            },
+          ],
+        });
       });
       riskClient.generateText = vi.fn().mockImplementation(async () => {
-        callOrder.push("risk");
+        callOrder.push("claude-risk");
         return JSON.stringify({
           issues: [
             {
@@ -419,11 +461,18 @@ export function authenticate(token: string) {
       pipeline = new AIReviewPipeline({ summaryClient, riskClient, suggestionClient });
       await pipeline.run(pr, MOCK_DIFF, semanticDiff);
 
-      expect(callOrder).toEqual(["summary", "risk", "suggestion"]);
+      // Summary must come first
+      expect(callOrder[0]).toBe("summary");
+      // Both risk analyses must happen after summary
+      expect(callOrder.indexOf("claude-risk")).toBeGreaterThan(0);
+      expect(callOrder.indexOf("gemini-risk")).toBeGreaterThan(0);
+      // Suggestion must come last
+      expect(callOrder[callOrder.length - 1]).toBe("suggestion");
     });
 
-    it("should skip suggestion generation when no risks found", async () => {
+    it("should skip suggestion generation when no consensus risks found", async () => {
       riskClient = createMockLLMClient(JSON.stringify({ issues: [] }));
+      summaryClient = createMockLLMClient(JSON.stringify({ issues: [] }));
       pipeline = new AIReviewPipeline({ summaryClient, riskClient, suggestionClient });
 
       const result = await pipeline.run(pr, MOCK_DIFF, semanticDiff);
@@ -432,5 +481,75 @@ export function authenticate(token: string) {
       expect(result.suggestion.suggestions).toHaveLength(0);
       expect(suggestionClient.generateText).not.toHaveBeenCalled();
     });
+  });
+});
+
+describe("AIReviewPipeline parallel risk analysis", () => {
+  it("should run both models in parallel and return consensus", async () => {
+    const mockClaude = {
+      generateText: vi.fn().mockResolvedValue(
+        JSON.stringify({
+          issues: [
+            {
+              severity: "critical",
+              message: "Race condition",
+              file: "src/order.ts",
+              line: 42,
+              explanation: "Shared state",
+            },
+          ],
+        }),
+      ),
+    };
+
+    const mockGemini = {
+      generateText: vi.fn().mockResolvedValue(
+        JSON.stringify({
+          issues: [
+            {
+              severity: "critical",
+              message: "Race condition detected",
+              file: "src/order.ts",
+              line: 43,
+              explanation: "Concurrent access",
+            },
+          ],
+        }),
+      ),
+    };
+
+    const pipeline = new AIReviewPipeline({
+      summaryClient: mockGemini,
+      riskClient: mockClaude,
+      suggestionClient: mockClaude,
+    });
+
+    const pr: PullRequest = {
+      id: 1,
+      title: "Test PR",
+      description: "Test",
+      author: "test",
+      branch: "feature",
+      baseBranch: "main",
+      files: [],
+      commits: [],
+    };
+
+    const semanticDiff: SemanticDiff = {
+      fileChanges: [],
+      summary: "test",
+      totalFiles: 0,
+      totalAdditions: 0,
+      totalDeletions: 0,
+    };
+
+    const result = await pipeline.run(pr, "diff", semanticDiff);
+
+    expect(result.consensus).toBeDefined();
+    expect(result.consensus.consensusIssues).toHaveLength(1);
+    expect(result.consensus.consensusIssues[0].confidence).toBe("high");
+    expect(result.consensus.consensusIssues[0].models).toEqual(["claude", "gemini"]);
+    expect(mockClaude.generateText).toHaveBeenCalled();
+    expect(mockGemini.generateText).toHaveBeenCalled();
   });
 });
