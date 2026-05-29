@@ -216,4 +216,16 @@ function complex(
     expect(result.functions).toHaveLength(1);
     expect(result.functions[0]?.parameters).toEqual(["param1", "param2", "param3"]);
   });
+
+  it("should extract arrow functions assigned to variables", async () => {
+    const code = `
+const multiply = (a: number, b: number): number => {
+  return a * b;
+};
+    `;
+    const result = await parseFile(code, "test.ts");
+    expect(result.functions).toHaveLength(1);
+    expect(result.functions[0]?.name).toBe("multiply");
+    expect(result.functions[0]?.parameters).toEqual(["a", "b"]);
+  });
 });

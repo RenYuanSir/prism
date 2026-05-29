@@ -49,7 +49,7 @@ export async function parseFile(content: string, filename?: string): Promise<Par
     const root = tree.rootNode;
 
     return {
-      functions: extractFunctionsFromAST(root, content),
+      functions: extractFunctionsFromAST(root),
       imports: extractImports(content),
       exports: extractExports(content),
       classes: extractClasses(content),
@@ -73,7 +73,7 @@ async function regexFallback(content: string): Promise<ParsedFile> {
   };
 }
 
-function extractFunctionsFromAST(root: Parser.SyntaxNode, content: string): FunctionInfo[] {
+function extractFunctionsFromAST(root: Parser.SyntaxNode): FunctionInfo[] {
   const functions: FunctionInfo[] = [];
 
   function visit(node: Parser.SyntaxNode) {
