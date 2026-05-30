@@ -1,142 +1,179 @@
-# PRism
+<p align="center">
+  <img src="prism.png" width="200" alt="PRism logo">
+</p>
 
-AI-powered pull request review assistant with semantic diff analysis, multi-model consensus, impact heatmaps, and race condition detection.
+<h1 align="center">PRism</h1>
+<p align="center">AI 驱动的 Pull Request 智能审查工具</p>
 
-## Features
+<p align="center">
+  <img src="https://img.shields.io/badge/TypeScript-5.4-blue" alt="TypeScript">
+  <img src="https://img.shields.io/badge/React-18-61DAFB" alt="React">
+  <img src="https://img.shields.io/badge/Express-4-000000" alt="Express">
+  <img src="https://img.shields.io/badge/pnpm-10-yellow" alt="pnpm">
+  <img src="https://img.shields.io/badge/Vitest-2-green" alt="Vitest">
+  <img src="https://img.shields.io/badge/Tailwind-3-06B6D4" alt="Tailwind CSS">
+  <img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT">
+</p>
 
-- **Semantic Diff Analysis** — AST-based parsing of code changes with function/variable-level tracking
-- **Multi-Model Consensus** — Claude + Gemini dual-model review with disagreement detection
-- **Impact Heatmap** — Visual dependency graph showing blast radius of changes
-- **Race Condition Detection** — Static analysis for concurrency risks in async code
-- **Smart Caching** — LocalStorage-based result caching with TTL
-- **Dark Theme UI** — Tailwind CSS + shadcn/ui modern interface
+<p align="center">
+  <a href="README_EN.md">English</a>
+</p>
 
-## Architecture
+---
+
+## 什么是 PRism？
+
+PRism 是一个 AI 驱动的代码审查助手，专为 GitHub Pull Request 设计。它将多模型 AI 共识、AST 语义分析、竞态条件检测和依赖影响热力图整合到一个统一的审查管线中，帮助开发者在合并前发现潜在风险。
+
+**命名灵感：** 棱镜（Prism）将白光分解为彩色光谱——PRism 将 Pull Request 中的多维度代码变更分解为结构化的审查结果。多个 feature 分支（彩虹色）经过分析管线后，合并为统一的审查报告（白光主线）。
+
+## 特性
+
+| 特性 | 说明 |
+|---|---|
+| **Semantic Diff** | 基于 Tree-sitter 的 AST 解析，函数/变量/import/export 级别变更追踪 |
+| **Multi-Model Consensus** | 双模型并行风险分析 + 共识投票算法（文件 + 行 ±3 + 严重性匹配） |
+| **Race Condition Detection** | 本地 AST 提取 + LLM 富化，时序动画可视化并发执行路径冲突 |
+| **Streaming Display** | SSE 流式渐进渲染，结果按管线阶段实时推送至前端 |
+| **Impact Heatmap** | 依赖影响图，清晰展示代码变更的波及范围 |
+| **Review History** | 审查完成后自动持久化为 JSON 文件，支持历史回看和秒级缓存加载 |
+
+## 架构
 
 ```
 prism/
 ├── apps/
-│   ├── frontend/    # React 18 + Vite + Tailwind CSS + shadcn/ui
-│   │   ├── src/pages/        # PRList, ReviewResult, Settings, History
-│   │   ├── src/components/   # FileChangeCard, ImpactHeatmap, ConsensusView, RaceConditionTimeline
-│   │   └── src/api/          # Backend API client
-│   └── backend/     # Node.js + Express API server
-│       ├── src/services/
-│       │   ├── github.ts              # GitHub API client
-│       │   ├── diff-analyzer.ts       # Semantic diff parser
-│       │   ├── ast-parser.ts          # Tree-sitter AST analysis
-│       │   ├── ai-review-pipeline.ts  # Claude + Gemini orchestration
-│       │   ├── consensus-merger.ts    # Multi-model agreement detection
-│       │   ├── impact-analyzer.ts     # Dependency impact graph
-│       │   └── race-condition-analyzer.ts  # Concurrency risk detection
-│       └── src/index.ts       # Express routes
+│   ├── frontend/       # React 18 + Vite + Tailwind CSS
+│   │   ├── src/pages/          # PRList, ReviewResult, HistoryPage, Settings
+│   │   ├── src/components/    # ConsensusView, RaceConditionTimeline, ImpactHeatmap 等
+│   │   └── src/api/           # SSE 流式客户端 + REST API
+│   └── backend/        # Node.js + Express
+│       └── src/services/
+│           ├── ai-review-pipeline.ts      # 多阶段审查管线（summary → risk → 共识 → suggestion）
+│           ├── consensus-merger.ts        # 双模型共识匹配算法
+│           ├── race-condition-analyzer.ts # 竞态条件模式提取
+│           ├── history-store.ts           # JSON 文件持久化
+│           ├── llm-client.ts / llm-config.ts  # 多厂商 LLM 抽象层
+│           ├── ast-parser.ts              # Tree-sitter WASM AST 解析
+│           ├── diff-analyzer.ts           # 语义差异分析
+│           ├── impact-analyzer.ts         # 依赖影响图
+│           └── github.ts                  # Octokit REST 客户端
 ├── packages/
-│   └── shared/      # Shared TypeScript types and utilities
-├── .github/workflows/ci.yml   # GitHub Actions CI
-├── biome.json                 # Lint/format config
-├── vitest.config.ts           # Test config
-└── pnpm-workspace.yaml        # Monorepo workspace
+│   └── shared/          # 共享 TypeScript 类型（120+ types）
+└── pnpm-workspace.yaml  # Monorepo
 ```
 
-## Tech Stack
+**审查管线：**
 
-| Layer | Technology |
-|-------|-----------|
+```
+summary ──▶ 并行 risk (模型 A + 模型 B) ──▶ consensus merge ──▶ suggestion
+   │              │                │                │               │
+   ▼              ▼                ▼                ▼               ▼
+ SSE event    SSE events       SSE event        SSE event       SSE event
+ 阶段摘要    各模型风险发现      共识结果          修复建议         完成
+```
+
+## 技术栈
+
+| 层级 | 技术 |
+|---|---|
 | Runtime | Node.js >= 18 |
-| Package Manager | pnpm >= 8 |
-| Language | TypeScript 5.4+ (strict mode) |
-| Frontend | React 18, Vite 5, Tailwind CSS 3, shadcn/ui |
-| Backend | Express 4, Tree-sitter, dotenv |
-| Testing | Vitest 2 (97 tests, 9 test files) |
-| Linting/Formatting | Biome |
+| 语言 | TypeScript 5.4+ (strict) |
+| 包管理 | pnpm >= 8 (monorepo workspace) |
+| 前端 | React 18, Vite 5, Tailwind CSS 3 |
+| 后端 | Express 4, Tree-sitter WASM, Octokit |
+| LLM | OpenAI 兼容接口（支持 DeepSeek、Qwen、百炼等） |
+| 测试 | Vitest 2（120 测试 / 11 文件） |
+| Lint/Format | Biome |
 | Git Hooks | Husky 9 + lint-staged |
 | CI/CD | GitHub Actions |
 
-## Quick Start
+## 快速开始
 
 ```bash
-# 1. Install dependencies
+# 1. 安装依赖
 pnpm install
 
-# 2. Configure environment
+# 2. 配置环境变量
 cp .env.example .env
-# Edit .env with your GitHub Token and AI API keys
+# 编辑 .env，填入 GitHub Token 和 LLM API Key
 
-# 3. Run everything
-pnpm dev          # Frontend (5173) + Backend (3001) in parallel
+# 3. 启动开发服务器
+pnpm dev          # Frontend (:5173) + Backend (:3001) 并行启动
 ```
 
-## Environment Variables
+## 环境变量
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `GITHUB_TOKEN` | Yes | GitHub personal access token (repo scope) |
-| `ANTHROPIC_API_KEY` | Yes* | Claude API key for risk analysis |
-| `GOOGLE_API_KEY` | Yes* | Gemini API key for summaries |
-| `PORT` | No | Backend port (default: 3001) |
+每个管线阶段（summary / risk / suggestion）可独立配置不同的 LLM 厂商和模型。
 
-\* Required for AI review pipeline. PR metadata/diff works without AI keys.
+| 变量 | 必填 | 说明 |
+|---|---|---|
+| `GITHUB_TOKEN` | ✅ | GitHub 个人访问令牌 |
+| `LLM_SUMMARY_PROVIDER` | ✅ | 摘要阶段 Provider（如 `openai-compatible`） |
+| `LLM_SUMMARY_API_KEY` | ✅ | 摘要阶段 API Key |
+| `LLM_SUMMARY_MODEL` | ✅ | 摘要阶段模型名 |
+| `LLM_RISK_PROVIDER` | ✅ | 风险分析 Provider |
+| `LLM_RISK_API_KEY` | ✅ | 风险分析 API Key |
+| `LLM_RISK_MODEL` | ✅ | 风险分析模型名 |
+| `LLM_SUGGESTION_PROVIDER` | ✅ | 建议生成 Provider |
+| `LLM_SUGGESTION_API_KEY` | ✅ | 建议生成 API Key |
+| `LLM_SUGGESTION_MODEL` | ✅ | 建议生成模型名 |
+| `LLM_*_BASE_URL` | 否 | 自定义 API 地址（用于 OpenAI 兼容服务） |
+| `PORT` | 否 | 后端端口（默认 3001） |
 
-## Scripts
+**支持的 Provider：** `anthropic` | `google` | `openai` | `openai-compatible`
+
+`openai-compatible` 模式支持任意 OpenAI 兼容接口服务，设置 `LLM_*_BASE_URL` 指向服务地址即可。
+
+## API 端点
+
+| 端点 | 方法 | 说明 |
+|---|---|---|
+| `/api/health` | GET | 健康检查 |
+| `/api/pr/:owner/:repo/:number` | GET | 获取 PR 元数据、diff 和语义分析 |
+| `/api/review/:owner/:repo/:number` | POST | 完整 AI 审查（阻塞式，一次性返回） |
+| `/api/review/:owner/:repo/:number/stream` | POST | SSE 流式 AI 审查（渐进式推送结果） |
+| `/api/impact/:owner/:repo/:number` | POST | 依赖影响热力图 |
+| `/api/history` | GET | 审查历史列表 |
+| `/api/history/:id` | GET | 按 ID 获取历史审查详情 |
+
+## 脚本 & 测试
 
 ```bash
-# Development
-pnpm dev              # Run all apps in parallel
-pnpm dev:frontend     # Frontend dev server only (port 5173)
-pnpm dev:backend      # Backend dev server only (port 3001)
+# 开发
+pnpm dev              # 全部启动
+pnpm dev:frontend     # 仅前端 (5173)
+pnpm dev:backend      # 仅后端 (3001)
 
-# Build
-pnpm build            # Build all packages and apps
-pnpm build:shared     # Build shared package only
+# 构建
+pnpm build            # 构建全部
+pnpm build:shared     # 仅 shared 包
 
-# Quality (zero tolerance)
-pnpm lint             # Biome check — must pass
-pnpm lint:fix         # Auto-fix issues
-pnpm typecheck        # TypeScript strict check — must pass
-pnpm test             # Run all tests — 97 tests must pass
-pnpm test:coverage    # Coverage report
-
-# Git hooks (auto-installed)
-# Pre-commit: biome check + format staged files
+# 质量
+pnpm lint             # Biome 检查
+pnpm lint:fix         # 自动修复
+pnpm typecheck        # TypeScript 严格检查
+pnpm test             # 运行全部 120 测试
+pnpm test -- --watch  # 监听模式
 ```
 
-## API Endpoints
+## CI/CD
 
-| Endpoint | Description |
-|----------|-------------|
-| `GET /api/health` | Health check |
-| `GET /api/pr/:owner/:repo/:number` | Full PR review (metadata + diff + AI analysis) |
-| `POST /api/impact/:owner/:repo/:number` | Impact heatmap only |
-
-## Testing
-
-```bash
-pnpm test              # All 97 tests
-pnpm test:watch        # Watch mode
-pnpm test:coverage     # With coverage
-```
-
-Test files colocated with source:
-- `src/services/ast-parser.ts` → `src/services/ast-parser.test.ts`
-- `src/services/ai-review-pipeline.ts` → `src/services/ai-review-pipeline.test.ts`
-
-## Git Workflow
-
-1. Branch from `main`: `git checkout -b feat/description`
-2. Code + tests
-3. `pnpm typecheck && pnpm lint && pnpm test` — all must pass
-4. Commit with conventional commits: `feat:`, `fix:`, `chore:`, `docs:`, `test:`
-5. Push and open PR — CI enforces quality gates
-
-## CI Pipeline
-
-GitHub Actions runs on every PR:
+GitHub Actions 在每个 PR 上运行：
 1. **Quality** — `pnpm lint` + `pnpm typecheck`
-2. **Test** — `pnpm test` (97 tests)
+2. **Test** — `pnpm test`（120 tests）
 3. **Build** — `pnpm build`
 
-All three must pass before merge.
+三项全部通过方可合并。
 
-## License
+## Git 工作流
+
+1. 从 `main` 创建分支：`git checkout -b feat/description`
+2. 编码 + 测试
+3. `pnpm typecheck && pnpm lint && pnpm test` — 全部通过
+4. Conventional Commits：`feat:` `fix:` `chore:` `docs:` `test:`
+5. Push 并创建 PR — CI 强制执行质量门禁
+
+## 许可证
 
 MIT
