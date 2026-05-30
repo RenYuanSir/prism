@@ -1,4 +1,4 @@
-import type { PRFile } from "@ai-pr-review/shared";
+import type { PRFile } from "@prism/shared";
 import { describe, expect, it } from "vitest";
 import { parseDiff } from "./diff-analyzer.js";
 

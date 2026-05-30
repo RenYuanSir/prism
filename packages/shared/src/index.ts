@@ -1,4 +1,4 @@
-// Shared types for the AI PR Review application
+// Shared types for the PRism application
 
 export interface PRFile {
   filename: string;

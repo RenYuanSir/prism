@@ -1,4 +1,4 @@
-import type { ExecutionPath } from "@ai-pr-review/shared";
+import type { ExecutionPath } from "@prism/shared";
 
 interface ExecutionPathColumnProps {
   path: ExecutionPath;
@@ -13,9 +13,9 @@ export function ExecutionPathColumn({
 }: ExecutionPathColumnProps) {
   return (
     <div className="flex-1">
-      <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 mb-3">
-        <h3 className="text-sm font-semibold text-slate-200 mb-1">{path.label}</h3>
-        <p className="text-xs text-slate-400 font-mono">{path.functionName}()</p>
+      <div className="bg-linear-surface/50 border border-linear-elevated rounded-lg p-4 mb-3">
+        <h3 className="text-sm font-semibold text-linear-text-secondary mb-1">{path.label}</h3>
+        <p className="text-xs text-linear-text-tertiary font-mono">{path.functionName}()</p>
       </div>
 
       <div className="space-y-2">
@@ -29,15 +29,17 @@ export function ExecutionPathColumn({
               className={`
                 border rounded-lg p-3 transition-all
                 ${isConflict ? "bg-red-500/20 border-red-500/50 animate-pulse" : ""}
-                ${isActive && !isConflict ? "bg-blue-500/10 border-blue-500/30" : ""}
-                ${!isActive ? "bg-slate-900/30 border-slate-800 opacity-50" : ""}
+                ${isActive && !isConflict ? "bg-linear-accent/10 border-linear-accent/30" : ""}
+                ${!isActive ? "bg-linear-panel/30 border-linear-surface opacity-50" : ""}
               `}
             >
               <div className="flex items-start gap-2">
-                <span className="text-xs font-bold text-slate-500 mt-0.5">{index + 1}.</span>
+                <span className="text-xs font-bold text-linear-text-muted mt-0.5">
+                  {index + 1}.
+                </span>
                 <div className="flex-1">
-                  <p className="text-sm text-slate-200">{step.description}</p>
-                  <p className="text-xs text-slate-500 font-mono mt-1">:{step.line}</p>
+                  <p className="text-sm text-linear-text-secondary">{step.description}</p>
+                  <p className="text-xs text-linear-text-muted font-mono mt-1">:{step.line}</p>
                 </div>
                 {isConflict && <span className="text-xs font-bold text-red-400">CONFLICT</span>}
               </div>

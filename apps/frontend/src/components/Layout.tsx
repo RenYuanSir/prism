@@ -1,5 +1,6 @@
+import { motion } from "framer-motion";
 import { Activity, GitPullRequest, History, Settings } from "lucide-react";
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, useLocation } from "react-router-dom";
 
 const navItems = [
   { to: "/", icon: GitPullRequest, label: "PR Review" },
@@ -8,53 +9,72 @@ const navItems = [
 ];
 
 export function Layout() {
+  const location = useLocation();
+
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
+    <div className="min-h-screen bg-linear-black text-linear-text-primary">
       <div className="flex h-screen">
         {/* Sidebar */}
-        <aside className="w-64 border-r border-slate-800 bg-slate-900/50 flex flex-col">
-          <div className="p-6 border-b border-slate-800">
+        <aside className="w-[240px] border-r border-linear-border-subtle bg-linear-panel flex flex-col">
+          {/* Logo */}
+          <div className="p-5 border-b border-linear-border-subtle">
             <div className="flex items-center gap-3">
-              <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                <Activity className="h-5 w-5 text-white" />
+              <div className="h-8 w-8 rounded-lg bg-linear-brand flex items-center justify-center glow-brand">
+                <Activity className="h-4 w-4 text-white" />
               </div>
               <div>
-                <h1 className="font-semibold text-slate-100">AI PR Review</h1>
-                <p className="text-xs text-slate-500">Automated Code Review</p>
+                <h1 className="font-weight-510 text-sm text-linear-text-primary">PRism</h1>
+                <p className="text-[11px] text-linear-text-muted tracking-wide">AI CODE REVIEW</p>
               </div>
             </div>
           </div>
 
-          <nav className="flex-1 p-4 space-y-1">
+          {/* Navigation */}
+          <nav className="flex-1 p-3 space-y-0.5">
             {navItems.map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
                 className={({ isActive }) =>
-                  `flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  `flex items-center gap-2.5 px-3 py-2 rounded-md text-[13px] font-weight-510 transition-all duration-200 ${
                     isActive
-                      ? "bg-slate-800 text-slate-100"
-                      : "text-slate-400 hover:bg-slate-800/50 hover:text-slate-200"
+                      ? "bg-linear-surface text-linear-text-primary border border-linear-border-subtle"
+                      : "text-linear-text-tertiary hover:bg-linear-surface/50 hover:text-linear-text-secondary"
                   }`
                 }
               >
                 <item.icon className="h-4 w-4" />
                 {item.label}
+                {location.pathname === item.to && (
+                  <motion.div
+                    layoutId="activeNav"
+                    className="ml-auto w-1 h-1 rounded-full bg-linear-accent"
+                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                  />
+                )}
               </NavLink>
             ))}
           </nav>
 
-          <div className="p-4 border-t border-slate-800">
-            <div className="flex items-center gap-2 text-xs text-slate-500">
-              <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-              <span>System Ready</span>
+          {/* Status */}
+          <div className="p-4 border-t border-linear-border-subtle">
+            <div className="flex items-center gap-2 text-[11px] text-linear-text-muted">
+              <div className="h-1.5 w-1.5 rounded-full bg-linear-success animate-pulse" />
+              <span className="font-weight-510 tracking-wide">SYSTEM READY</span>
             </div>
           </div>
         </aside>
 
         {/* Main content */}
         <main className="flex-1 overflow-auto">
-          <Outlet />
+          <motion.div
+            key={location.pathname}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+          >
+            <Outlet />
+          </motion.div>
         </main>
       </div>
     </div>

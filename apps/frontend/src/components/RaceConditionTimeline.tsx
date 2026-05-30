@@ -1,4 +1,4 @@
-import type { RaceConditionIssue } from "@ai-pr-review/shared";
+import type { RaceConditionIssue } from "@prism/shared";
 import { Play, RotateCcw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { ConflictIndicator } from "./ConflictIndicator";
@@ -66,7 +66,9 @@ export function RaceConditionTimeline({ issues }: RaceConditionTimelineProps) {
                 handleReplay();
               }}
               className={`px-3 py-1 text-xs rounded ${
-                i === currentIssueIndex ? "bg-blue-500 text-white" : "bg-slate-700 text-slate-300"
+                i === currentIssueIndex
+                  ? "bg-linear-accent text-white"
+                  : "bg-linear-elevated text-linear-text-secondary"
               }`}
             >
               Issue {i + 1}
@@ -75,29 +77,31 @@ export function RaceConditionTimeline({ issues }: RaceConditionTimelineProps) {
         </div>
       )}
 
-      <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+      <div className="bg-linear-panel/50 border border-linear-surface rounded-xl p-6">
         <div className="flex items-start gap-3 mb-4">
           <span className="text-2xl">⚡</span>
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
               <SeverityBadge severity={issue.severity} />
-              <span className="text-sm font-medium text-slate-200">{issue.message}</span>
+              <span className="text-sm font-medium text-linear-text-secondary">
+                {issue.message}
+              </span>
             </div>
-            <p className="text-xs text-slate-400 font-mono mb-1">
+            <p className="text-xs text-linear-text-tertiary font-mono mb-1">
               {issue.file}:{issue.line}
             </p>
             {issue.confidence === "high" && (
-              <p className="text-xs text-green-400 font-semibold">
+              <p className="text-xs text-linear-success font-semibold">
                 HIGH CONFIDENCE — Both models detected this
               </p>
             )}
           </div>
         </div>
 
-        <p className="text-sm text-slate-300 mb-2">
+        <p className="text-sm text-linear-text-secondary mb-2">
           <span className="font-semibold">Shared State:</span> {issue.sharedState}
         </p>
-        <p className="text-sm text-slate-300 mb-6">{issue.explanation}</p>
+        <p className="text-sm text-linear-text-secondary mb-6">{issue.explanation}</p>
 
         <div className="grid grid-cols-2 gap-6">
           <ExecutionPathColumn
@@ -119,7 +123,7 @@ export function RaceConditionTimeline({ issues }: RaceConditionTimelineProps) {
             <button
               type="button"
               onClick={handlePlay}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-linear-brand hover:bg-linear-accent text-white rounded-lg transition-colors"
             >
               <Play className="h-4 w-4" />
               Play Animation
@@ -129,14 +133,14 @@ export function RaceConditionTimeline({ issues }: RaceConditionTimelineProps) {
             <button
               type="button"
               onClick={handleReplay}
-              className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-linear-elevated hover:bg-linear-text-muted text-white rounded-lg transition-colors"
             >
               <RotateCcw className="h-4 w-4" />
               Replay
             </button>
           )}
           {animationStep >= 0 && (
-            <span className="text-sm text-slate-400">
+            <span className="text-sm text-linear-text-tertiary">
               Step {animationStep + 1} / {maxSteps}
             </span>
           )}

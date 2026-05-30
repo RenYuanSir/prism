@@ -1,12 +1,20 @@
-import { ArrowRight, GitPullRequest, Sparkles } from "lucide-react";
+import { motion } from "framer-motion";
+import { ArrowRight, GitBranch, GitPullRequest, Shield, Sparkles, Zap } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+
+const features = [
+  { icon: Zap, label: "Semantic Diff", desc: "AST-level change tracking" },
+  { icon: Shield, label: "Risk Detection", desc: "AI-powered vulnerability scan" },
+  { icon: GitBranch, label: "Impact Analysis", desc: "Dependency blast radius" },
+];
 
 export function PRList() {
   const navigate = useNavigate();
   const [owner, setOwner] = useState("");
   const [repo, setRepo] = useState("");
   const [pullNumber, setPullNumber] = useState("");
+  const [isHovered, setIsHovered] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,76 +26,157 @@ export function PRList() {
   const isValid = owner.trim() && repo.trim() && pullNumber.trim();
 
   return (
-    <div className="p-8 max-w-4xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-slate-100 mb-2">Review a Pull Request</h1>
-        <p className="text-slate-400">
-          Enter the details of a GitHub pull request to get an AI-powered code review.
-        </p>
+    <div className="min-h-screen flex flex-col">
+      {/* Hero Section */}
+      <div className="flex-1 flex items-center justify-center px-8 py-16">
+        <div className="w-full max-w-xl">
+          {/* Header */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="text-center mb-10"
+          >
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass-surface border border-linear-border text-[11px] font-weight-510 text-linear-text-tertiary mb-6">
+              <Sparkles className="h-3 w-3 text-linear-accent" />
+              AI-POWERED CODE REVIEW
+            </div>
+            <h1 className="text-[48px] font-weight-510 tracking-display leading-none text-linear-text-primary mb-4">
+              Review Code <span className="text-gradient-brand">Intelligently</span>
+            </h1>
+            <p className="text-[15px] text-linear-text-tertiary leading-relaxed max-w-md mx-auto">
+              Enter a GitHub pull request to get an AI-powered analysis with semantic diff, risk
+              detection, and impact heatmaps.
+            </p>
+          </motion.div>
+
+          {/* Form */}
+          <motion.form
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            onSubmit={handleSubmit}
+            className="space-y-4"
+          >
+            <div className="glass-surface rounded-xl p-5 space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label
+                    htmlFor="owner"
+                    className="block text-[11px] font-weight-510 text-linear-text-muted tracking-wide uppercase mb-1.5"
+                  >
+                    Owner
+                  </label>
+                  <input
+                    id="owner"
+                    type="text"
+                    value={owner}
+                    onChange={(e) => setOwner(e.target.value)}
+                    placeholder="facebook"
+                    className="w-full px-3 py-2.5 bg-linear-black border border-linear-border rounded-md text-[13px] text-linear-text-primary placeholder-linear-text-muted/50 focus:outline-none focus:border-linear-accent/50 transition-colors"
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="repo"
+                    className="block text-[11px] font-weight-510 text-linear-text-muted tracking-wide uppercase mb-1.5"
+                  >
+                    Repository
+                  </label>
+                  <input
+                    id="repo"
+                    type="text"
+                    value={repo}
+                    onChange={(e) => setRepo(e.target.value)}
+                    placeholder="react"
+                    className="w-full px-3 py-2.5 bg-linear-black border border-linear-border rounded-md text-[13px] text-linear-text-primary placeholder-linear-text-muted/50 focus:outline-none focus:border-linear-accent/50 transition-colors"
+                  />
+                </div>
+              </div>
+              <div>
+                <label
+                  htmlFor="pr"
+                  className="block text-[11px] font-weight-510 text-linear-text-muted tracking-wide uppercase mb-1.5"
+                >
+                  Pull Request Number
+                </label>
+                <input
+                  id="pr"
+                  type="number"
+                  value={pullNumber}
+                  onChange={(e) => setPullNumber(e.target.value)}
+                  placeholder="28735"
+                  min="1"
+                  className="w-full px-3 py-2.5 bg-linear-black border border-linear-border rounded-md text-[13px] text-linear-text-primary placeholder-linear-text-muted/50 focus:outline-none focus:border-linear-accent/50 transition-colors"
+                />
+              </div>
+            </div>
+
+            <motion.button
+              type="submit"
+              disabled={!isValid}
+              onMouseEnter={() => setIsHovered(true)}
+              onMouseLeave={() => setIsHovered(false)}
+              whileHover={{ scale: isValid ? 1.01 : 1 }}
+              whileTap={{ scale: isValid ? 0.99 : 1 }}
+              className={`w-full flex items-center justify-center gap-2 px-6 py-3 rounded-md text-[13px] font-weight-510 transition-all duration-200 ${
+                isValid
+                  ? "bg-linear-brand text-white hover:bg-linear-accent glow-brand"
+                  : "bg-linear-surface text-linear-text-muted cursor-not-allowed border border-linear-border-subtle"
+              }`}
+            >
+              <Sparkles className="h-4 w-4" />
+              Start Review
+              <motion.span
+                animate={{ x: isHovered && isValid ? 4 : 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <ArrowRight className="h-4 w-4" />
+              </motion.span>
+            </motion.button>
+          </motion.form>
+
+          {/* Features */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            className="mt-10 grid grid-cols-3 gap-3"
+          >
+            {features.map((feature, i) => (
+              <motion.div
+                key={feature.label}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.4 + i * 0.1 }}
+                className="glass-surface rounded-lg p-4 text-center glass-surface-hover transition-all cursor-default"
+              >
+                <feature.icon className="h-5 w-5 text-linear-accent mx-auto mb-2" />
+                <div className="text-[12px] font-weight-510 text-linear-text-secondary">
+                  {feature.label}
+                </div>
+                <div className="text-[11px] text-linear-text-muted mt-0.5">{feature.desc}</div>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6 space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="owner" className="block text-sm font-medium text-slate-300 mb-2">
-                Repository Owner
-              </label>
-              <input
-                id="owner"
-                type="text"
-                value={owner}
-                onChange={(e) => setOwner(e.target.value)}
-                placeholder="facebook"
-                className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-              />
-            </div>
-            <div>
-              <label htmlFor="repo" className="block text-sm font-medium text-slate-300 mb-2">
-                Repository Name
-              </label>
-              <input
-                id="repo"
-                type="text"
-                value={repo}
-                onChange={(e) => setRepo(e.target.value)}
-                placeholder="react"
-                className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-              />
-            </div>
+      {/* Recent Reviews Section */}
+      <div className="px-8 pb-8">
+        <div className="max-w-xl mx-auto">
+          <div className="flex items-center gap-2 mb-4">
+            <GitPullRequest className="h-4 w-4 text-linear-text-muted" />
+            <h2 className="text-[13px] font-weight-510 text-linear-text-secondary tracking-wide">
+              RECENT REVIEWS
+            </h2>
           </div>
-          <div>
-            <label htmlFor="pr" className="block text-sm font-medium text-slate-300 mb-2">
-              Pull Request Number
-            </label>
-            <input
-              id="pr"
-              type="number"
-              value={pullNumber}
-              onChange={(e) => setPullNumber(e.target.value)}
-              placeholder="123"
-              min="1"
-              className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-            />
+          <div className="glass-surface rounded-xl p-12 text-center">
+            <GitPullRequest className="h-10 w-10 text-linear-text-muted/30 mx-auto mb-3" />
+            <p className="text-[13px] text-linear-text-muted">
+              No reviews yet. Start by reviewing a PR above.
+            </p>
           </div>
-        </div>
-
-        <button
-          type="submit"
-          disabled={!isValid}
-          className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-medium rounded-lg hover:from-blue-500 hover:to-purple-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-        >
-          <Sparkles className="h-5 w-5" />
-          Start Review
-          <ArrowRight className="h-5 w-5" />
-        </button>
-      </form>
-
-      <div className="mt-12">
-        <h2 className="text-xl font-semibold text-slate-200 mb-4">Recent Reviews</h2>
-        <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-12 text-center">
-          <GitPullRequest className="h-12 w-12 text-slate-600 mx-auto mb-4" />
-          <p className="text-slate-400">No reviews yet. Start by reviewing a PR above.</p>
         </div>
       </div>
     </div>

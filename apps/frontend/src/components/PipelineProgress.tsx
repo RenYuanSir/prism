@@ -1,4 +1,4 @@
-import type { PipelineStage } from "@ai-pr-review/shared";
+import type { PipelineStage } from "@prism/shared";
 import { CheckCircle, Circle, Loader2 } from "lucide-react";
 
 interface PipelineProgressProps {
@@ -29,18 +29,24 @@ export function PipelineProgress({ currentStage }: PipelineProgressProps) {
 
         return (
           <div key={stage.key} className="flex items-center gap-2">
-            {isComplete && <CheckCircle className="h-5 w-5 text-green-500" />}
-            {isCurrent && <Loader2 className="h-5 w-5 text-blue-500 animate-spin" />}
-            {isPending && <Circle className="h-5 w-5 text-slate-600" />}
+            {isComplete && <CheckCircle className="h-5 w-5 text-linear-success" />}
+            {isCurrent && <Loader2 className="h-5 w-5 text-linear-accent animate-spin" />}
+            {isPending && <Circle className="h-5 w-5 text-linear-text-muted" />}
             <span
               className={`text-sm font-medium ${
-                isComplete ? "text-green-400" : isCurrent ? "text-blue-400" : "text-slate-600"
+                isComplete
+                  ? "text-linear-success"
+                  : isCurrent
+                    ? "text-linear-accent"
+                    : "text-linear-text-muted"
               }`}
             >
               {stage.label}
             </span>
             {index < stages.length - 1 && (
-              <div className={`w-12 h-0.5 ${isComplete ? "bg-green-500" : "bg-slate-700"}`} />
+              <div
+                className={`w-12 h-0.5 ${isComplete ? "bg-linear-success" : "bg-linear-elevated"}`}
+              />
             )}
           </div>
         );

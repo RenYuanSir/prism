@@ -1,4 +1,4 @@
-import type { ChangeType, ExportChange, FunctionChange, ImportChange } from "@ai-pr-review/shared";
+import type { ChangeType, ExportChange, FunctionChange, ImportChange } from "@prism/shared";
 import type Parser from "web-tree-sitter";
 import { getLanguage, getParser } from "./tree-sitter-init.js";
 

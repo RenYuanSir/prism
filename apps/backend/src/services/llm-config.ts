@@ -1,0 +1,54 @@
+import type { LLMClient, LLMProviderConfig } from "./llm-client.js";
+import { createLLMClient } from "./llm-client.js";
+
+export interface LLMPipelineConfig {
+  summary: LLMProviderConfig;
+  risk: LLMProviderConfig;
+  suggestion: LLMProviderConfig;
+}
+
+function getEnvConfig(
+  prefix: string,
+  defaults: { provider: string; model: string; baseUrl?: string },
+): LLMProviderConfig {
+  const provider = (process.env[`${prefix}_PROVIDER`] ||
+    defaults.provider) as LLMProviderConfig["provider"];
+  const apiKey = process.env[`${prefix}_API_KEY`];
+  const model = process.env[`${prefix}_MODEL`] || defaults.model;
+  const baseUrl = process.env[`${prefix}_BASE_URL`] || defaults.baseUrl;
+
+  if (!apiKey) {
+    throw new Error(`${prefix}_API_KEY environment variable is not set`);
+  }
+
+  return { provider, apiKey, model, baseUrl };
+}
+
+export function loadLLMConfigFromEnv(): LLMPipelineConfig {
+  return {
+    summary: getEnvConfig("LLM_SUMMARY", {
+      provider: "google",
+      model: "gemini-2.0-flash",
+    }),
+    risk: getEnvConfig("LLM_RISK", {
+      provider: "anthropic",
+      model: "claude-3-5-sonnet-20241022",
+    }),
+    suggestion: getEnvConfig("LLM_SUGGESTION", {
+      provider: "anthropic",
+      model: "claude-3-5-sonnet-20241022",
+    }),
+  };
+}
+
+export function createPipelineClients(config: LLMPipelineConfig): {
+  summaryClient: LLMClient;
+  riskClient: LLMClient;
+  suggestionClient: LLMClient;
+} {
+  return {
+    summaryClient: createLLMClient(config.summary),
+    riskClient: createLLMClient(config.risk),
+    suggestionClient: createLLMClient(config.suggestion),
+  };
+}

@@ -3,7 +3,7 @@ import type {
   ConcurrencyPatternType,
   SemanticDiff,
   SharedStateAccess,
-} from "@ai-pr-review/shared";
+} from "@prism/shared";
 import { parseFile } from "./ast-parser.js";
 
 export async function analyzeRaceConditionPatterns(

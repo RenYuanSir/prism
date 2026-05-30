@@ -1,4 +1,4 @@
-import type { ImpactGraph, ImpactNode } from "@ai-pr-review/shared";
+import type { ImpactGraph, ImpactNode } from "@prism/shared";
 import { AlertTriangle, ArrowRight, FileCode, Info, Layers, Zap } from "lucide-react";
 import { useState } from "react";
 
@@ -20,10 +20,10 @@ const impactStyles: Record<string, { bg: string; border: string; text: string; b
     badge: "bg-yellow-500/20 text-yellow-300",
   },
   low: {
-    bg: "bg-slate-800/50",
-    border: "border-slate-700",
-    text: "text-slate-400",
-    badge: "bg-slate-700 text-slate-300",
+    bg: "bg-linear-surface/50",
+    border: "border-linear-elevated",
+    text: "text-linear-text-tertiary",
+    badge: "bg-linear-elevated text-linear-text-secondary",
   },
 };
 
@@ -46,32 +46,35 @@ function HeatmapTile({
       onClick={onClick}
       className={`relative p-3 rounded-lg border transition-all text-left ${styles.bg} ${styles.border} ${
         isSelected
-          ? "ring-2 ring-blue-500 ring-offset-1 ring-offset-slate-900"
+          ? "ring-2 ring-linear-accent ring-offset-1 ring-offset-linear-panel"
           : "hover:brightness-125"
       }`}
     >
       <div className="flex items-center justify-between mb-1">
-        <span className="text-xs font-mono text-slate-300 truncate" title={node.filename}>
+        <span
+          className="text-xs font-mono text-linear-text-secondary truncate"
+          title={node.filename}
+        >
           {shortFilename(node.filename)}
         </span>
         <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${styles.badge}`}>
           {scorePercent}%
         </span>
       </div>
-      <div className="w-full bg-slate-700/50 rounded-full h-1.5 mt-1">
+      <div className="w-full bg-linear-elevated/50 rounded-full h-1.5 mt-1">
         <div
           className={`h-1.5 rounded-full transition-all ${
             node.impactLevel === "high"
               ? "bg-red-500"
               : node.impactLevel === "medium"
                 ? "bg-yellow-500"
-                : "bg-slate-500"
+                : "bg-linear-text-muted"
           }`}
           style={{ width: `${scorePercent}%` }}
         />
       </div>
       {node.affectedFileCount > 0 && (
-        <p className="text-[10px] text-slate-500 mt-1">
+        <p className="text-[10px] text-linear-text-muted mt-1">
           {node.affectedFileCount} dependent{node.affectedFileCount !== 1 ? "s" : ""}
         </p>
       )}
@@ -89,7 +92,7 @@ function DetailPanel({ node, graph }: { node: ImpactNode; graph: ImpactGraph }) 
     <div className={`rounded-lg border p-4 ${styles.bg} ${styles.border}`}>
       <div className="flex items-center gap-2 mb-3">
         <FileCode className={`h-4 w-4 ${styles.text}`} />
-        <span className="font-mono text-sm text-slate-200">{node.filename}</span>
+        <span className="font-mono text-sm text-linear-text-secondary">{node.filename}</span>
         <span
           className={`ml-auto text-xs font-semibold px-2 py-0.5 rounded ${styles.badge} uppercase`}
         >
@@ -98,30 +101,36 @@ function DetailPanel({ node, graph }: { node: ImpactNode; graph: ImpactGraph }) 
       </div>
 
       <div className="grid grid-cols-3 gap-3 mb-4">
-        <div className="bg-slate-900/50 rounded p-2 text-center">
-          <p className="text-lg font-bold text-slate-200">{Math.round(node.impactScore * 100)}%</p>
-          <p className="text-[10px] text-slate-500 uppercase">Score</p>
+        <div className="bg-linear-panel/50 rounded p-2 text-center">
+          <p className="text-lg font-bold text-linear-text-secondary">
+            {Math.round(node.impactScore * 100)}%
+          </p>
+          <p className="text-[10px] text-linear-text-muted uppercase">Score</p>
         </div>
-        <div className="bg-slate-900/50 rounded p-2 text-center">
-          <p className="text-lg font-bold text-slate-200">{node.directDependents.length}</p>
-          <p className="text-[10px] text-slate-500 uppercase">Dependents</p>
+        <div className="bg-linear-panel/50 rounded p-2 text-center">
+          <p className="text-lg font-bold text-linear-text-secondary">
+            {node.directDependents.length}
+          </p>
+          <p className="text-[10px] text-linear-text-muted uppercase">Dependents</p>
         </div>
-        <div className="bg-slate-900/50 rounded p-2 text-center">
-          <p className="text-lg font-bold text-slate-200">{node.directDependencies.length}</p>
-          <p className="text-[10px] text-slate-500 uppercase">Dependencies</p>
+        <div className="bg-linear-panel/50 rounded p-2 text-center">
+          <p className="text-lg font-bold text-linear-text-secondary">
+            {node.directDependencies.length}
+          </p>
+          <p className="text-[10px] text-linear-text-muted uppercase">Dependencies</p>
         </div>
       </div>
 
       {node.changedExports.length > 0 && (
         <div className="mb-3">
-          <p className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">
+          <p className="text-xs font-medium text-linear-text-tertiary uppercase tracking-wider mb-1">
             Changed Exports
           </p>
           <div className="flex flex-wrap gap-1">
             {node.changedExports.map((exp) => (
               <span
                 key={exp}
-                className="text-xs font-mono px-1.5 py-0.5 bg-purple-500/15 text-purple-300 rounded"
+                className="text-xs font-mono px-1.5 py-0.5 bg-linear-brand/15 text-linear-accent rounded"
               >
                 {exp}
               </span>
@@ -132,14 +141,14 @@ function DetailPanel({ node, graph }: { node: ImpactNode; graph: ImpactGraph }) 
 
       {node.directDependents.length > 0 && (
         <div className="mb-3">
-          <p className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">
+          <p className="text-xs font-medium text-linear-text-tertiary uppercase tracking-wider mb-1">
             Files That Depend On This
           </p>
           <div className="space-y-1">
             {node.directDependents.map((dep) => (
               <div key={dep} className="flex items-center gap-2 text-xs">
                 <ArrowRight className="h-3 w-3 text-red-400" />
-                <span className="font-mono text-slate-300">{dep}</span>
+                <span className="font-mono text-linear-text-secondary">{dep}</span>
               </div>
             ))}
           </div>
@@ -148,14 +157,14 @@ function DetailPanel({ node, graph }: { node: ImpactNode; graph: ImpactGraph }) 
 
       {node.directDependencies.length > 0 && (
         <div className="mb-3">
-          <p className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">
+          <p className="text-xs font-medium text-linear-text-tertiary uppercase tracking-wider mb-1">
             Dependencies
           </p>
           <div className="space-y-1">
             {node.directDependencies.map((dep) => (
               <div key={dep} className="flex items-center gap-2 text-xs">
-                <ArrowRight className="h-3 w-3 text-blue-400" />
-                <span className="font-mono text-slate-300">{dep}</span>
+                <ArrowRight className="h-3 w-3 text-linear-accent" />
+                <span className="font-mono text-linear-text-secondary">{dep}</span>
               </div>
             ))}
           </div>
@@ -164,13 +173,13 @@ function DetailPanel({ node, graph }: { node: ImpactNode; graph: ImpactGraph }) 
 
       {connectedEdges.length > 0 && (
         <div>
-          <p className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">
+          <p className="text-xs font-medium text-linear-text-tertiary uppercase tracking-wider mb-1">
             Symbols
           </p>
           <div className="space-y-1">
             {connectedEdges.map((edge) => (
-              <div key={`${edge.from}-${edge.to}`} className="text-xs text-slate-500">
-                <span className="font-mono text-slate-400">
+              <div key={`${edge.from}-${edge.to}`} className="text-xs text-linear-text-muted">
+                <span className="font-mono text-linear-text-tertiary">
                   {edge.from === node.filename ? edge.to : edge.from}
                 </span>
                 : {edge.symbols.join(", ")}
@@ -206,25 +215,25 @@ export function ImpactHeatmap({ graph }: ImpactHeatmapProps) {
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2">
           <Zap className="h-4 w-4 text-red-400" />
-          <span className="text-sm text-slate-300">
+          <span className="text-sm text-linear-text-secondary">
             <span className="font-bold text-red-400">{graph.highImpactCount}</span> high
           </span>
         </div>
         <div className="flex items-center gap-2">
           <AlertTriangle className="h-4 w-4 text-yellow-400" />
-          <span className="text-sm text-slate-300">
+          <span className="text-sm text-linear-text-secondary">
             <span className="font-bold text-yellow-400">{graph.mediumImpactCount}</span> medium
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <Info className="h-4 w-4 text-slate-400" />
-          <span className="text-sm text-slate-300">
-            <span className="font-bold text-slate-400">{graph.lowImpactCount}</span> low
+          <Info className="h-4 w-4 text-linear-text-tertiary" />
+          <span className="text-sm text-linear-text-secondary">
+            <span className="font-bold text-linear-text-tertiary">{graph.lowImpactCount}</span> low
           </span>
         </div>
         <div className="flex items-center gap-2 ml-auto">
-          <Layers className="h-4 w-4 text-slate-500" />
-          <span className="text-xs text-slate-500">{graph.edges.length} dependencies</span>
+          <Layers className="h-4 w-4 text-linear-text-muted" />
+          <span className="text-xs text-linear-text-muted">{graph.edges.length} dependencies</span>
         </div>
       </div>
 
@@ -249,8 +258,10 @@ export function ImpactHeatmap({ graph }: ImpactHeatmapProps) {
           {selectedNode ? (
             <DetailPanel node={selectedNode} graph={graph} />
           ) : (
-            <div className="flex items-center justify-center h-full min-h-[200px] border border-dashed border-slate-700 rounded-lg">
-              <p className="text-sm text-slate-500">Click a file tile to see impact details</p>
+            <div className="flex items-center justify-center h-full min-h-[200px] border border-dashed border-linear-elevated rounded-lg">
+              <p className="text-sm text-linear-text-muted">
+                Click a file tile to see impact details
+              </p>
             </div>
           )}
         </div>
