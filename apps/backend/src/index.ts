@@ -75,9 +75,11 @@ app.get("/api/pr/:owner/:repo/:pullNumber", async (req: Request, res: Response) 
       github.getPullRequestDiff(owner, repo, prNumber),
     ]);
 
+    const semanticDiff = await analyzeDiff(pr.files, diff);
+
     res.json({
       success: true,
-      data: { ...pr, diff },
+      data: { ...pr, diff, semanticDiff },
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
