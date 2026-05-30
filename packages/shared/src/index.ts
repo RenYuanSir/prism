@@ -144,6 +144,35 @@ export interface AIReviewResult {
   suggestion: AISuggestionResult;
 }
 
+export interface HistoryEntry {
+  id: string;
+  owner: string;
+  repo: string;
+  prNumber: number;
+  title: string;
+  createdAt: string;
+  riskCount: number;
+  criticalCount: number;
+  summarySnippet: string;
+}
+
+export interface SavedReview {
+  id: string;
+  pr: {
+    owner: string;
+    repo: string;
+    prNumber: number;
+    title: string;
+    description: string;
+    author: string;
+    branch: string;
+    baseBranch: string;
+  };
+  review: AIReviewResult;
+  semanticDiff: SemanticDiff;
+  createdAt: string;
+}
+
 export type ModelName = "claude" | "gemini";
 
 export interface ModelFinding {
