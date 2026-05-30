@@ -4,6 +4,7 @@ import type {
   AISummaryResult,
   PullRequest,
   SemanticDiff,
+  StreamEvent,
 } from "@prism/shared";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
@@ -946,5 +947,271 @@ describe("AIReviewPipeline race condition integration", () => {
     expect(result.raceConditions[0].sharedState).toBe("stateB");
     expect(result.raceConditions[1].confidence).toBe("medium");
     expect(result.raceConditions[1].sharedState).toBe("stateA");
+  });
+});
+
+describe("runStream", () => {
+  it("should emit events in correct order with done as final event", async () => {
+    const events: StreamEvent[] = [];
+    const issueResponse = JSON.stringify({
+      issues: [
+        { severity: "warning", message: "Test", file: "src/test.ts", line: 1, explanation: "Test" },
+      ],
+    });
+    const mockClient = createMockLLMClient(issueResponse);
+    const pipeline = new AIReviewPipeline({
+      summaryClient: mockClient,
+      riskClient: mockClient,
+      suggestionClient: mockClient,
+    });
+
+    const pr: PullRequest = {
+      id: 1,
+      title: "Test",
+      description: "",
+      author: "test",
+      branch: "feat",
+      baseBranch: "main",
+      files: [],
+      commits: [],
+    };
+    const semanticDiff: SemanticDiff = {
+      fileChanges: [],
+      summary: "test",
+      totalFiles: 0,
+      totalAdditions: 0,
+      totalDeletions: 0,
+    };
+
+    await pipeline.runStream(pr, "diff", semanticDiff, {}, (e) => events.push(e));
+
+    const types = events.map((e) => e.type);
+    expect(types).toContain("stage:start");
+    expect(types).toContain("summary");
+    expect(types).toContain("risk:model-done");
+    expect(types).toContain("consensus");
+    expect(types).toContain("suggestion");
+    expect(types[types.length - 1]).toBe("done");
+  });
+
+  it("should emit summary event with correct text", async () => {
+    const events: StreamEvent[] = [];
+    const summaryClient = createMockLLMClient("Summary text here.");
+    const otherClient = createMockLLMClient(JSON.stringify({ issues: [] }));
+    const pipeline = new AIReviewPipeline({
+      summaryClient,
+      riskClient: otherClient,
+      suggestionClient: otherClient,
+    });
+
+    await pipeline.runStream(
+      {
+        id: 1,
+        title: "Test",
+        description: "",
+        author: "test",
+        branch: "feat",
+        baseBranch: "main",
+        files: [],
+        commits: [],
+      },
+      "diff",
+      { fileChanges: [], summary: "test", totalFiles: 0, totalAdditions: 0, totalDeletions: 0 },
+      {},
+      (e) => events.push(e),
+    );
+
+    const evt = events.find((e) => e.type === "summary");
+    expect(evt).toBeDefined();
+    expect(evt!.summary).toBe("Summary text here.");
+  });
+
+  it("should emit risk:model-done for both claude and gemini", async () => {
+    const events: StreamEvent[] = [];
+    const mockClient = createMockLLMClient(
+      JSON.stringify({
+        issues: [
+          {
+            severity: "warning",
+            message: "Test",
+            file: "src/test.ts",
+            line: 1,
+            explanation: "Test",
+          },
+        ],
+      }),
+    );
+    const pipeline = new AIReviewPipeline({
+      summaryClient: mockClient,
+      riskClient: mockClient,
+      suggestionClient: mockClient,
+    });
+
+    await pipeline.runStream(
+      {
+        id: 1,
+        title: "Test",
+        description: "",
+        author: "test",
+        branch: "feat",
+        baseBranch: "main",
+        files: [],
+        commits: [],
+      },
+      "diff",
+      { fileChanges: [], summary: "test", totalFiles: 0, totalAdditions: 0, totalDeletions: 0 },
+      {},
+      (e) => events.push(e),
+    );
+
+    const riskEvents = events.filter((e) => e.type === "risk:model-done");
+    expect(riskEvents).toHaveLength(2);
+    expect(riskEvents.map((e) => e.model).sort()).toEqual(["claude", "gemini"]);
+  });
+
+  it("should emit consensus with high confidence when both models agree", async () => {
+    const events: StreamEvent[] = [];
+    const sameIssue = JSON.stringify({
+      issues: [
+        {
+          severity: "critical",
+          message: "Hardcoded secret",
+          file: "src/auth.ts",
+          line: 4,
+          explanation: "Secret",
+        },
+      ],
+    });
+    const mockClient = createMockLLMClient(sameIssue);
+    const pipeline = new AIReviewPipeline({
+      summaryClient: mockClient,
+      riskClient: mockClient,
+      suggestionClient: mockClient,
+    });
+
+    await pipeline.runStream(
+      {
+        id: 1,
+        title: "Test",
+        description: "",
+        author: "test",
+        branch: "feat",
+        baseBranch: "main",
+        files: [],
+        commits: [],
+      },
+      "diff",
+      { fileChanges: [], summary: "test", totalFiles: 0, totalAdditions: 0, totalDeletions: 0 },
+      {},
+      (e) => events.push(e),
+    );
+
+    const evt = events.find((e) => e.type === "consensus");
+    expect(evt).toBeDefined();
+    expect(evt!.consensus!.consensusIssues).toHaveLength(1);
+    expect(evt!.consensus!.consensusIssues[0].confidence).toBe("high");
+  });
+
+  it("should emit suggestion event with fix suggestions", async () => {
+    const events: StreamEvent[] = [];
+    const issueResp = JSON.stringify({
+      issues: [
+        { severity: "warning", message: "Test", file: "src/test.ts", line: 1, explanation: "Test" },
+      ],
+    });
+    const riskClient = createMockLLMClient(issueResp);
+    const suggestionClient = createMockLLMClient(
+      JSON.stringify({
+        suggestions: [{ issueIndex: 0, suggestedCode: "fix", explanation: "Better" }],
+      }),
+    );
+    const pipeline = new AIReviewPipeline({
+      summaryClient: riskClient,
+      riskClient,
+      suggestionClient,
+    });
+
+    await pipeline.runStream(
+      {
+        id: 1,
+        title: "Test",
+        description: "",
+        author: "test",
+        branch: "feat",
+        baseBranch: "main",
+        files: [],
+        commits: [],
+      },
+      "diff",
+      { fileChanges: [], summary: "test", totalFiles: 0, totalAdditions: 0, totalDeletions: 0 },
+      {},
+      (e) => events.push(e),
+    );
+
+    const evt = events.find((e) => e.type === "suggestion");
+    expect(evt).toBeDefined();
+    expect(evt!.suggestions).toHaveLength(1);
+  });
+
+  it("should skip suggestion when no consensus issues", async () => {
+    const events: StreamEvent[] = [];
+    const emptyClient = createMockLLMClient(JSON.stringify({ issues: [] }));
+    const pipeline = new AIReviewPipeline({
+      summaryClient: emptyClient,
+      riskClient: emptyClient,
+      suggestionClient: emptyClient,
+    });
+
+    await pipeline.runStream(
+      {
+        id: 1,
+        title: "Test",
+        description: "",
+        author: "test",
+        branch: "feat",
+        baseBranch: "main",
+        files: [],
+        commits: [],
+      },
+      "diff",
+      { fileChanges: [], summary: "test", totalFiles: 0, totalAdditions: 0, totalDeletions: 0 },
+      {},
+      (e) => events.push(e),
+    );
+
+    const evt = events.find((e) => e.type === "suggestion");
+    expect(evt!.suggestions).toHaveLength(0);
+  });
+
+  it("should emit error event on LLM failure", async () => {
+    const events: StreamEvent[] = [];
+    const failingClient = { generateText: vi.fn().mockRejectedValue(new Error("API timeout")) };
+    const pipeline = new AIReviewPipeline({
+      summaryClient: failingClient,
+      riskClient: failingClient,
+      suggestionClient: failingClient,
+    });
+
+    // runStream should NOT throw — it communicates errors via callback
+    await pipeline.runStream(
+      {
+        id: 1,
+        title: "Test",
+        description: "",
+        author: "test",
+        branch: "feat",
+        baseBranch: "main",
+        files: [],
+        commits: [],
+      },
+      "diff",
+      { fileChanges: [], summary: "test", totalFiles: 0, totalAdditions: 0, totalDeletions: 0 },
+      {},
+      (e) => events.push(e),
+    );
+
+    const errEvt = events.find((e) => e.type === "error");
+    expect(errEvt).toBeDefined();
+    expect(errEvt!.message).toBe("API timeout");
   });
 });

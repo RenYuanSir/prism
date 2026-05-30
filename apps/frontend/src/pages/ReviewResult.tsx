@@ -1,4 +1,11 @@
-import type { AIReviewResult, ImpactGraph, SemanticDiff } from "@prism/shared";
+import type {
+  AIConsensusResult,
+  AIFixSuggestion,
+  AIReviewResult,
+  ImpactGraph,
+  ModelFinding,
+  SemanticDiff,
+} from "@prism/shared";
 import type { PipelineStage } from "@prism/shared";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -18,12 +25,13 @@ import {
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Link } from "react-router-dom";
-import { type ReviewResponse, fetchImpact, triggerReview } from "../api/client";
+import { type ReviewResponse, fetchImpact, streamReview } from "../api/client";
 import { ConsensusView } from "../components/ConsensusView";
 import { FileChangeCard } from "../components/FileChangeCard";
 import { ImpactHeatmap } from "../components/ImpactHeatmap";
 import { PipelineProgress } from "../components/PipelineProgress";
 import { RaceConditionTimeline } from "../components/RaceConditionTimeline";
+import { SeverityBadge } from "../components/SeverityBadge";
 import { SuggestionCard } from "../components/SuggestionCard";
 
 interface PRInfo {
@@ -35,10 +43,20 @@ interface PRInfo {
   baseBranch: string;
 }
 
+interface PartialResults {
+  summary?: string;
+  claudeFindings?: ModelFinding[];
+  geminiFindings?: ModelFinding[];
+  consensus?: AIConsensusResult;
+  suggestions?: AIFixSuggestion[];
+  currentStage?: string;
+  isComplete: boolean;
+}
+
 type ReviewState =
-  | { status: "loading"; stage: PipelineStage | "idle" }
+  | { status: "loading"; partial: PartialResults }
   | { status: "success"; data: ReviewResponse; impactGraph: ImpactGraph | null }
-  | { status: "error"; message: string };
+  | { status: "error"; message: string; partial: PartialResults };
 
 export function ReviewResult() {
   const { owner, repo, pullNumber } = useParams<{
@@ -46,47 +64,115 @@ export function ReviewResult() {
     repo: string;
     pullNumber: string;
   }>();
-  const [state, setState] = useState<ReviewState>({ status: "loading", stage: "idle" });
+  const [state, setState] = useState<ReviewState>({
+    status: "loading",
+    partial: { isComplete: false },
+  });
 
   useEffect(() => {
     if (!owner || !repo || !pullNumber) return;
-
     const prNum = Number(pullNumber);
     if (!Number.isInteger(prNum) || prNum <= 0) {
-      setState({ status: "error", message: "Invalid pull request number" });
+      setState({
+        status: "error",
+        message: "Invalid pull request number",
+        partial: { isComplete: false },
+      });
       return;
     }
 
-    async function runReview() {
-      setState({ status: "loading", stage: "summary" });
+    const partial: PartialResults = { isComplete: false };
 
-      setTimeout(() => setState({ status: "loading", stage: "risk" }), 2000);
-      setTimeout(() => setState({ status: "loading", stage: "suggestion" }), 4000);
+    let streamController: AbortController | null = null;
 
-      try {
-        const [result, impactResult] = await Promise.all([
-          triggerReview(owner!, repo!, prNum),
-          fetchImpact(owner!, repo!, prNum),
-        ]);
-        if (result.success && result.data) {
-          const impactGraph =
-            impactResult.success && impactResult.data ? impactResult.data.impactGraph : null;
-          setState({ status: "success", data: result.data, impactGraph });
-        } else {
-          setState({
-            status: "error",
-            message: result.error ?? "Failed to review PR",
-          });
+    streamReview(
+      owner,
+      repo,
+      prNum,
+      (event) => {
+        switch (event.type) {
+          case "stage:start":
+            partial.currentStage = event.stage;
+            setState({ status: "loading", partial: { ...partial } });
+            break;
+          case "summary":
+            partial.summary = event.summary;
+            setState({ status: "loading", partial: { ...partial } });
+            break;
+          case "risk:model-done":
+            if (event.model === "claude") partial.claudeFindings = event.findings as ModelFinding[];
+            else partial.geminiFindings = event.findings as ModelFinding[];
+            setState({ status: "loading", partial: { ...partial } });
+            break;
+          case "consensus":
+            partial.consensus = event.consensus as unknown as AIConsensusResult;
+            setState({ status: "loading", partial: { ...partial } });
+            break;
+          case "suggestion":
+            partial.suggestions = event.suggestions as AIFixSuggestion[];
+            setState({ status: "loading", partial: { ...partial } });
+            break;
         }
-      } catch (err) {
-        setState({
-          status: "error",
-          message: err instanceof Error ? err.message : "Network error",
-        });
-      }
-    }
+      },
+      (error) => setState({ status: "error", message: error, partial: { ...partial } }),
+      async () => {
+        // Stream done — fetch impact and transition to success
+        try {
+          const [prResult, impactResult] = await Promise.all([
+            fetch(`/api/pr/${owner}/${repo}/${prNum}`).then((r) => r.json()),
+            fetchImpact(owner, repo, prNum),
+          ]);
+          if (prResult.success && prResult.data) {
+            setState({
+              status: "success",
+              data: {
+                pr: {
+                  id: prResult.data.id,
+                  title: prResult.data.title,
+                  description: prResult.data.description,
+                  author: prResult.data.author,
+                  branch: prResult.data.branch,
+                  baseBranch: prResult.data.baseBranch,
+                },
+                semanticDiff: prResult.data.semanticDiff || {
+                  fileChanges: [],
+                  summary: "",
+                  totalFiles: 0,
+                  totalAdditions: 0,
+                  totalDeletions: 0,
+                },
+                review: {
+                  summary: { summary: partial.summary ?? "", stage: "summary" },
+                  risk: {
+                    issues: (partial.consensus?.consensusIssues ?? []).map((i) => i.issue),
+                    stage: "risk",
+                  },
+                  consensus: partial.consensus ?? {
+                    consensusIssues: [],
+                    claudeOnly: partial.claudeFindings ?? [],
+                    geminiOnly: partial.geminiFindings ?? [],
+                    allAgreeCount: 0,
+                    claudeTotal: 0,
+                    geminiTotal: 0,
+                  },
+                  raceConditions: [],
+                  suggestion: { suggestions: partial.suggestions ?? [], stage: "suggestion" },
+                },
+              },
+              impactGraph: impactResult.success ? (impactResult.data?.impactGraph ?? null) : null,
+            });
+          }
+        } catch {
+          /* PR info fetch is non-critical */
+        }
+      },
+    ).then((c) => {
+      streamController = c;
+    });
 
-    runReview();
+    return () => {
+      streamController?.abort();
+    };
   }, [owner, repo, pullNumber]);
 
   if (!owner || !repo || !pullNumber) {
@@ -132,12 +218,70 @@ export function ReviewResult() {
               <h2 className="text-[15px] font-weight-510 text-linear-text-primary mb-4">
                 Analyzing Pull Request...
               </h2>
-              <PipelineProgress currentStage={state.stage} />
+              <PipelineProgress
+                currentStage={
+                  (state.partial.currentStage as PipelineStage | "idle" | "complete") ?? "summary"
+                }
+              />
             </div>
 
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 text-linear-accent animate-spin" />
-            </div>
+            {/* Summary — appears as soon as LLM responds */}
+            {state.partial.summary && (
+              <motion.section initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                <SectionHeader icon={Sparkles} title="AI Summary" accent="text-linear-accent" />
+                <div className="glass-surface rounded-xl p-6">
+                  <p className="text-[14px] text-linear-text-secondary leading-relaxed">
+                    {state.partial.summary}
+                  </p>
+                </div>
+              </motion.section>
+            )}
+
+            {/* Risk analysis — per-model cards, show individually */}
+            {(state.partial.claudeFindings || state.partial.geminiFindings) && (
+              <motion.section initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                <SectionHeader
+                  icon={AlertTriangle}
+                  title="Risk Analysis"
+                  accent="text-linear-accent"
+                />
+                <div className="grid grid-cols-2 gap-4">
+                  <RiskModelCard label="Model 1" findings={state.partial.claudeFindings} />
+                  <RiskModelCard label="Model 2" findings={state.partial.geminiFindings} />
+                </div>
+              </motion.section>
+            )}
+
+            {/* Consensus — after both models done */}
+            {state.partial.consensus && (
+              <motion.section initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                <ConsensusView consensus={state.partial.consensus} />
+              </motion.section>
+            )}
+
+            {/* Suggestions */}
+            {state.partial.suggestions && state.partial.suggestions.length > 0 && (
+              <motion.section initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                <SectionHeader
+                  icon={Lightbulb}
+                  title="Fix Suggestions"
+                  count={state.partial.suggestions.length}
+                  accent="text-linear-accent"
+                />
+                <div className="space-y-3">
+                  {state.partial.suggestions.map((s, i) => (
+                    <SuggestionCard key={`${s.issue.file}-${s.issue.line}-${i}`} suggestion={s} />
+                  ))}
+                </div>
+              </motion.section>
+            )}
+
+            {/* Spinner while still waiting for consensus */}
+            {!state.partial.consensus && (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 text-linear-accent animate-spin" />
+              </div>
+            )}
           </motion.div>
         )}
 
@@ -148,19 +292,35 @@ export function ReviewResult() {
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0 }}
-            className="glass-surface rounded-xl p-6 border-red-500/20"
           >
-            <div className="flex items-start gap-3">
-              <XCircle className="h-6 w-6 text-red-400 flex-shrink-0" />
-              <div>
-                <h3 className="text-[15px] font-weight-510 text-red-400 mb-1">Review Failed</h3>
-                <p className="text-linear-text-secondary">{state.message}</p>
-                <Link
-                  to="/"
-                  className="inline-block mt-4 px-4 py-2 bg-linear-surface hover:bg-linear-elevated text-linear-text-primary rounded-md transition-colors text-[13px] font-weight-510 border border-linear-border"
-                >
-                  Try Another PR
-                </Link>
+            {/* Show partial results that arrived before the error */}
+            {state.partial.summary && (
+              <motion.section
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-6"
+              >
+                <SectionHeader icon={Sparkles} title="AI Summary" accent="text-linear-accent" />
+                <div className="glass-surface rounded-xl p-6">
+                  <p className="text-[14px] text-linear-text-secondary leading-relaxed">
+                    {state.partial.summary}
+                  </p>
+                </div>
+              </motion.section>
+            )}
+            <div className="glass-surface rounded-xl p-6 border-red-500/20">
+              <div className="flex items-start gap-3">
+                <XCircle className="h-6 w-6 text-red-400 flex-shrink-0" />
+                <div>
+                  <h3 className="text-[15px] font-weight-510 text-red-400 mb-1">Review Failed</h3>
+                  <p className="text-linear-text-secondary">{state.message}</p>
+                  <Link
+                    to="/"
+                    className="inline-block mt-4 px-4 py-2 bg-linear-surface hover:bg-linear-elevated text-linear-text-primary rounded-md transition-colors text-[13px] font-weight-510 border border-linear-border"
+                  >
+                    Try Another PR
+                  </Link>
+                </div>
               </div>
             </div>
           </motion.div>
@@ -386,6 +546,34 @@ function ReviewContent({ pr, semanticDiff, review, impactGraph }: ReviewContentP
         </motion.section>
       )}
     </motion.div>
+  );
+}
+
+function RiskModelCard({ label, findings }: { label: string; findings?: ModelFinding[] }) {
+  return (
+    <div className="glass-surface rounded-xl p-4">
+      <h4 className="text-[13px] font-weight-510 text-linear-text-secondary mb-3">
+        {label} {findings ? `(${findings.length} issues)` : ""}
+      </h4>
+      {findings === undefined ? (
+        <div className="flex items-center gap-2 text-linear-text-muted">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          <span className="text-[13px]">Analyzing...</span>
+        </div>
+      ) : findings.length === 0 ? (
+        <p className="text-[13px] text-linear-text-muted">No issues found</p>
+      ) : (
+        findings.slice(0, 5).map((f, i) => (
+          <div key={`${f.file}-${f.line}-${i}`} className="mb-2 p-2 bg-linear-surface/30 rounded">
+            <SeverityBadge severity={f.severity} />
+            <p className="text-[13px] text-linear-text-secondary mt-1">{f.message}</p>
+            <p className="text-[11px] text-linear-text-muted font-mono">
+              {f.file}:{f.line}
+            </p>
+          </div>
+        ))
+      )}
+    </div>
   );
 }
 

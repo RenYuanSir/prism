@@ -49,6 +49,89 @@ export async function triggerReview(
   return response.json();
 }
 
+export interface StreamEvent {
+  type: string;
+  stage?: string;
+  summary?: string;
+  model?: string;
+  findings?: Array<{
+    model: string;
+    severity: string;
+    message: string;
+    file: string;
+    line: number;
+    explanation: string;
+  }>;
+  consensus?: Record<string, unknown>;
+  suggestions?: unknown[];
+  message?: string;
+}
+
+function parseSSEChunk(chunk: string): StreamEvent | null {
+  const lines = chunk.split("\n");
+  let eventType = "";
+  let dataStr = "";
+  for (const line of lines) {
+    if (line.startsWith("event: ")) eventType = line.slice(7).trim();
+    else if (line.startsWith("data: ")) dataStr = line.slice(6);
+  }
+  if (!eventType || !dataStr) return null;
+  try {
+    return JSON.parse(dataStr) as StreamEvent;
+  } catch {
+    return null;
+  }
+}
+
+export async function streamReview(
+  owner: string,
+  repo: string,
+  pullNumber: number,
+  onEvent: (event: StreamEvent) => void,
+  onError: (error: string) => void,
+  onDone: () => void,
+): Promise<AbortController> {
+  const controller = new AbortController();
+  const response = await fetch(`${BASE_URL}/review/${owner}/${repo}/${pullNumber}/stream`, {
+    method: "POST",
+    signal: controller.signal,
+  });
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+  const reader = response.body!.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  (async () => {
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const parts = buffer.split("\n\n");
+        buffer = parts.pop() ?? "";
+        for (const part of parts) {
+          if (!part.trim()) continue;
+          const event = parseSSEChunk(part);
+          if (!event) continue;
+          if (event.type === "done") {
+            onDone();
+            return;
+          }
+          if (event.type === "error") {
+            onError(event.message ?? "Unknown error");
+            return;
+          }
+          onEvent(event);
+        }
+      }
+    } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") return;
+      onError(err instanceof Error ? err.message : "Connection lost");
+    }
+  })();
+  return controller;
+}
+
 export async function fetchImpact(
   owner: string,
   repo: string,
