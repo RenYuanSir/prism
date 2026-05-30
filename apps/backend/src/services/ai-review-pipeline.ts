@@ -13,6 +13,7 @@ import type {
   ModelName,
   RaceConditionIssue,
   SemanticDiff,
+  StreamEvent,
 } from "@prism/shared";
 import type { PullRequest } from "@prism/shared";
 import { mergeConsensus } from "./consensus-merger.js";
@@ -51,8 +52,7 @@ export class AIReviewPipeline {
     const summary = await this.generateSummary(pr, semanticDiff);
 
     // Extract race condition patterns (local, <100ms)
-    const racePatterns = await analyzeRaceConditionPatterns(semanticDiff, fileContents);
-    const raceCandidates = detectRaceConditionCandidates(racePatterns);
+    const raceCandidates = await this.getRaceCandidates(semanticDiff, fileContents);
 
     // Stage 2: Parallel Risk Analysis (with race condition context)
     const [claudeResult, geminiResult] = await Promise.all([
@@ -89,6 +89,67 @@ export class AIReviewPipeline {
     };
 
     return { summary, risk, consensus, raceConditions: mergedRaceConditions, suggestion };
+  }
+
+  async runStream(
+    pr: PullRequest,
+    diff: string,
+    semanticDiff: SemanticDiff,
+    fileContents: Record<string, string>,
+    onEvent: (event: StreamEvent) => void,
+  ): Promise<void> {
+    try {
+      // Stage 1: Summary
+      onEvent({ type: "stage:start", stage: "summary" });
+      const summary = await this.generateSummary(pr, semanticDiff);
+      onEvent({ type: "summary", summary: summary.summary });
+
+      const raceCandidates = await this.getRaceCandidates(semanticDiff, fileContents);
+
+      // Stage 2: Parallel Risk Analysis
+      onEvent({ type: "stage:start", stage: "risk" });
+      const [claudeResult, geminiResult] = await Promise.all([
+        this.analyzeRisksWithModel(
+          this.riskClient,
+          "claude",
+          pr,
+          diff,
+          semanticDiff,
+          raceCandidates,
+        ).then((r) => {
+          onEvent({ type: "risk:model-done", model: "claude", findings: r.findings });
+          return r;
+        }),
+        this.analyzeRisksWithModel(
+          this.summaryClient,
+          "gemini",
+          pr,
+          diff,
+          semanticDiff,
+          raceCandidates,
+        ).then((r) => {
+          onEvent({ type: "risk:model-done", model: "gemini", findings: r.findings });
+          return r;
+        }),
+      ]);
+
+      // Stage 3: Consensus Merge
+      const consensus = mergeConsensus(claudeResult.findings, geminiResult.findings);
+      onEvent({ type: "consensus", consensus });
+
+      // Stage 4: Suggestions
+      const issuesForSuggestion = consensus.consensusIssues
+        .filter((i) => i.confidence !== "low")
+        .map((i) => i.issue);
+      const suggestion = await this.generateSuggestions(issuesForSuggestion, diff);
+      onEvent({ type: "suggestion", suggestions: suggestion.suggestions });
+
+      onEvent({ type: "done" });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      onEvent({ type: "error", message });
+      throw error;
+    }
   }
 
   async generateSummary(pr: PullRequest, semanticDiff: SemanticDiff): Promise<AISummaryResult> {
@@ -480,6 +541,14 @@ Provide COMPLETE code replacements that can be directly applied. Include surroun
     });
 
     return merged;
+  }
+
+  private async getRaceCandidates(
+    semanticDiff: SemanticDiff,
+    fileContents: Record<string, string>,
+  ) {
+    const racePatterns = await analyzeRaceConditionPatterns(semanticDiff, fileContents);
+    return detectRaceConditionCandidates(racePatterns);
   }
 
   private parseSuggestionResponse(response: string, issues: AIRiskIssue[]): AIFixSuggestion[] {
