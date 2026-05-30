@@ -285,3 +285,31 @@ export interface ImpactGraph {
   mediumImpactCount: number;
   lowImpactCount: number;
 }
+
+// GitHub PR URL parser
+
+/**
+ * Parse a GitHub Pull Request URL into owner, repo, and PR number.
+ * Returns null if the URL is not a valid GitHub PR URL.
+ *
+ * Supported formats:
+ * - https://github.com/owner/repo/pull/123
+ * - https://github.com/owner/repo/pull/123/files
+ * - github.com/owner/repo/pull/123
+ */
+export function parseGitHubPrUrl(
+  url: string,
+): { owner: string; repo: string; pullNumber: number } | null {
+  const trimmed = url.trim();
+  if (!trimmed) return null;
+
+  const regex = /github\.com\/([^/]+)\/([^/]+)\/pull\/(\d+)/;
+  const match = trimmed.match(regex);
+  if (!match) return null;
+
+  const [, owner, repo, pullNumberStr] = match;
+  const pullNumber = Number(pullNumberStr);
+  if (!Number.isInteger(pullNumber) || pullNumber <= 0) return null;
+
+  return { owner, repo, pullNumber };
+}
