@@ -27,6 +27,11 @@ describe("parseGitHubPrUrl", () => {
     expect(result).toEqual({ owner: "foo", repo: "bar", pullNumber: 99 });
   });
 
+  it("parses a URL with hash fragment", () => {
+    const result = parseGitHubPrUrl("http://github.com/owner/repo/pull/99#discussion");
+    expect(result).toEqual({ owner: "owner", repo: "repo", pullNumber: 99 });
+  });
+
   it("parses a URL with trailing whitespace", () => {
     const result = parseGitHubPrUrl("  https://github.com/a/b/pull/7  ");
     expect(result).toEqual({ owner: "a", repo: "b", pullNumber: 7 });
@@ -38,6 +43,10 @@ describe("parseGitHubPrUrl", () => {
 
   it("returns null for URL with PR number 0", () => {
     expect(parseGitHubPrUrl("https://github.com/owner/repo/pull/0")).toBeNull();
+  });
+
+  it("returns null for negative PR number", () => {
+    expect(parseGitHubPrUrl("https://github.com/owner/repo/pull/-1")).toBeNull();
   });
 
   it("returns null for empty string", () => {

@@ -295,6 +295,7 @@ export interface ImpactGraph {
  * Supported formats:
  * - https://github.com/owner/repo/pull/123
  * - https://github.com/owner/repo/pull/123/files
+ * - http://github.com/owner/repo/pull/123#discussion
  * - github.com/owner/repo/pull/123
  */
 export function parseGitHubPrUrl(
