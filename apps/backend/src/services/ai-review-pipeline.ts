@@ -13,8 +13,8 @@ import type {
   ModelName,
   RaceConditionIssue,
   SemanticDiff,
-} from "@ai-pr-review/shared";
-import type { PullRequest } from "@ai-pr-review/shared";
+} from "@prism/shared";
+import type { PullRequest } from "@prism/shared";
 import { mergeConsensus } from "./consensus-merger.js";
 import type { LLMClient } from "./llm-client.js";
 import { createPipelineClients, loadLLMConfigFromEnv } from "./llm-config.js";

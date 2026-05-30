@@ -4,7 +4,7 @@ import type {
   ImpactGraph,
   PullRequest,
   SemanticDiff,
-} from "@ai-pr-review/shared";
+} from "@prism/shared";
 
 const BASE_URL = "/api";
 

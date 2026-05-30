@@ -13,9 +13,7 @@ export function SettingsPage() {
         <h1 className="text-[32px] font-weight-510 tracking-tight-custom text-linear-text-primary mb-2">
           Settings
         </h1>
-        <p className="text-[15px] text-linear-text-tertiary">
-          Configure your AI PR Review experience.
-        </p>
+        <p className="text-[15px] text-linear-text-tertiary">Configure your PRism experience.</p>
       </motion.div>
 
       <motion.div

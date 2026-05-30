@@ -1,4 +1,4 @@
-import type { AIRiskIssue } from "@ai-pr-review/shared";
+import type { AIRiskIssue } from "@prism/shared";
 import { AlertTriangle, FileText, Info, XCircle } from "lucide-react";
 import { SeverityBadge } from "./SeverityBadge";
 

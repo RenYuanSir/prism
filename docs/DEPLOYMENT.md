@@ -5,7 +5,7 @@
 ```bash
 # 1. Clone and install
 git clone <repo>
-cd ai-pr-review
+cd prism
 pnpm install
 
 # 2. Configure environment
@@ -30,7 +30,7 @@ NODE_ENV=production node dist/index.js
 
 # Serve frontend (static files)
 cd apps/frontend
-cp -r dist/ /var/www/ai-pr-review/
+cp -r dist/ /var/www/prism/
 # Or use Vercel/Netlify for frontend hosting
 ```
 
@@ -63,8 +63,8 @@ CMD ["node", "apps/backend/dist/index.js"]
 ```
 
 ```bash
-docker build -t ai-pr-review .
-docker run -p 3001:3001 --env-file .env ai-pr-review
+docker build -t prism .
+docker run -p 3001:3001 --env-file .env prism
 ```
 
 ## Vercel Deployment (Frontend)

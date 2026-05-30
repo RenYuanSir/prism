@@ -1,4 +1,4 @@
-import type { RaceConditionIssue } from "@ai-pr-review/shared";
+import type { RaceConditionIssue } from "@prism/shared";
 import { Play, RotateCcw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { ConflictIndicator } from "./ConflictIndicator";

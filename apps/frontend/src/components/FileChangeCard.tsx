@@ -1,4 +1,4 @@
-import type { ChangeType, FileChange } from "@ai-pr-review/shared";
+import type { ChangeType, FileChange } from "@prism/shared";
 import { Box, FileCode, GitBranch, Package } from "lucide-react";
 import { useState } from "react";
 

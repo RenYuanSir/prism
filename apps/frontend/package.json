@@ -1,5 +1,5 @@
 {
-  "name": "@ai-pr-review/frontend",
+  "name": "@prism/frontend",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -11,7 +11,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@ai-pr-review/shared": "workspace:*",
+    "@prism/shared": "workspace:*",
     "framer-motion": "^12.40.0",
     "lucide-react": "^1.16.0",
     "react": "^18.3.0",

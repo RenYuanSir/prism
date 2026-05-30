@@ -1,14 +1,14 @@
-# CLAUDE.md
+# PRism
 
 ## Project Overview
 
-AI PR Review is a full-stack TypeScript monorepo for automated AI-powered pull request reviews.
+PRism is a full-stack TypeScript monorepo for automated AI-powered pull request reviews.
 It uses a pnpm workspace with three packages: a React frontend, an Express backend, and a shared types package.
 
 ## Architecture
 
 ```
-ai-pr-review/
+prism/
 ├── apps/
 │   ├── frontend/    # React 18 + Vite + Tailwind CSS SPA
 │   │   ├── src/pages/        # PRList, ReviewResult, Settings, History
@@ -79,7 +79,7 @@ pnpm test:coverage    # Run with coverage report
 - **Vitest** for testing — new features require tests, 97 tests currently passing
 - **ESM modules** throughout — `"type": "module"` in all packages
 - **No default exports** — use named exports exclusively
-- **Shared types** live in `packages/shared/src/`, consumed via `@ai-pr-review/shared`
+- **Shared types** live in `packages/shared/src/`, consumed via `@prism/shared`
 - **Colocated tests** — `feature.ts` → `feature.test.ts`
 
 ## Git Workflow

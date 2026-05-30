@@ -1,4 +1,4 @@
-# AI PR Review - Hackathon Auto-Dev Rules
+# PRism - Hackathon Auto-Dev Rules
 
 ## CRITICAL: Git Workflow
 1. NEVER commit directly to main - always work on feature branches

@@ -1,5 +1,5 @@
 {
-  "name": "@ai-pr-review/backend",
+  "name": "@prism/backend",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -11,7 +11,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@ai-pr-review/shared": "workspace:*",
+    "@prism/shared": "workspace:*",
     "@anthropic-ai/sdk": "^0.24.0",
     "@google/generative-ai": "^0.12.0",
     "@octokit/rest": "^21.0.0",

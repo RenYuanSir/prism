@@ -1,4 +1,4 @@
-import type { AIRiskSeverity } from "@ai-pr-review/shared";
+import type { AIRiskSeverity } from "@prism/shared";
 
 interface SeverityBadgeProps {
   severity: AIRiskSeverity;

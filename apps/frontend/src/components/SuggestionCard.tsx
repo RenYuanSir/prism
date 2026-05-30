@@ -1,4 +1,4 @@
-import type { AIFixSuggestion } from "@ai-pr-review/shared";
+import type { AIFixSuggestion } from "@prism/shared";
 import { FileText, Lightbulb } from "lucide-react";
 import { SeverityBadge } from "./SeverityBadge";
 

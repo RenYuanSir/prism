@@ -1,4 +1,4 @@
-import type { ExecutionPath } from "@ai-pr-review/shared";
+import type { ExecutionPath } from "@prism/shared";
 
 interface ExecutionPathColumnProps {
   path: ExecutionPath;

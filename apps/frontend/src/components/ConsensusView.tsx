@@ -1,4 +1,4 @@
-import type { AIConsensusResult } from "@ai-pr-review/shared";
+import type { AIConsensusResult } from "@prism/shared";
 import { ConsensusIssueCard } from "./ConsensusIssueCard";
 import { ConsensusStats } from "./ConsensusStats";
 

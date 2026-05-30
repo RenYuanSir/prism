@@ -1,5 +1,5 @@
-import type { PRCommit, PRFile, PullRequest } from "@ai-pr-review/shared";
 import { Octokit } from "@octokit/rest";
+import type { PRCommit, PRFile, PullRequest } from "@prism/shared";
 
 export class GitHubService {
   private octokit: Octokit;

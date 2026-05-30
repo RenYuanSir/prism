@@ -1,5 +1,5 @@
-import type { AIReviewResult, ImpactGraph, SemanticDiff } from "@ai-pr-review/shared";
-import type { PipelineStage } from "@ai-pr-review/shared";
+import type { AIReviewResult, ImpactGraph, SemanticDiff } from "@prism/shared";
+import type { PipelineStage } from "@prism/shared";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   AlertTriangle,

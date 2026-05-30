@@ -1,6 +1,6 @@
 # LLM Provider Configuration
 
-AI PR Review supports multiple LLM providers through a unified adapter pattern. Each pipeline stage (summary, risk analysis, suggestions) can be configured independently with different providers.
+PRism supports multiple LLM providers through a unified adapter pattern. Each pipeline stage (summary, risk analysis, suggestions) can be configured independently with different providers.
 
 ## Supported Providers
 

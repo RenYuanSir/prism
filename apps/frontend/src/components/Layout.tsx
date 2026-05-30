@@ -23,8 +23,8 @@ export function Layout() {
                 <Activity className="h-4 w-4 text-white" />
               </div>
               <div>
-                <h1 className="font-weight-510 text-sm text-linear-text-primary">AI PR Review</h1>
-                <p className="text-[11px] text-linear-text-muted tracking-wide">AUTOMATED REVIEW</p>
+                <h1 className="font-weight-510 text-sm text-linear-text-primary">PRism</h1>
+                <p className="text-[11px] text-linear-text-muted tracking-wide">AI CODE REVIEW</p>
               </div>
             </div>
           </div>

@@ -1,4 +1,4 @@
-import type { ConsensusIssue } from "@ai-pr-review/shared";
+import type { ConsensusIssue } from "@prism/shared";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
 import { SeverityBadge } from "./SeverityBadge";

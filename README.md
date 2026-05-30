@@ -1,4 +1,4 @@
-# AI PR Review
+# PRism
 
 AI-powered pull request review assistant with semantic diff analysis, multi-model consensus, impact heatmaps, and race condition detection.
 
@@ -14,7 +14,7 @@ AI-powered pull request review assistant with semantic diff analysis, multi-mode
 ## Architecture
 
 ```
-ai-pr-review/
+prism/
 ├── apps/
 │   ├── frontend/    # React 18 + Vite + Tailwind CSS + shadcn/ui
 │   │   ├── src/pages/        # PRList, ReviewResult, Settings, History

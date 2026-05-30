@@ -1,4 +1,4 @@
-import type { ImpactGraph, ImpactNode } from "@ai-pr-review/shared";
+import type { ImpactGraph, ImpactNode } from "@prism/shared";
 import { AlertTriangle, ArrowRight, FileCode, Info, Layers, Zap } from "lucide-react";
 import { useState } from "react";
 

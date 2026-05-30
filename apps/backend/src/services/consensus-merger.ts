@@ -4,7 +4,7 @@ import type {
   AIRiskSeverity,
   ConsensusIssue,
   ModelFinding,
-} from "@ai-pr-review/shared";
+} from "@prism/shared";
 
 export function mergeConsensus(
   claudeFindings: ModelFinding[],

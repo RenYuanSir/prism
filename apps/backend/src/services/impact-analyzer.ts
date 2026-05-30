@@ -1,11 +1,5 @@
-import type {
-  ImpactEdge,
-  ImpactGraph,
-  ImpactLevel,
-  ImpactNode,
-  SemanticDiff,
-} from "@ai-pr-review/shared";
-import type { FileChange } from "@ai-pr-review/shared";
+import type { ImpactEdge, ImpactGraph, ImpactLevel, ImpactNode, SemanticDiff } from "@prism/shared";
+import type { FileChange } from "@prism/shared";
 
 /**
  * Resolves an import path to a filename in the PR's changed files.

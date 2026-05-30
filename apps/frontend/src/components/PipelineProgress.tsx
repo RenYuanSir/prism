@@ -1,4 +1,4 @@
-import type { PipelineStage } from "@ai-pr-review/shared";
+import type { PipelineStage } from "@prism/shared";
 import { CheckCircle, Circle, Loader2 } from "lucide-react";
 
 interface PipelineProgressProps {

@@ -1,4 +1,4 @@
-import type { ModelFinding } from "@ai-pr-review/shared";
+import type { ModelFinding } from "@prism/shared";
 import { describe, expect, it } from "vitest";
 import { mergeConsensus } from "./consensus-merger";
 

@@ -1,9 +1,63 @@
+# Claude Code local settings
+.claude/settings.local.json
+.claude/CLAUDE.local.md
+
+# Dependencies
 node_modules/
+.pnpm-store/
+
+# Build output
 dist/
+*.tsbuildinfo
+
+# Environment variables
 .env
 .env.local
+.env.*.local
+!.env.example
+
+# Logs
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Editor directories and files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS files
 .DS_Store
+Thumbs.db
+
+# Testing
 coverage/
-.vite/.env
-*.tsbuildinfo
+
+# Vite
+.vite/
+*.local
+
+# Cache
+.eslintcache
+.cache/
+
+# Build artifacts
+*.map
+
+# Deployment
+.vercel/
+.railway/
+
+# Husky
+.husky/_/
+!.husky/pre-commit
+
+# Misc
+*.tgz
+.npm/
