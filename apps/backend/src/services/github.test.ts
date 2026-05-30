@@ -9,6 +9,9 @@ vi.mock("@octokit/rest", () => {
       listFiles: vi.fn(),
       listCommits: vi.fn(),
     },
+    repos: {
+      getContent: vi.fn(),
+    },
   };
 
   return {
@@ -17,7 +20,6 @@ vi.mock("@octokit/rest", () => {
   };
 });
 
-// biome-ignore lint/suspicious/noExplicitAny: accessing mock export
 const { __mockOctokit: mockOctokit } = (await import("@octokit/rest")) as any;
 
 describe("GitHubService", () => {
@@ -220,6 +222,42 @@ describe("GitHubService", () => {
       const result = await service.getPullRequestCommits("owner", "repo", 42);
 
       expect(result).toEqual([]);
+    });
+  });
+
+  describe("getFileContent", () => {
+    it("should fetch and decode file content from base64", async () => {
+      const fileContent = "export function hello() { return 'world'; }";
+      const base64Content = Buffer.from(fileContent).toString("base64");
+
+      mockOctokit.repos.getContent.mockResolvedValue({
+        data: {
+          content: base64Content,
+          encoding: "base64",
+        },
+      });
+
+      const result = await service.getFileContent("owner", "repo", "src/hello.ts", "main");
+
+      expect(result).toBe(fileContent);
+      expect(mockOctokit.repos.getContent).toHaveBeenCalledWith({
+        owner: "owner",
+        repo: "repo",
+        path: "src/hello.ts",
+        ref: "main",
+      });
+    });
+
+    it("should throw error when content is not available", async () => {
+      mockOctokit.repos.getContent.mockResolvedValue({
+        data: {
+          type: "dir",
+        },
+      });
+
+      await expect(service.getFileContent("owner", "repo", "src/", "main")).rejects.toThrow(
+        "Cannot get content for src/",
+      );
     });
   });
 });

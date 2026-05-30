@@ -6,11 +6,22 @@ import type {
   AIRiskSeverity,
   AISuggestionResult,
   AISummaryResult,
+  ConcurrencyPattern,
+  ConsensusConfidence,
+  ExecutionPath,
+  ModelFinding,
+  ModelName,
+  RaceConditionIssue,
   SemanticDiff,
 } from "@ai-pr-review/shared";
 import type { PullRequest } from "@ai-pr-review/shared";
 import Anthropic from "@anthropic-ai/sdk";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { mergeConsensus } from "./consensus-merger.js";
+import {
+  analyzeRaceConditionPatterns,
+  detectRaceConditionCandidates,
+} from "./race-condition-analyzer.js";
 
 export interface LLMClient {
   generateText(prompt: string): Promise<string>;
@@ -69,12 +80,53 @@ export class AIReviewPipeline {
     this.suggestionClient = config.suggestionClient;
   }
 
-  async run(pr: PullRequest, diff: string, semanticDiff: SemanticDiff): Promise<AIReviewResult> {
+  async run(
+    pr: PullRequest,
+    diff: string,
+    semanticDiff: SemanticDiff,
+    fileContents: Record<string, string> = {},
+  ): Promise<AIReviewResult> {
     const summary = await this.generateSummary(pr, semanticDiff);
-    const risk = await this.analyzeRisks(pr, diff, semanticDiff);
-    const suggestion = await this.generateSuggestions(risk.issues, diff);
 
-    return { summary, risk, suggestion };
+    // Extract race condition patterns (local, <100ms)
+    const racePatterns = await analyzeRaceConditionPatterns(semanticDiff, fileContents);
+    const raceCandidates = detectRaceConditionCandidates(racePatterns);
+
+    // Stage 2: Parallel Risk Analysis (with race condition context)
+    const [claudeResult, geminiResult] = await Promise.all([
+      this.analyzeRisksWithModel(this.riskClient, "claude", pr, diff, semanticDiff, raceCandidates),
+      this.analyzeRisksWithModel(
+        this.summaryClient,
+        "gemini",
+        pr,
+        diff,
+        semanticDiff,
+        raceCandidates,
+      ),
+    ]);
+
+    // Stage 3: Consensus Merge
+    const consensus = mergeConsensus(claudeResult.findings, geminiResult.findings);
+
+    // Merge race conditions from both models
+    const mergedRaceConditions = this.mergeRaceConditions(
+      claudeResult.raceConditions,
+      geminiResult.raceConditions,
+    );
+
+    // Stage 4: Suggestions (only for high/medium confidence issues)
+    const issuesForSuggestion = consensus.consensusIssues
+      .filter((i) => i.confidence !== "low")
+      .map((i) => i.issue);
+    const suggestion = await this.generateSuggestions(issuesForSuggestion, diff);
+
+    // Build backward-compatible risk result
+    const risk: AIRiskResult = {
+      issues: consensus.consensusIssues.map((i) => i.issue),
+      stage: "risk",
+    };
+
+    return { summary, risk, consensus, raceConditions: mergedRaceConditions, suggestion };
   }
 
   async generateSummary(pr: PullRequest, semanticDiff: SemanticDiff): Promise<AISummaryResult> {
@@ -106,6 +158,32 @@ export class AIReviewPipeline {
     return { suggestions, stage: "suggestion" };
   }
 
+  async analyzeRisksWithModel(
+    client: LLMClient,
+    modelName: "claude" | "gemini",
+    pr: PullRequest,
+    diff: string,
+    semanticDiff: SemanticDiff,
+    raceCandidates?: Array<{ sharedState: string; patterns: ConcurrencyPattern[] }>,
+  ): Promise<{ findings: ModelFinding[]; raceConditions: RaceConditionIssue[] }> {
+    const prompt = this.buildRiskPrompt(pr, diff, semanticDiff, raceCandidates);
+    const response = await client.generateText(prompt);
+    const issues = this.parseRiskResponse(response);
+    const raceConditions = this.parseRaceConditions(response);
+
+    // Convert AIRiskIssue to ModelFinding
+    const findings: ModelFinding[] = issues.map((issue) => ({
+      model: modelName,
+      severity: issue.severity,
+      message: issue.message,
+      file: issue.file,
+      line: issue.line,
+      explanation: issue.explanation,
+    }));
+
+    return { findings, raceConditions };
+  }
+
   private buildSummaryPrompt(pr: PullRequest, semanticDiff: SemanticDiff): string {
     return `Analyze this pull request and provide a brief summary (2-3 sentences) of what it does.
 
@@ -134,8 +212,13 @@ ${semanticDiff.fileChanges
 Provide a concise summary focusing on the purpose and scope of changes. Do not mention file counts or line counts. Respond with ONLY the summary text, no JSON, no markdown formatting.`;
   }
 
-  private buildRiskPrompt(pr: PullRequest, diff: string, semanticDiff: SemanticDiff): string {
-    return `Analyze this pull request for potential risks, bugs, security issues, and logic errors.
+  private buildRiskPrompt(
+    pr: PullRequest,
+    diff: string,
+    semanticDiff: SemanticDiff,
+    raceCandidates?: Array<{ sharedState: string; patterns: ConcurrencyPattern[] }>,
+  ): string {
+    const basePrompt = `Analyze this pull request for potential risks, bugs, security issues, and logic errors.
 
 PR Title: ${pr.title}
 PR Description: ${pr.description || "(no description)"}
@@ -154,7 +237,18 @@ Identify issues related to:
 - Error handling gaps
 - Race conditions
 - Performance issues
-- Breaking changes
+- Breaking changes`;
+
+    if (raceCandidates && raceCandidates.length > 0) {
+      const raceSection = this.buildRaceConditionPromptSection(raceCandidates);
+      return `${basePrompt}
+
+${raceSection}
+
+Respond with ONLY the JSON, no markdown code blocks.`;
+    }
+
+    return `${basePrompt}
 
 For each issue found, provide a JSON response with this exact structure:
 {
@@ -172,6 +266,65 @@ For each issue found, provide a JSON response with this exact structure:
 If no issues are found, return: {"issues": []}
 
 Focus on CODE QUALITY issues, not style preferences. Be specific with line numbers. Respond with ONLY the JSON, no markdown code blocks.`;
+  }
+
+  private buildRaceConditionPromptSection(
+    raceCandidates: Array<{ sharedState: string; patterns: ConcurrencyPattern[] }>,
+  ): string {
+    const patternsList = raceCandidates
+      .map((candidate) => {
+        const patternDetails = candidate.patterns
+          .map((p) => `    - Function: ${p.functionName} (${p.type}) at ${p.file}:${p.line}`)
+          .join("\n");
+        return `  Shared State: "${candidate.sharedState}"\n${patternDetails}`;
+      })
+      .join("\n");
+
+    return `RACE CONDITION ANALYSIS:
+The following concurrent access patterns were detected in the code:
+${patternsList}
+
+For each potential race condition, analyze the execution paths and provide BOTH issues and raceConditions in this JSON structure:
+{
+  "issues": [
+    {
+      "severity": "critical" | "warning" | "info",
+      "message": "Brief one-line description of the issue",
+      "file": "path/to/file.ts",
+      "line": 42,
+      "explanation": "Detailed explanation of why this is risky"
+    }
+  ],
+  "raceConditions": [
+    {
+      "severity": "critical" | "warning" | "info",
+      "message": "Brief description of the race condition",
+      "file": "path/to/file.ts",
+      "line": 42,
+      "explanation": "Detailed explanation of the race condition and its impact",
+      "sharedState": "name of the shared variable/resource",
+      "patternA": {
+        "label": "Path A description",
+        "functionName": "functionName",
+        "steps": [
+          { "description": "step description", "line": 10, "isConflictPoint": false }
+        ]
+      },
+      "patternB": {
+        "label": "Path B description",
+        "functionName": "functionName",
+        "steps": [
+          { "description": "step description", "line": 20, "isConflictPoint": true }
+        ]
+      },
+      "conflictPoint": "Description of where the conflict occurs"
+    }
+  ]
+}
+
+If no issues are found, return: {"issues": [], "raceConditions": []}
+
+Focus on REAL race conditions that could cause data corruption, lost updates, or inconsistent state. Be specific with execution paths and line numbers.`;
   }
 
   private buildSuggestionPrompt(issues: AIRiskIssue[], diff: string): string {
@@ -253,6 +406,118 @@ Provide COMPLETE code replacements that can be directly applied. Include surroun
       return severity;
     }
     return "info";
+  }
+
+  private parseRaceConditions(response: string): RaceConditionIssue[] {
+    try {
+      const cleaned = response
+        .replace(/```json\s*/g, "")
+        .replace(/```\s*/g, "")
+        .trim();
+      const parsed = JSON.parse(cleaned) as { raceConditions?: unknown[] };
+
+      if (!parsed.raceConditions || !Array.isArray(parsed.raceConditions)) {
+        return [];
+      }
+
+      return parsed.raceConditions
+        .filter((rc): rc is Record<string, unknown> => {
+          return (
+            typeof rc === "object" &&
+            rc !== null &&
+            "severity" in rc &&
+            "message" in rc &&
+            "patternA" in rc &&
+            "patternB" in rc
+          );
+        })
+        .map((rc) => ({
+          severity: this.validateSeverity(rc.severity),
+          message: String(rc.message),
+          file: String(rc.file || ""),
+          line: Number(rc.line) || 0,
+          explanation: String(rc.explanation || ""),
+          sharedState: String(rc.sharedState || "unknown"),
+          patternA: this.validateExecutionPath(rc.patternA),
+          patternB: this.validateExecutionPath(rc.patternB),
+          conflictPoint: String(rc.conflictPoint || "unknown"),
+          confidence: "high" as ConsensusConfidence,
+          models: [] as ModelName[],
+        }));
+    } catch {
+      return [];
+    }
+  }
+
+  private validateExecutionPath(path: unknown): ExecutionPath {
+    if (typeof path !== "object" || path === null) {
+      return { label: "Unknown", functionName: "unknown", steps: [] };
+    }
+
+    const p = path as Record<string, unknown>;
+    const steps = Array.isArray(p.steps)
+      ? p.steps
+          .filter((s): s is Record<string, unknown> => typeof s === "object" && s !== null)
+          .map((s) => ({
+            description: String(s.description || ""),
+            line: Number(s.line) || 0,
+            isConflictPoint: Boolean(s.isConflictPoint),
+          }))
+      : [];
+
+    return {
+      label: String(p.label || "Unknown"),
+      functionName: String(p.functionName || "unknown"),
+      steps,
+    };
+  }
+
+  private mergeRaceConditions(
+    claudeRCs: RaceConditionIssue[],
+    geminiRCs: RaceConditionIssue[],
+  ): RaceConditionIssue[] {
+    const merged: RaceConditionIssue[] = [];
+    const unmatchedClaude = [...claudeRCs];
+    const unmatchedGemini = [...geminiRCs];
+
+    for (let i = unmatchedClaude.length - 1; i >= 0; i--) {
+      const claude = unmatchedClaude[i];
+      if (!claude) continue;
+
+      for (let j = unmatchedGemini.length - 1; j >= 0; j--) {
+        const gemini = unmatchedGemini[j];
+        if (!gemini) continue;
+
+        if (
+          claude.file === gemini.file &&
+          Math.abs(claude.line - gemini.line) <= 5 &&
+          claude.sharedState === gemini.sharedState
+        ) {
+          merged.push({
+            ...claude,
+            confidence: "high",
+            models: ["claude", "gemini"],
+          });
+          unmatchedClaude.splice(i, 1);
+          unmatchedGemini.splice(j, 1);
+          break;
+        }
+      }
+    }
+
+    for (const rc of unmatchedClaude) {
+      merged.push({ ...rc, confidence: "medium", models: ["claude"] });
+    }
+    for (const rc of unmatchedGemini) {
+      merged.push({ ...rc, confidence: "medium", models: ["gemini"] });
+    }
+
+    merged.sort((a, b) => {
+      const order = { high: 0, medium: 1, low: 2 };
+      return order[a.confidence] - order[b.confidence];
+    });
+
+    return merged;
   }
 
   private parseSuggestionResponse(response: string, issues: AIRiskIssue[]): AIFixSuggestion[] {
