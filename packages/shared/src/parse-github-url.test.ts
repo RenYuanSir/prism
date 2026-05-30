@@ -32,6 +32,16 @@ describe("parseGitHubPrUrl", () => {
     expect(result).toEqual({ owner: "owner", repo: "repo", pullNumber: 99 });
   });
 
+  it("parses a URL with mixed-case hostname", () => {
+    const result = parseGitHubPrUrl("https://GitHub.com/foo/bar/pull/99");
+    expect(result).toEqual({ owner: "foo", repo: "bar", pullNumber: 99 });
+  });
+
+  it("parses a URL with www subdomain", () => {
+    const result = parseGitHubPrUrl("https://www.github.com/owner/repo/pull/42");
+    expect(result).toEqual({ owner: "owner", repo: "repo", pullNumber: 42 });
+  });
+
   it("parses a URL with trailing whitespace", () => {
     const result = parseGitHubPrUrl("  https://github.com/a/b/pull/7  ");
     expect(result).toEqual({ owner: "a", repo: "b", pullNumber: 7 });

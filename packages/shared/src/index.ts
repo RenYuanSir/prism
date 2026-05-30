@@ -297,6 +297,7 @@ export interface ImpactGraph {
  * - https://github.com/owner/repo/pull/123/files
  * - http://github.com/owner/repo/pull/123#discussion
  * - github.com/owner/repo/pull/123
+ * - https://www.github.com/owner/repo/pull/123
  */
 export function parseGitHubPrUrl(
   url: string,
@@ -304,7 +305,7 @@ export function parseGitHubPrUrl(
   const trimmed = url.trim();
   if (!trimmed) return null;
 
-  const regex = /github\.com\/([^/]+)\/([^/]+)\/pull\/(\d+)/;
+  const regex = /(?:www\.)?github\.com\/([^/]+)\/([^/]+)\/pull\/(\d+)/i;
   const match = trimmed.match(regex);
   if (!match) return null;
 
