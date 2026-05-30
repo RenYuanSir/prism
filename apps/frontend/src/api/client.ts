@@ -174,5 +174,23 @@ export async function fetchHistory(): Promise<
 
 export async function fetchHistoryDetail(id: string): Promise<ApiResponse<ReviewResponse>> {
   const response = await fetch(`${BASE_URL}/history/${id}`);
-  return response.json();
+  const json = await response.json();
+  if (json.success && json.data) {
+    // Map SavedReview.pr.prNumber -> ReviewResponse.pr.id for type compatibility
+    return {
+      success: true,
+      data: {
+        ...json.data,
+        pr: {
+          id: json.data.pr.prNumber,
+          title: json.data.pr.title,
+          description: json.data.pr.description,
+          author: json.data.pr.author,
+          branch: json.data.pr.branch,
+          baseBranch: json.data.pr.baseBranch,
+        },
+      },
+    };
+  }
+  return json;
 }
