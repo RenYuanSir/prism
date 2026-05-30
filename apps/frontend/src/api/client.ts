@@ -152,3 +152,27 @@ export async function checkHealth(): Promise<boolean> {
     return false;
   }
 }
+
+export async function fetchHistory(): Promise<
+  ApiResponse<
+    Array<{
+      id: string;
+      owner: string;
+      repo: string;
+      prNumber: number;
+      title: string;
+      createdAt: string;
+      riskCount: number;
+      criticalCount: number;
+      summarySnippet: string;
+    }>
+  >
+> {
+  const response = await fetch(`${BASE_URL}/history`);
+  return response.json();
+}
+
+export async function fetchHistoryDetail(id: string): Promise<ApiResponse<ReviewResponse>> {
+  const response = await fetch(`${BASE_URL}/history/${id}`);
+  return response.json();
+}
