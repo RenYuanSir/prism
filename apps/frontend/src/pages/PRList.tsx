@@ -128,7 +128,7 @@ export function PRList() {
                   )}
                 </div>
                 {urlParseStatus === "error" && (
-                  <p className="text-[12px] text-red-500 mt-1">Invalid GitHub PR URL</p>
+                  <p className="text-[13px] text-red-500 mt-1">Invalid GitHub PR URL</p>
                 )}
               </div>
 
