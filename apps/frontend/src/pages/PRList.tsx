@@ -1,5 +1,15 @@
+import { parseGitHubPrUrl } from "@prism/shared";
 import { motion } from "framer-motion";
-import { ArrowRight, GitBranch, GitPullRequest, Shield, Sparkles, Zap } from "lucide-react";
+import {
+  ArrowRight,
+  CheckCircle2,
+  GitBranch,
+  GitPullRequest,
+  Shield,
+  Sparkles,
+  XCircle,
+  Zap,
+} from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -15,12 +25,36 @@ export function PRList() {
   const [repo, setRepo] = useState("");
   const [pullNumber, setPullNumber] = useState("");
   const [isHovered, setIsHovered] = useState(false);
+  const [urlInput, setUrlInput] = useState("");
+  const [urlParseStatus, setUrlParseStatus] = useState<"idle" | "success" | "error">("idle");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (owner && repo && pullNumber) {
       navigate(`/review/${owner}/${repo}/${pullNumber}`);
     }
+  };
+
+  const handleUrlChange = (value: string) => {
+    setUrlInput(value);
+    if (!value.trim()) {
+      setUrlParseStatus("idle");
+      return;
+    }
+    const parsed = parseGitHubPrUrl(value);
+    if (parsed) {
+      setOwner(parsed.owner);
+      setRepo(parsed.repo);
+      setPullNumber(String(parsed.pullNumber));
+      setUrlParseStatus("success");
+    } else {
+      setUrlParseStatus("error");
+    }
+  };
+
+  const handleManualFieldChange = (setter: (value: string) => void, value: string) => {
+    setter(value);
+    setUrlParseStatus("idle");
   };
 
   const isValid = owner.trim() && repo.trim() && pullNumber.trim();
@@ -59,6 +93,45 @@ export function PRList() {
             className="space-y-4"
           >
             <div className="glass-surface rounded-xl p-5 space-y-4">
+              {/* URL Auto-Parse Input */}
+              <div>
+                <label
+                  htmlFor="pr-url"
+                  className="block text-[11px] font-weight-510 text-linear-text-muted tracking-wide uppercase mb-1.5"
+                >
+                  GitHub PR URL
+                </label>
+                <div className="relative">
+                  <input
+                    id="pr-url"
+                    type="text"
+                    value={urlInput}
+                    onChange={(e) => handleUrlChange(e.target.value)}
+                    onPaste={(e) => {
+                      const pasted = e.clipboardData.getData("text");
+                      handleUrlChange(pasted);
+                    }}
+                    placeholder="Paste a GitHub PR URL to auto-fill…"
+                    className={`w-full px-3 py-2.5 bg-linear-black border rounded-md text-[13px] text-linear-text-primary placeholder-linear-text-muted/50 focus:outline-none transition-colors pr-9 ${
+                      urlParseStatus === "success"
+                        ? "border-green-500/50 focus:border-green-500"
+                        : urlParseStatus === "error"
+                          ? "border-red-500/50 focus:border-red-500"
+                          : "border-linear-border focus:border-linear-accent/50"
+                    }`}
+                  />
+                  {urlParseStatus === "success" && (
+                    <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
+                  )}
+                  {urlParseStatus === "error" && (
+                    <XCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-red-500" />
+                  )}
+                </div>
+                {urlParseStatus === "error" && (
+                  <p className="text-[12px] text-red-500 mt-1">Invalid GitHub PR URL</p>
+                )}
+              </div>
+
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label
@@ -71,7 +144,7 @@ export function PRList() {
                     id="owner"
                     type="text"
                     value={owner}
-                    onChange={(e) => setOwner(e.target.value)}
+                    onChange={(e) => handleManualFieldChange(setOwner, e.target.value)}
                     placeholder="facebook"
                     className="w-full px-3 py-2.5 bg-linear-black border border-linear-border rounded-md text-[13px] text-linear-text-primary placeholder-linear-text-muted/50 focus:outline-none focus:border-linear-accent/50 transition-colors"
                   />
@@ -87,7 +160,7 @@ export function PRList() {
                     id="repo"
                     type="text"
                     value={repo}
-                    onChange={(e) => setRepo(e.target.value)}
+                    onChange={(e) => handleManualFieldChange(setRepo, e.target.value)}
                     placeholder="react"
                     className="w-full px-3 py-2.5 bg-linear-black border border-linear-border rounded-md text-[13px] text-linear-text-primary placeholder-linear-text-muted/50 focus:outline-none focus:border-linear-accent/50 transition-colors"
                   />
@@ -104,7 +177,7 @@ export function PRList() {
                   id="pr"
                   type="number"
                   value={pullNumber}
-                  onChange={(e) => setPullNumber(e.target.value)}
+                  onChange={(e) => handleManualFieldChange(setPullNumber, e.target.value)}
                   placeholder="28735"
                   min="1"
                   className="w-full px-3 py-2.5 bg-linear-black border border-linear-border rounded-md text-[13px] text-linear-text-primary placeholder-linear-text-muted/50 focus:outline-none focus:border-linear-accent/50 transition-colors"
