@@ -1,6 +1,9 @@
 # Claude Code local settings
-.claude/settings.local.json
-.claude/CLAUDE.local.md
+.claude/
+CLAUDE.md
+
+# Project documentation
+CONTRIBUTING.md
 
 # Dependencies
 node_modules/
