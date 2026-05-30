@@ -23,9 +23,8 @@ import {
   Zap,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import { Link } from "react-router-dom";
-import { type ReviewResponse, fetchImpact, streamReview } from "../api/client";
+import { Link, useParams, useSearchParams } from "react-router-dom";
+import { type ReviewResponse, fetchHistoryDetail, fetchImpact, streamReview } from "../api/client";
 import { ConsensusView } from "../components/ConsensusView";
 import { FileChangeCard } from "../components/FileChangeCard";
 import { ImpactHeatmap } from "../components/ImpactHeatmap";
@@ -64,6 +63,9 @@ export function ReviewResult() {
     repo: string;
     pullNumber: string;
   }>();
+  const [searchParams] = useSearchParams();
+  const historyId = searchParams.get("historyId");
+
   const [state, setState] = useState<ReviewState>({
     status: "loading",
     partial: { isComplete: false },
@@ -79,6 +81,47 @@ export function ReviewResult() {
         partial: { isComplete: false },
       });
       return;
+    }
+
+    // Cached review mode — load from history, skip pipeline
+    if (historyId) {
+      async function loadCached() {
+        try {
+          const result = await fetchHistoryDetail(historyId!);
+          if (result.success && result.data) {
+            setState({
+              status: "success",
+              data: {
+                pr: {
+                  id: result.data.pr.id,
+                  title: result.data.pr.title,
+                  description: result.data.pr.description,
+                  author: result.data.pr.author,
+                  branch: result.data.pr.branch,
+                  baseBranch: result.data.pr.baseBranch,
+                },
+                semanticDiff: result.data.semanticDiff,
+                review: result.data.review,
+              },
+              impactGraph: null,
+            });
+          } else {
+            setState({
+              status: "error",
+              message: result.error ?? "Review not found — may have been deleted",
+              partial: { isComplete: false },
+            });
+          }
+        } catch (err) {
+          setState({
+            status: "error",
+            message: err instanceof Error ? err.message : "Failed to load review",
+            partial: { isComplete: false },
+          });
+        }
+      }
+      loadCached();
+      return; // Skip streaming flow
     }
 
     const partial: PartialResults = { isComplete: false };
@@ -173,7 +216,7 @@ export function ReviewResult() {
     return () => {
       streamController?.abort();
     };
-  }, [owner, repo, pullNumber]);
+  }, [owner, repo, pullNumber, historyId]);
 
   if (!owner || !repo || !pullNumber) {
     return (
@@ -188,11 +231,11 @@ export function ReviewResult() {
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
         <Link
-          to="/"
+          to={historyId ? "/history" : "/"}
           className="inline-flex items-center gap-2 text-[13px] text-linear-text-tertiary hover:text-linear-text-secondary transition-colors mb-4"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to PR List
+          {historyId ? "Back to History" : "Back to PR List"}
         </Link>
         <div className="flex items-center gap-2 text-[13px] text-linear-text-muted font-mono">
           <GitCommit className="h-3.5 w-3.5" />
