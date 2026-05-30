@@ -83,6 +83,8 @@ export function ReviewResult() {
 
     const partial: PartialResults = { isComplete: false };
 
+    let streamController: AbortController | null = null;
+
     streamReview(
       owner,
       repo,
@@ -164,7 +166,13 @@ export function ReviewResult() {
           /* PR info fetch is non-critical */
         }
       },
-    );
+    ).then((c) => {
+      streamController = c;
+    });
+
+    return () => {
+      streamController?.abort();
+    };
   }, [owner, repo, pullNumber]);
 
   if (!owner || !repo || !pullNumber) {
