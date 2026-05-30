@@ -1,4 +1,4 @@
-import type { SemanticDiff } from "@ai-pr-review/shared";
+import type { SemanticDiff } from "@prism/shared";
 import { describe, expect, it } from "vitest";
 import {
   analyzeRaceConditionPatterns,

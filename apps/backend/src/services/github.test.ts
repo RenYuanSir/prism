@@ -1,4 +1,4 @@
-import type { PRCommit, PRFile, PullRequest } from "@ai-pr-review/shared";
+import type { PRCommit, PRFile, PullRequest } from "@prism/shared";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { GitHubService } from "./github";
 

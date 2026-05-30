@@ -1,4 +1,4 @@
-import type { FileChange, SemanticDiff } from "@ai-pr-review/shared";
+import type { FileChange, SemanticDiff } from "@prism/shared";
 import { describe, expect, it } from "vitest";
 import { analyzeImpact, resolveImportPath } from "./impact-analyzer.js";
 
@@ -54,7 +54,7 @@ describe("resolveImportPath", () => {
   });
 
   it("should return null for scoped package imports", () => {
-    const result = resolveImportPath("@ai-pr-review/shared", "src/index.ts", ["src/index.ts"]);
+    const result = resolveImportPath("@prism/shared", "src/index.ts", ["src/index.ts"]);
     expect(result).toBeNull();
   });
 

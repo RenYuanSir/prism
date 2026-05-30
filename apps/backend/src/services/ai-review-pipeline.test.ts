@@ -4,7 +4,7 @@ import type {
   AISummaryResult,
   PullRequest,
   SemanticDiff,
-} from "@ai-pr-review/shared";
+} from "@prism/shared";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   AIReviewPipeline,

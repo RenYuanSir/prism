@@ -13,7 +13,19 @@ export default defineConfig({
       provider: "v8",
       reporter: ["text", "json", "html"],
       include: ["packages/*/src/**/*.ts", "apps/*/src/**/*.ts"],
-      exclude: ["**/*.test.ts", "**/dist/**", "**/node_modules/**", "**/vite-env.d.ts"],
+      exclude: [
+        "**/*.test.ts",
+        "**/dist/**",
+        "**/node_modules/**",
+        "**/vite-env.d.ts",
+        "**/*.config.*",
+      ],
+      thresholds: {
+        lines: 70,
+        functions: 70,
+        branches: 60,
+        statements: 70,
+      },
     },
   },
 });

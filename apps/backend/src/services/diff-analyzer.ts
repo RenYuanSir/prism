@@ -1,4 +1,4 @@
-import type { FileChange, PRFile, SemanticDiff } from "@ai-pr-review/shared";
+import type { FileChange, PRFile, SemanticDiff } from "@prism/shared";
 import {
   type ExportInfo,
   type FunctionInfo,
