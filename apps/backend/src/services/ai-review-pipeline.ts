@@ -148,7 +148,6 @@ export class AIReviewPipeline {
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
       onEvent({ type: "error", message });
-      throw error;
     }
   }
 

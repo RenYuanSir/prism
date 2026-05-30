@@ -96,23 +96,14 @@ export interface SemanticDiff {
 // AI Review Pipeline types
 export type PipelineStage = "summary" | "risk" | "suggestion";
 
-export interface StreamEvent {
-  type:
-    | "stage:start"
-    | "summary"
-    | "risk:model-done"
-    | "consensus"
-    | "suggestion"
-    | "done"
-    | "error";
-  stage?: string;
-  summary?: string;
-  model?: string;
-  findings?: ModelFinding[];
-  consensus?: AIConsensusResult;
-  suggestions?: AIFixSuggestion[];
-  message?: string;
-}
+export type StreamEvent =
+  | { type: "stage:start"; stage: string }
+  | { type: "summary"; summary: string }
+  | { type: "risk:model-done"; model: string; findings: ModelFinding[] }
+  | { type: "consensus"; consensus: AIConsensusResult }
+  | { type: "suggestion"; suggestions: AIFixSuggestion[] }
+  | { type: "done" }
+  | { type: "error"; message: string };
 
 export type AIRiskSeverity = "critical" | "warning" | "info";
 

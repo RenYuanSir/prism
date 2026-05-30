@@ -1192,24 +1192,23 @@ describe("runStream", () => {
       suggestionClient: failingClient,
     });
 
-    await expect(
-      pipeline.runStream(
-        {
-          id: 1,
-          title: "Test",
-          description: "",
-          author: "test",
-          branch: "feat",
-          baseBranch: "main",
-          files: [],
-          commits: [],
-        },
-        "diff",
-        { fileChanges: [], summary: "test", totalFiles: 0, totalAdditions: 0, totalDeletions: 0 },
-        {},
-        (e) => events.push(e),
-      ),
-    ).rejects.toThrow("API timeout");
+    // runStream should NOT throw — it communicates errors via callback
+    await pipeline.runStream(
+      {
+        id: 1,
+        title: "Test",
+        description: "",
+        author: "test",
+        branch: "feat",
+        baseBranch: "main",
+        files: [],
+        commits: [],
+      },
+      "diff",
+      { fileChanges: [], summary: "test", totalFiles: 0, totalAdditions: 0, totalDeletions: 0 },
+      {},
+      (e) => events.push(e),
+    );
 
     const errEvt = events.find((e) => e.type === "error");
     expect(errEvt).toBeDefined();
