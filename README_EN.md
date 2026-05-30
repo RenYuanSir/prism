@@ -37,6 +37,7 @@ PRism is an AI-powered code review assistant designed for GitHub Pull Requests. 
 | **Streaming Display** | SSE progressive rendering — results stream to frontend per pipeline stage as they complete |
 | **Impact Heatmap** | Dependency impact graph showing the blast radius of code changes |
 | **Review History** | Auto-persist reviews as JSON files with instant cached loading |
+| **URL Auto-Parse** | Paste a GitHub PR URL to auto-fill owner/repo/number fields |
 
 ## Architecture
 
