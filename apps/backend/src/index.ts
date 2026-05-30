@@ -1,3 +1,4 @@
+import type { AIConsensusResult, AIFixSuggestion, SavedReview } from "@prism/shared";
 import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
@@ -5,6 +6,7 @@ import type { Request, Response } from "express";
 import { createDefaultPipeline } from "./services/ai-review-pipeline.js";
 import { analyzeDiff } from "./services/diff-analyzer.js";
 import { GitHubService } from "./services/github.js";
+import { HistoryStore } from "./services/history-store.js";
 import { analyzeImpact } from "./services/impact-analyzer.js";
 
 dotenv.config({ path: "../../.env" });
@@ -17,6 +19,32 @@ app.use(express.json());
 
 app.get("/api/health", (_req, res) => {
   res.json({ status: "ok" });
+});
+
+app.get("/api/history", async (_req: Request, res: Response) => {
+  try {
+    const store = new HistoryStore();
+    const entries = await store.list();
+    res.json({ success: true, data: entries });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    res.status(500).json({ success: false, error: message });
+  }
+});
+
+app.get("/api/history/:id", async (req: Request, res: Response) => {
+  try {
+    const store = new HistoryStore();
+    const review = await store.get(req.params.id);
+    if (!review) {
+      res.status(404).json({ success: false, error: "Review not found" });
+      return;
+    }
+    res.json({ success: true, data: review });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    res.status(500).json({ success: false, error: message });
+  }
 });
 
 app.get("/api/pr/:owner/:repo/:pullNumber", async (req: Request, res: Response) => {
@@ -179,12 +207,70 @@ app.post("/api/review/:owner/:repo/:pullNumber/stream", async (req: Request, res
     );
     const fileContents = Object.fromEntries(fileContentEntries);
 
+    // Collect review data during streaming for history
+    let collectedSummary = "";
+    let collectedConsensus: AIConsensusResult | null = null;
+    let collectedSuggestions: AIFixSuggestion[] = [];
+
     const pipeline = createDefaultPipeline();
     await pipeline.runStream(pr, diff, semanticDiff, fileContents, (event) => {
       if (aborted) return;
+      if (event.type === "summary" && event.summary) {
+        collectedSummary = event.summary;
+      }
+      if (event.type === "consensus" && event.consensus) {
+        collectedConsensus = event.consensus;
+      }
+      if (event.type === "suggestion" && event.suggestions) {
+        collectedSuggestions = event.suggestions;
+      }
       const data = JSON.stringify(event);
       res.write(`event: ${event.type}\ndata: ${data}\n\n`);
     });
+
+    // Auto-save review history (non-blocking)
+    if (!aborted) {
+      const date = new Date().toISOString().split("T")[0];
+      const id = `${date}-${owner}-${repo}-${prNumber}`;
+      const consensus: AIConsensusResult = collectedConsensus ?? {
+        consensusIssues: [],
+        claudeOnly: [],
+        geminiOnly: [],
+        allAgreeCount: 0,
+        claudeTotal: 0,
+        geminiTotal: 0,
+      };
+      const savedReview: SavedReview = {
+        id,
+        pr: {
+          owner,
+          repo,
+          prNumber,
+          title: pr.title,
+          description: pr.description,
+          author: pr.author,
+          branch: pr.branch,
+          baseBranch: pr.baseBranch,
+        },
+        review: {
+          summary: { summary: collectedSummary, stage: "summary" },
+          risk: {
+            issues: consensus.consensusIssues.map((i) => i.issue),
+            stage: "risk",
+          },
+          consensus,
+          raceConditions: [],
+          suggestion: { suggestions: collectedSuggestions, stage: "suggestion" },
+        },
+        semanticDiff,
+        createdAt: new Date().toISOString(),
+      };
+      try {
+        await new HistoryStore().save(savedReview);
+      } catch (err) {
+        console.error("Failed to save review history:", err);
+      }
+    }
 
     if (!aborted) {
       res.end();
