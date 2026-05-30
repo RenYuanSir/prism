@@ -63,6 +63,10 @@ describe("parseGitHubPrUrl", () => {
     expect(parseGitHubPrUrl("")).toBeNull();
   });
 
+  it("returns null for URL with github.com as subdomain of another domain", () => {
+    expect(parseGitHubPrUrl("https://notgithub.com/foo/bar/pull/123")).toBeNull();
+  });
+
   it("returns null for random text", () => {
     expect(parseGitHubPrUrl("not a url")).toBeNull();
   });

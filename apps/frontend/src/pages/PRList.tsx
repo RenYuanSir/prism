@@ -107,10 +107,6 @@ export function PRList() {
                     type="text"
                     value={urlInput}
                     onChange={(e) => handleUrlChange(e.target.value)}
-                    onPaste={(e) => {
-                      const pasted = e.clipboardData.getData("text");
-                      handleUrlChange(pasted);
-                    }}
                     placeholder="Paste a GitHub PR URL to auto-fill…"
                     className={`w-full px-3 py-2.5 bg-linear-black border rounded-md text-[13px] text-linear-text-primary placeholder-linear-text-muted/50 focus:outline-none transition-colors pr-9 ${
                       urlParseStatus === "success"
@@ -121,10 +117,16 @@ export function PRList() {
                     }`}
                   />
                   {urlParseStatus === "success" && (
-                    <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
+                    <CheckCircle2
+                      className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500"
+                      aria-label="URL parsed successfully"
+                    />
                   )}
                   {urlParseStatus === "error" && (
-                    <XCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-red-500" />
+                    <XCircle
+                      className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-red-500"
+                      aria-label="Invalid GitHub PR URL"
+                    />
                   )}
                 </div>
                 {urlParseStatus === "error" && (

@@ -305,7 +305,7 @@ export function parseGitHubPrUrl(
   const trimmed = url.trim();
   if (!trimmed) return null;
 
-  const regex = /(?:www\.)?github\.com\/([^/]+)\/([^/]+)\/pull\/(\d+)/i;
+  const regex = /(?:www\.)?\bgithub\.com\/([^/]+)\/([^/]+)\/pull\/(\d+)/i;
   const match = trimmed.match(regex);
   if (!match) return null;
 
