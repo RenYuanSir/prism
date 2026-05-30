@@ -54,8 +54,8 @@ importers:
         specifier: ^0.1.13
         version: 0.1.13
       web-tree-sitter:
-        specifier: ^0.26.9
-        version: 0.26.9
+        specifier: 0.24.7
+        version: 0.24.7
     devDependencies:
       '@types/cors':
         specifier: ^2.8.0
@@ -2170,8 +2170,8 @@ packages:
     resolution: {integrity: sha512-QW95TCTaHmsYfHDybGMwO5IJIM93I/6vTRk+daHTWFPhwh+C8Cg7j7XyKrwrj8Ib6vYXe0ocYNrmzY4xAAN6ug==}
     engines: {node: '>= 14'}
 
-  web-tree-sitter@0.26.9:
-    resolution: {integrity: sha512-YJwSHANl6XFgeEjB8nitgj0qZYt5gkIesJ4w2srS2wcLB4GUa4xcOkM0YaMsU6WNR53YVIkDSY7Ej4pf3IXtCA==}
+  web-tree-sitter@0.24.7:
+    resolution: {integrity: sha512-CdC/TqVFbXqR+C51v38hv6wOPatKEUGxa39scAeFSm98wIhZxAYonhRQPSMmfZ2w7JDI0zQDdzdmgtNk06/krQ==}
 
   webidl-conversions@3.0.1:
     resolution: {integrity: sha512-2JAn3z8AR6rjK8Sm8orRC0h/bcl/DqL7tRPdGZ4I1CjdF+EaMLmYxBHyXuKL849eucPFhvBoxMsflfOb8kxaeQ==}
@@ -4140,7 +4140,7 @@ snapshots:
 
   web-streams-polyfill@4.0.0-beta.3: {}
 
-  web-tree-sitter@0.26.9: {}
+  web-tree-sitter@0.24.7: {}
 
   webidl-conversions@3.0.1: {}
 

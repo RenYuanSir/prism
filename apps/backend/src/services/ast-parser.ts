@@ -1,4 +1,6 @@
 import type { ChangeType, ExportChange, FunctionChange, ImportChange } from "@ai-pr-review/shared";
+import type Parser from "web-tree-sitter";
+import { getLanguage, getParser } from "./tree-sitter-init.js";
 
 export interface ParsedFile {
   functions: FunctionInfo[];
@@ -16,6 +18,10 @@ export interface FunctionInfo {
   signature: string;
   parameters: string[];
   returnType: string;
+  body?: string;
+  isAsync?: boolean;
+  isMethod?: boolean;
+  className?: string;
 }
 
 export interface ImportInfo {
@@ -29,8 +35,34 @@ export interface ExportInfo {
   isDefault: boolean;
 }
 
-// Simple regex-based parser for hackathon (tree-sitter has ESM issues)
-export async function parseFile(content: string): Promise<ParsedFile> {
+// Tree-sitter AST parser with regex fallback
+export async function parseFile(content: string, filename?: string): Promise<ParsedFile> {
+  try {
+    const parser = await getParser();
+    const lang = getLanguage(filename ?? "file.ts");
+    if (!lang) {
+      return regexFallback(content);
+    }
+
+    parser.setLanguage(lang);
+    const tree = parser.parse(content);
+    const root = tree.rootNode;
+
+    return {
+      functions: extractFunctionsFromAST(root),
+      imports: extractImportsFromAST(root),
+      exports: extractExportsFromAST(root),
+      classes: extractClassesFromAST(root),
+      interfaces: extractInterfacesFromAST(root),
+      types: extractTypesFromAST(root),
+    };
+  } catch (error) {
+    console.warn("Tree-sitter parsing failed, falling back to regex:", error);
+    return regexFallback(content);
+  }
+}
+
+async function regexFallback(content: string): Promise<ParsedFile> {
   return {
     functions: extractFunctions(content),
     imports: extractImports(content),
@@ -39,6 +71,259 @@ export async function parseFile(content: string): Promise<ParsedFile> {
     interfaces: extractInterfaces(content),
     types: extractTypes(content),
   };
+}
+
+function extractFunctionsFromAST(root: Parser.SyntaxNode): FunctionInfo[] {
+  const functions: FunctionInfo[] = [];
+
+  function visit(node: Parser.SyntaxNode) {
+    // Function declarations
+    if (node.type === "function_declaration") {
+      const nameNode = node.childForFieldName("name");
+      const paramsNode = node.childForFieldName("parameters");
+      const bodyNode = node.childForFieldName("body");
+      const returnTypeNode = node.childForFieldName("return_type");
+
+      if (nameNode) {
+        const isAsync = node.text.startsWith("async");
+        const params = extractParameters(paramsNode);
+        const returnType = returnTypeNode?.text ?? "void";
+        const signature = `${nameNode.text}(${params.join(", ")}): ${returnType}`;
+
+        functions.push({
+          name: nameNode.text,
+          startLine: node.startPosition.row + 1,
+          endLine: node.endPosition.row + 1,
+          signature,
+          parameters: params,
+          returnType,
+          body: bodyNode?.text,
+          isAsync,
+          isMethod: false,
+        });
+      }
+    }
+
+    // Method definitions (class methods)
+    if (node.type === "method_definition") {
+      const nameNode = node.childForFieldName("name");
+      const paramsNode = node.childForFieldName("parameters");
+      const bodyNode = node.childForFieldName("body");
+      const returnTypeNode = node.childForFieldName("return_type");
+
+      if (nameNode) {
+        const isAsync = node.text.startsWith("async");
+        const params = extractParameters(paramsNode);
+        const returnType = returnTypeNode?.text ?? "void";
+        const signature = `${nameNode.text}(${params.join(", ")}): ${returnType}`;
+
+        // Find parent class name
+        let className: string | undefined;
+        let parent = node.parent;
+        while (parent && parent.type !== "class_declaration") {
+          parent = parent.parent;
+        }
+        if (parent) {
+          const classNameNode = parent.childForFieldName("name");
+          className = classNameNode?.text;
+        }
+
+        functions.push({
+          name: nameNode.text,
+          startLine: node.startPosition.row + 1,
+          endLine: node.endPosition.row + 1,
+          signature,
+          parameters: params,
+          returnType,
+          body: bodyNode?.text,
+          isAsync,
+          isMethod: true,
+          className,
+        });
+      }
+    }
+
+    // Arrow functions assigned to const/let/var
+    if (node.type === "lexical_declaration" || node.type === "variable_declaration") {
+      const declarator = node.children.find((c) => c.type === "variable_declarator");
+      if (declarator) {
+        const nameNode = declarator.childForFieldName("name");
+        const valueNode = declarator.childForFieldName("value");
+
+        if (nameNode && valueNode?.type === "arrow_function") {
+          const paramsNode = valueNode.childForFieldName("parameters");
+          const bodyNode = valueNode.childForFieldName("body");
+          const returnTypeNode = valueNode.childForFieldName("return_type");
+
+          const isAsync = valueNode.text.startsWith("async");
+          const params = extractParameters(paramsNode);
+          const returnType = returnTypeNode?.text ?? "void";
+          const signature = `${nameNode.text}(${params.join(", ")}): ${returnType}`;
+
+          functions.push({
+            name: nameNode.text,
+            startLine: node.startPosition.row + 1,
+            endLine: node.endPosition.row + 1,
+            signature,
+            parameters: params,
+            returnType,
+            body: bodyNode?.text,
+            isAsync,
+            isMethod: false,
+          });
+        }
+      }
+    }
+
+    // Recurse into children
+    for (const child of node.children) {
+      visit(child);
+    }
+  }
+
+  visit(root);
+  return functions;
+}
+
+function extractParameters(paramsNode: Parser.SyntaxNode | null): string[] {
+  if (!paramsNode) return [];
+
+  const params: string[] = [];
+  for (const child of paramsNode.children) {
+    if (child.type === "identifier") {
+      params.push(child.text);
+    } else if (child.type === "required_parameter" || child.type === "optional_parameter") {
+      const patternNode = child.childForFieldName("pattern") ?? child.children[0];
+      if (patternNode) {
+        params.push(patternNode.text);
+      }
+    }
+  }
+  return params;
+}
+
+function extractImportsFromAST(root: Parser.SyntaxNode): ImportInfo[] {
+  const imports: ImportInfo[] = [];
+
+  function visit(node: Parser.SyntaxNode) {
+    if (node.type === "import_statement") {
+      const sourceNode = node.childForFieldName("source");
+      if (!sourceNode) return;
+
+      const module = sourceNode.text.replace(/["']/g, "");
+      const importsList: string[] = [];
+      let isDefault = false;
+
+      const clauseNode = node.children.find((c) => c.type === "import_clause");
+      if (clauseNode) {
+        // Default import: identifier child of import_clause (no field name)
+        const defaultImport = clauseNode.children.find((c) => c.type === "identifier");
+        if (defaultImport) {
+          importsList.push(defaultImport.text);
+        }
+
+        // Named imports: import_specifier descendants
+        const namedImports = clauseNode.descendantsOfType("import_specifier");
+        for (const spec of namedImports) {
+          const nameNode = spec.childForFieldName("name");
+          if (nameNode) {
+            importsList.push(nameNode.text);
+          }
+        }
+
+        // isDefault is true only when there's a default import AND no named imports
+        isDefault = defaultImport !== undefined && namedImports.length === 0;
+      }
+
+      imports.push({
+        module,
+        imports: importsList,
+        isDefault,
+      });
+    }
+
+    for (const child of node.children) {
+      visit(child);
+    }
+  }
+
+  visit(root);
+  return imports;
+}
+
+function extractExportsFromAST(root: Parser.SyntaxNode): ExportInfo[] {
+  const exports: ExportInfo[] = [];
+
+  function visit(node: Parser.SyntaxNode) {
+    if (node.type === "export_statement") {
+      const declarationNode = node.childForFieldName("declaration");
+      if (!declarationNode) return;
+
+      const isDefault = node.text.includes("export default");
+
+      // Function/class declaration: name is a direct field
+      let nameNode = declarationNode.childForFieldName("name");
+
+      // Lexical/variable declaration (export const/let/var): drill into variable_declarator
+      if (!nameNode) {
+        const declarator = declarationNode.children.find((c) => c.type === "variable_declarator");
+        if (declarator) {
+          nameNode = declarator.childForFieldName("name");
+        }
+      }
+
+      // Fallback: direct identifier child
+      if (!nameNode) {
+        nameNode = declarationNode.children.find((c) => c.type === "identifier") ?? null;
+      }
+
+      if (nameNode) {
+        exports.push({
+          name: nameNode.text,
+          isDefault,
+        });
+      }
+    }
+
+    for (const child of node.children) {
+      visit(child);
+    }
+  }
+
+  visit(root);
+  return exports;
+}
+
+function extractNamesByNodeType(root: Parser.SyntaxNode, nodeType: string): string[] {
+  const names: string[] = [];
+
+  function visit(node: Parser.SyntaxNode) {
+    if (node.type === nodeType) {
+      const nameNode = node.childForFieldName("name");
+      if (nameNode) {
+        names.push(nameNode.text);
+      }
+    }
+
+    for (const child of node.children) {
+      visit(child);
+    }
+  }
+
+  visit(root);
+  return names;
+}
+
+function extractClassesFromAST(root: Parser.SyntaxNode): string[] {
+  return extractNamesByNodeType(root, "class_declaration");
+}
+
+function extractInterfacesFromAST(root: Parser.SyntaxNode): string[] {
+  return extractNamesByNodeType(root, "interface_declaration");
+}
+
+function extractTypesFromAST(root: Parser.SyntaxNode): string[] {
+  return extractNamesByNodeType(root, "type_alias_declaration");
 }
 
 function extractFunctions(content: string): FunctionInfo[] {

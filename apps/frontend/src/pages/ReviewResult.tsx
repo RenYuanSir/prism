@@ -1,4 +1,4 @@
-import type { AIReviewResult, SemanticDiff } from "@ai-pr-review/shared";
+import type { AIReviewResult, ImpactGraph, SemanticDiff } from "@ai-pr-review/shared";
 import type { PipelineStage } from "@ai-pr-review/shared";
 import {
   AlertTriangle,
@@ -10,12 +10,14 @@ import {
   Sparkles,
   User,
   XCircle,
+  Zap,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Link } from "react-router-dom";
-import { type ReviewResponse, triggerReview } from "../api/client";
+import { type ReviewResponse, fetchImpact, triggerReview } from "../api/client";
 import { FileChangeCard } from "../components/FileChangeCard";
+import { ImpactHeatmap } from "../components/ImpactHeatmap";
 import { PipelineProgress } from "../components/PipelineProgress";
 import { RiskIssueCard } from "../components/RiskIssueCard";
 import { SuggestionCard } from "../components/SuggestionCard";
@@ -31,7 +33,7 @@ interface PRInfo {
 
 type ReviewState =
   | { status: "loading"; stage: PipelineStage | "idle" }
-  | { status: "success"; data: ReviewResponse }
+  | { status: "success"; data: ReviewResponse; impactGraph: ImpactGraph | null }
   | { status: "error"; message: string };
 
 export function ReviewResult() {
@@ -59,9 +61,14 @@ export function ReviewResult() {
       setTimeout(() => setState({ status: "loading", stage: "suggestion" }), 4000);
 
       try {
-        const result = await triggerReview(owner!, repo!, prNum);
+        const [result, impactResult] = await Promise.all([
+          triggerReview(owner!, repo!, prNum),
+          fetchImpact(owner!, repo!, prNum),
+        ]);
         if (result.success && result.data) {
-          setState({ status: "success", data: result.data });
+          const impactGraph =
+            impactResult.success && impactResult.data ? impactResult.data.impactGraph : null;
+          setState({ status: "success", data: result.data, impactGraph });
         } else {
           setState({
             status: "error",
@@ -146,6 +153,7 @@ export function ReviewResult() {
           pr={state.data.pr}
           semanticDiff={state.data.semanticDiff}
           review={state.data.review}
+          impactGraph={state.impactGraph}
         />
       )}
     </div>
@@ -156,9 +164,10 @@ interface ReviewContentProps {
   pr: PRInfo;
   semanticDiff: SemanticDiff;
   review: AIReviewResult;
+  impactGraph: ImpactGraph | null;
 }
 
-function ReviewContent({ pr, semanticDiff, review }: ReviewContentProps) {
+function ReviewContent({ pr, semanticDiff, review, impactGraph }: ReviewContentProps) {
   const criticalCount = review.risk.issues.filter((i) => i.severity === "critical").length;
   const warningCount = review.risk.issues.filter((i) => i.severity === "warning").length;
 
@@ -228,6 +237,19 @@ function ReviewContent({ pr, semanticDiff, review }: ReviewContentProps) {
           ))}
         </div>
       </section>
+
+      {/* Impact Heatmap */}
+      {impactGraph && impactGraph.nodes.length > 0 && (
+        <section>
+          <h2 className="text-lg font-semibold text-slate-200 mb-3 flex items-center gap-2">
+            <Zap className="h-5 w-5 text-orange-400" />
+            Cross-File Impact
+          </h2>
+          <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
+            <ImpactHeatmap graph={impactGraph} />
+          </div>
+        </section>
+      )}
 
       {/* Risk Issues */}
       {review.risk.issues.length > 0 && (

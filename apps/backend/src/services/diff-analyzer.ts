@@ -82,8 +82,8 @@ export async function analyzeDiff(files: PRFile[], _diffText: string): Promise<S
       const oldContent = extractOldContent(file.patch);
       const newContent = extractNewContent(file.patch);
 
-      const oldParsed = await parseFile(oldContent);
-      const newParsed = await parseFile(newContent);
+      const oldParsed = await parseFile(oldContent, file.filename);
+      const newParsed = await parseFile(newContent, file.filename);
 
       const functionChanges = diffFunctions(oldParsed.functions, newParsed.functions);
       const importChanges = diffImports(oldParsed.imports, newParsed.imports);

@@ -1,4 +1,10 @@
-import type { AIReviewResult, ApiResponse, PullRequest, SemanticDiff } from "@ai-pr-review/shared";
+import type {
+  AIReviewResult,
+  ApiResponse,
+  ImpactGraph,
+  PullRequest,
+  SemanticDiff,
+} from "@ai-pr-review/shared";
 
 const BASE_URL = "/api";
 
@@ -19,6 +25,10 @@ export interface ReviewResponse {
   review: AIReviewResult;
 }
 
+export interface ImpactResponse {
+  impactGraph: ImpactGraph;
+}
+
 export async function fetchPR(
   owner: string,
   repo: string,
@@ -34,6 +44,17 @@ export async function triggerReview(
   pullNumber: number,
 ): Promise<ApiResponse<ReviewResponse>> {
   const response = await fetch(`${BASE_URL}/review/${owner}/${repo}/${pullNumber}`, {
+    method: "POST",
+  });
+  return response.json();
+}
+
+export async function fetchImpact(
+  owner: string,
+  repo: string,
+  pullNumber: number,
+): Promise<ApiResponse<ImpactResponse>> {
+  const response = await fetch(`${BASE_URL}/impact/${owner}/${repo}/${pullNumber}`, {
     method: "POST",
   });
   return response.json();
