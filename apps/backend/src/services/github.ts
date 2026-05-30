@@ -78,4 +78,19 @@ export class GitHubService {
       date: commit.commit.author?.date ?? "",
     }));
   }
+
+  async getFileContent(owner: string, repo: string, path: string, ref: string): Promise<string> {
+    const { data } = await this.octokit.repos.getContent({
+      owner,
+      repo,
+      path,
+      ref,
+    });
+
+    if ("content" in data && typeof data.content === "string") {
+      return Buffer.from(data.content, "base64").toString("utf-8");
+    }
+
+    throw new Error(`Cannot get content for ${path}`);
+  }
 }

@@ -90,8 +90,21 @@ app.post("/api/review/:owner/:repo/:pullNumber", async (req: Request, res: Respo
 
     const semanticDiff = await analyzeDiff(pr.files, diff);
 
+    // Fetch file contents for race condition analysis
+    const fileContentEntries = await Promise.all(
+      pr.files.map(async (file) => {
+        try {
+          const content = await github.getFileContent(owner, repo, file.filename, pr.branch);
+          return [file.filename, content] as const;
+        } catch {
+          return [file.filename, ""] as const;
+        }
+      }),
+    );
+    const fileContents = Object.fromEntries(fileContentEntries);
+
     const pipeline = createDefaultPipeline();
-    const reviewResult = await pipeline.run(pr, diff, semanticDiff);
+    const reviewResult = await pipeline.run(pr, diff, semanticDiff, fileContents);
 
     res.json({
       success: true,
