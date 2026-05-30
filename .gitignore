@@ -4,6 +4,9 @@ CLAUDE.md
 
 # Project documentation
 CONTRIBUTING.md
+ARCHITECTURE.md
+ai_pr_review_hackathon_report.md
+docs/superpowers/
 
 # Dependencies
 node_modules/
