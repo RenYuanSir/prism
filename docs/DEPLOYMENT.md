@@ -18,6 +18,31 @@ pnpm dev
 # Backend:  http://localhost:3001
 ```
 
+## Environment Variables
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `GITHUB_TOKEN` | ✅ | GitHub PAT with `repo` scope |
+| `LLM_SUMMARY_PROVIDER` | ✅ | Summary stage provider |
+| `LLM_SUMMARY_API_KEY` | ✅ | Summary stage API key |
+| `LLM_SUMMARY_MODEL` | ✅ | Summary stage model name |
+| `LLM_RISK_PROVIDER` | ✅ | Risk Model 1 provider |
+| `LLM_RISK_API_KEY` | ✅ | Risk Model 1 API key |
+| `LLM_RISK_MODEL` | ✅ | Risk Model 1 model name |
+| `LLM_GEMINI_PROVIDER` | ✅ | Risk Model 2 provider |
+| `LLM_GEMINI_API_KEY` | ✅ | Risk Model 2 API key |
+| `LLM_GEMINI_MODEL` | ✅ | Risk Model 2 model name |
+| `LLM_SUGGESTION_PROVIDER` | ✅ | Suggestion stage provider |
+| `LLM_SUGGESTION_API_KEY` | ✅ | Suggestion stage API key |
+| `LLM_SUGGESTION_MODEL` | ✅ | Suggestion stage model name |
+| `LLM_*_BASE_URL` | No | Custom API base URL (for OpenAI-compatible services) |
+| `PORT` | No | Backend port (default: 3001) |
+| `NODE_ENV` | No | `development` or `production` |
+
+**Supported Providers:** `anthropic` | `google` | `openai` | `openai-compatible`
+
+The `openai-compatible` mode supports any OpenAI-compatible API (DeepSeek, Qwen, Bailian, Kimi, etc.). Set `LLM_*_BASE_URL` to point to your provider's endpoint.
+
 ## Production Build
 
 ```bash
@@ -33,18 +58,6 @@ cd apps/frontend
 cp -r dist/ /var/www/prism/
 # Or use Vercel/Netlify for frontend hosting
 ```
-
-## Environment Variables
-
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `GITHUB_TOKEN` | Yes | GitHub PAT with `repo` scope |
-| `ANTHROPIC_API_KEY` | Yes* | Claude API key |
-| `GOOGLE_API_KEY` | Yes* | Gemini API key |
-| `PORT` | No | Backend port (default: 3001) |
-| `NODE_ENV` | No | `development` or `production` |
-
-\* Required for AI features. PR metadata works without AI keys.
 
 ## Docker (Optional)
 
