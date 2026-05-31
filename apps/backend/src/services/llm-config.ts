@@ -5,6 +5,7 @@ import { SettingsStore } from "./settings-store.js";
 export interface LLMPipelineConfig {
   summary: LLMProviderConfig;
   risk: LLMProviderConfig;
+  gemini: LLMProviderConfig;
   suggestion: LLMProviderConfig;
 }
 
@@ -34,6 +35,10 @@ function getEnvDefaults(): LLMPipelineConfig {
     risk: getEnvConfig("LLM_RISK", {
       provider: "anthropic",
       model: "claude-3-5-sonnet-20241022",
+    }),
+    gemini: getEnvConfig("LLM_GEMINI", {
+      provider: "google",
+      model: "gemini-2.0-flash",
     }),
     suggestion: getEnvConfig("LLM_SUGGESTION", {
       provider: "anthropic",
@@ -72,11 +77,13 @@ export function loadLLMConfigFromEnv(): LLMPipelineConfig {
 export function createPipelineClients(config: LLMPipelineConfig): {
   summaryClient: LLMClient;
   riskClient: LLMClient;
+  geminiClient: LLMClient;
   suggestionClient: LLMClient;
 } {
   return {
     summaryClient: createLLMClient(config.summary),
     riskClient: createLLMClient(config.risk),
+    geminiClient: createLLMClient(config.gemini),
     suggestionClient: createLLMClient(config.suggestion),
   };
 }

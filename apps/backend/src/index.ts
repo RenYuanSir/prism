@@ -356,6 +356,11 @@ app.get("/api/settings", async (_req: Request, res: Response) => {
           model: config.risk.model,
           baseUrl: config.risk.baseUrl,
         },
+        gemini: {
+          provider: config.gemini.provider,
+          model: config.gemini.model,
+          baseUrl: config.gemini.baseUrl,
+        },
         suggestion: {
           provider: config.suggestion.provider,
           model: config.suggestion.model,
@@ -377,7 +382,7 @@ app.post("/api/settings", async (req: Request, res: Response) => {
     const store = new SettingsStore();
     const config = req.body as LLMPipelineConfig;
     // Basic validation
-    const stages = ["summary", "risk", "suggestion"] as const;
+    const stages = ["summary", "risk", "gemini", "suggestion"] as const;
     for (const stage of stages) {
       if (!config[stage]?.provider || !config[stage]?.apiKey || !config[stage]?.model) {
         res

@@ -29,17 +29,20 @@ export type { LLMClient } from "./llm-client.js";
 export interface AIReviewPipelineConfig {
   summaryClient: LLMClient;
   riskClient: LLMClient;
+  geminiClient: LLMClient;
   suggestionClient: LLMClient;
 }
 
 export class AIReviewPipeline {
   private summaryClient: LLMClient;
   private riskClient: LLMClient;
+  private geminiClient: LLMClient;
   private suggestionClient: LLMClient;
 
   constructor(config: AIReviewPipelineConfig) {
     this.summaryClient = config.summaryClient;
     this.riskClient = config.riskClient;
+    this.geminiClient = config.geminiClient;
     this.suggestionClient = config.suggestionClient;
   }
 
@@ -58,7 +61,7 @@ export class AIReviewPipeline {
     const [claudeResult, geminiResult] = await Promise.all([
       this.analyzeRisksWithModel(this.riskClient, "claude", pr, diff, semanticDiff, raceCandidates),
       this.analyzeRisksWithModel(
-        this.summaryClient,
+        this.geminiClient,
         "gemini",
         pr,
         diff,
@@ -111,10 +114,10 @@ export class AIReviewPipeline {
       const raceCandidates = await this.getRaceCandidates(semanticDiff, fileContents);
 
       // Stage 2: Parallel Risk Analysis
-      // NOTE: "claude" role uses riskClient, "gemini" role uses summaryClient.
-      // This is intentional — using two different models gives diverse perspectives
-      // for consensus. If one model is consistently slower, check the env config:
-      // LLM_SUMMARY_MODEL (gemini role) vs LLM_RISK_MODEL (claude role).
+      // NOTE: "claude" role uses riskClient, "gemini" role uses its own geminiClient.
+      // Using two different models gives diverse perspectives for consensus.
+      // If one model is consistently slower, check the env config:
+      // LLM_GEMINI_MODEL vs LLM_RISK_MODEL.
       onEvent({ type: "stage:start", stage: "risk" });
       const riskStart = Date.now();
       const [claudeResult, geminiResult] = await Promise.all([
@@ -131,7 +134,7 @@ export class AIReviewPipeline {
           return r;
         }),
         this.analyzeRisksWithModel(
-          this.summaryClient,
+          this.geminiClient,
           "gemini",
           pr,
           diff,
@@ -139,7 +142,7 @@ export class AIReviewPipeline {
           raceCandidates,
         ).then((r) => {
           console.log(
-            `[pipeline] Model "gemini" (summaryClient) done in ${Date.now() - riskStart}ms`,
+            `[pipeline] Model "gemini" (geminiClient) done in ${Date.now() - riskStart}ms`,
           );
           onEvent({ type: "risk:model-done", model: "gemini", findings: r.findings });
           return r;

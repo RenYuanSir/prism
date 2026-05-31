@@ -100,6 +100,7 @@ describe("AIReviewPipeline", () => {
   let pipeline: AIReviewPipeline;
   let summaryClient: LLMClient;
   let riskClient: LLMClient;
+  let geminiClient: LLMClient;
   let suggestionClient: LLMClient;
   let pr: PullRequest;
   let semanticDiff: SemanticDiff;
@@ -169,9 +170,25 @@ export function authenticate(token: string) {
       }),
     );
 
+    geminiClient = createMockLLMClient(
+      JSON.stringify({
+        issues: [
+          {
+            severity: "critical",
+            message: "Hardcoded secret in JWT verification",
+            file: "src/auth.ts",
+            line: 4,
+            explanation:
+              "The JWT secret is hardcoded as 'hardcoded-secret'. This is a security vulnerability.",
+          },
+        ],
+      }),
+    );
+
     const config: AIReviewPipelineConfig = {
       summaryClient,
       riskClient,
+      geminiClient,
       suggestionClient,
     };
 
@@ -220,7 +237,12 @@ export function authenticate(token: string) {
 
     it("should handle empty issues response", async () => {
       riskClient = createMockLLMClient(JSON.stringify({ issues: [] }));
-      pipeline = new AIReviewPipeline({ summaryClient, riskClient, suggestionClient });
+      pipeline = new AIReviewPipeline({
+        summaryClient,
+        riskClient,
+        geminiClient,
+        suggestionClient,
+      });
 
       const result = await pipeline.analyzeRisks(pr, MOCK_DIFF, semanticDiff);
 
@@ -229,7 +251,12 @@ export function authenticate(token: string) {
 
     it("should handle malformed JSON response gracefully", async () => {
       riskClient = createMockLLMClient("This is not valid JSON");
-      pipeline = new AIReviewPipeline({ summaryClient, riskClient, suggestionClient });
+      pipeline = new AIReviewPipeline({
+        summaryClient,
+        riskClient,
+        geminiClient,
+        suggestionClient,
+      });
 
       const result = await pipeline.analyzeRisks(pr, MOCK_DIFF, semanticDiff);
 
@@ -240,7 +267,12 @@ export function authenticate(token: string) {
       riskClient = createMockLLMClient(
         '```json\n{"issues": [{"severity": "info", "message": "Minor issue", "file": "src/auth.ts", "line": 1, "explanation": "Test"}]}\n```',
       );
-      pipeline = new AIReviewPipeline({ summaryClient, riskClient, suggestionClient });
+      pipeline = new AIReviewPipeline({
+        summaryClient,
+        riskClient,
+        geminiClient,
+        suggestionClient,
+      });
 
       const result = await pipeline.analyzeRisks(pr, MOCK_DIFF, semanticDiff);
 
@@ -262,7 +294,12 @@ export function authenticate(token: string) {
           ],
         }),
       );
-      pipeline = new AIReviewPipeline({ summaryClient, riskClient, suggestionClient });
+      pipeline = new AIReviewPipeline({
+        summaryClient,
+        riskClient,
+        geminiClient,
+        suggestionClient,
+      });
 
       const result = await pipeline.analyzeRisks(pr, MOCK_DIFF, semanticDiff);
 
@@ -287,7 +324,12 @@ export function authenticate(token: string) {
           ],
         }),
       );
-      pipeline = new AIReviewPipeline({ summaryClient, riskClient, suggestionClient });
+      pipeline = new AIReviewPipeline({
+        summaryClient,
+        riskClient,
+        geminiClient,
+        suggestionClient,
+      });
 
       const result = await pipeline.analyzeRisks(pr, MOCK_DIFF, semanticDiff);
 
@@ -335,7 +377,12 @@ export function authenticate(token: string) {
 
     it("should handle malformed suggestion response", async () => {
       suggestionClient = createMockLLMClient("Not valid JSON");
-      pipeline = new AIReviewPipeline({ summaryClient, riskClient, suggestionClient });
+      pipeline = new AIReviewPipeline({
+        summaryClient,
+        riskClient,
+        geminiClient,
+        suggestionClient,
+      });
 
       const issues: AIRiskIssue[] = [
         {
@@ -379,29 +426,14 @@ export function authenticate(token: string) {
 
   describe("run", () => {
     it("should execute all pipeline stages and return combined result with consensus", async () => {
-      // summaryClient is used for both summary and gemini risk analysis
-      let summaryCallCount = 0;
-      summaryClient.generateText = vi.fn().mockImplementation(async () => {
-        summaryCallCount++;
-        if (summaryCallCount === 1) {
-          // First call: summary
-          return "This PR implements JWT-based authentication for the API.";
-        }
-        // Second call: gemini risk analysis
-        return JSON.stringify({
-          issues: [
-            {
-              severity: "critical",
-              message: "Hardcoded secret in JWT verification",
-              file: "src/auth.ts",
-              line: 4,
-              explanation: "The JWT secret is hardcoded.",
-            },
-          ],
-        });
-      });
+      // geminiClient handles the gemini risk role independently
 
-      pipeline = new AIReviewPipeline({ summaryClient, riskClient, suggestionClient });
+      pipeline = new AIReviewPipeline({
+        summaryClient,
+        riskClient,
+        geminiClient,
+        suggestionClient,
+      });
       const result: AIReviewResult = await pipeline.run(pr, MOCK_DIFF, semanticDiff);
 
       expect(result.summary.stage).toBe("summary");
@@ -420,13 +452,11 @@ export function authenticate(token: string) {
     it("should run summary first, then parallel risk, then suggestion", async () => {
       const callOrder: string[] = [];
 
-      let summaryCallCount = 0;
       summaryClient.generateText = vi.fn().mockImplementation(async () => {
-        summaryCallCount++;
-        if (summaryCallCount === 1) {
-          callOrder.push("summary");
-          return "Summary text";
-        }
+        callOrder.push("summary");
+        return "Summary text";
+      });
+      geminiClient.generateText = vi.fn().mockImplementation(async () => {
         callOrder.push("gemini-risk");
         return JSON.stringify({
           issues: [
@@ -459,7 +489,12 @@ export function authenticate(token: string) {
         return JSON.stringify({ suggestions: [] });
       });
 
-      pipeline = new AIReviewPipeline({ summaryClient, riskClient, suggestionClient });
+      pipeline = new AIReviewPipeline({
+        summaryClient,
+        riskClient,
+        geminiClient,
+        suggestionClient,
+      });
       await pipeline.run(pr, MOCK_DIFF, semanticDiff);
 
       // Summary must come first
@@ -474,7 +509,12 @@ export function authenticate(token: string) {
     it("should skip suggestion generation when no consensus risks found", async () => {
       riskClient = createMockLLMClient(JSON.stringify({ issues: [] }));
       summaryClient = createMockLLMClient(JSON.stringify({ issues: [] }));
-      pipeline = new AIReviewPipeline({ summaryClient, riskClient, suggestionClient });
+      pipeline = new AIReviewPipeline({
+        summaryClient,
+        riskClient,
+        geminiClient,
+        suggestionClient,
+      });
 
       const result = await pipeline.run(pr, MOCK_DIFF, semanticDiff);
 
@@ -522,6 +562,7 @@ describe("AIReviewPipeline parallel risk analysis", () => {
     const pipeline = new AIReviewPipeline({
       summaryClient: mockGemini,
       riskClient: mockClaude,
+      geminiClient: mockGemini,
       suggestionClient: mockClaude,
     });
 
@@ -611,6 +652,7 @@ describe("AIReviewPipeline race condition integration", () => {
     const pipeline = new AIReviewPipeline({
       summaryClient: mockGemini,
       riskClient: mockClaude,
+      geminiClient: mockGemini,
       suggestionClient: mockClaude,
     });
 
@@ -654,6 +696,7 @@ describe("AIReviewPipeline race condition integration", () => {
     const pipeline = new AIReviewPipeline({
       summaryClient: mockGemini,
       riskClient: mockClaude,
+      geminiClient: mockGemini,
       suggestionClient: mockClaude,
     });
 
@@ -702,6 +745,7 @@ describe("AIReviewPipeline race condition integration", () => {
     const pipeline = new AIReviewPipeline({
       summaryClient: mockGemini,
       riskClient: mockClaude,
+      geminiClient: mockGemini,
       suggestionClient: mockClaude,
     });
 
@@ -759,6 +803,7 @@ describe("AIReviewPipeline race condition integration", () => {
     const pipeline = new AIReviewPipeline({
       summaryClient: mockGemini,
       riskClient: mockClaude,
+      geminiClient: mockGemini,
       suggestionClient: mockClaude,
     });
 
@@ -794,6 +839,7 @@ describe("AIReviewPipeline race condition integration", () => {
     const pipeline = new AIReviewPipeline({
       summaryClient: mockClient,
       riskClient: mockClient,
+      geminiClient: mockClient,
       suggestionClient: mockClient,
     });
 
@@ -917,6 +963,7 @@ describe("AIReviewPipeline race condition integration", () => {
     const pipeline = new AIReviewPipeline({
       summaryClient: mockGemini,
       riskClient: mockClaude,
+      geminiClient: mockGemini,
       suggestionClient: mockClaude,
     });
 
@@ -962,6 +1009,7 @@ describe("runStream", () => {
     const pipeline = new AIReviewPipeline({
       summaryClient: mockClient,
       riskClient: mockClient,
+      geminiClient: mockClient,
       suggestionClient: mockClient,
     });
 
@@ -1001,6 +1049,7 @@ describe("runStream", () => {
     const pipeline = new AIReviewPipeline({
       summaryClient,
       riskClient: otherClient,
+      geminiClient: otherClient,
       suggestionClient: otherClient,
     });
 
@@ -1044,6 +1093,7 @@ describe("runStream", () => {
     const pipeline = new AIReviewPipeline({
       summaryClient: mockClient,
       riskClient: mockClient,
+      geminiClient: mockClient,
       suggestionClient: mockClient,
     });
 
@@ -1086,6 +1136,7 @@ describe("runStream", () => {
     const pipeline = new AIReviewPipeline({
       summaryClient: mockClient,
       riskClient: mockClient,
+      geminiClient: mockClient,
       suggestionClient: mockClient,
     });
 
@@ -1128,6 +1179,7 @@ describe("runStream", () => {
     const pipeline = new AIReviewPipeline({
       summaryClient: riskClient,
       riskClient,
+      geminiClient: riskClient,
       suggestionClient,
     });
 
@@ -1159,6 +1211,7 @@ describe("runStream", () => {
     const pipeline = new AIReviewPipeline({
       summaryClient: emptyClient,
       riskClient: emptyClient,
+      geminiClient: emptyClient,
       suggestionClient: emptyClient,
     });
 
@@ -1185,11 +1238,15 @@ describe("runStream", () => {
 
   it("should emit error event on LLM failure", async () => {
     const events: StreamEvent[] = [];
-    const failingClient = { generateText: vi.fn().mockRejectedValue(new Error("API timeout")) };
+    const failingClient = {
+      generateText: vi.fn().mockRejectedValue(new Error("API timeout")),
+      model: "fail",
+    };
     const pipeline = new AIReviewPipeline({
-      summaryClient: failingClient,
-      riskClient: failingClient,
-      suggestionClient: failingClient,
+      summaryClient: failingClient as LLMClient,
+      riskClient: failingClient as LLMClient,
+      geminiClient: failingClient as LLMClient,
+      suggestionClient: failingClient as LLMClient,
     });
 
     // runStream should NOT throw — it communicates errors via callback

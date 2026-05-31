@@ -205,12 +205,14 @@ export interface LLMStageConfig {
 export interface LLMSettings {
   summary: LLMStageConfig;
   risk: LLMStageConfig;
+  gemini: LLMStageConfig;
   suggestion: LLMStageConfig;
 }
 
 export interface SafeLLMSettings {
   summary: Omit<LLMStageConfig, "apiKey">;
   risk: Omit<LLMStageConfig, "apiKey">;
+  gemini: Omit<LLMStageConfig, "apiKey">;
   suggestion: Omit<LLMStageConfig, "apiKey">;
 }
 

@@ -45,7 +45,7 @@ const PROVIDER_PRESETS: Record<
   },
 };
 
-type StageName = "summary" | "risk" | "suggestion";
+type StageName = "summary" | "risk" | "gemini" | "suggestion";
 
 const STAGE_LABELS: Record<string, { name: string; desc: string }> = {
   summary: {
@@ -53,8 +53,12 @@ const STAGE_LABELS: Record<string, { name: string; desc: string }> = {
     desc: "Generates PR change overview. Fast model recommended.",
   },
   risk: {
-    name: "Risk Analysis",
-    desc: "Detects bugs, security issues, and code smells. Most capable model recommended.",
+    name: "Risk Analysis (Model 1)",
+    desc: "Primary risk scanner. Detects bugs, security issues, and code smells.",
+  },
+  gemini: {
+    name: "Risk Analysis (Model 2)",
+    desc: "Secondary risk scanner for dual-model consensus. Different perspective recommended.",
   },
   suggestion: {
     name: "Suggestions",
@@ -84,6 +88,7 @@ export function SettingsPage() {
   const [forms, setForms] = useState<Record<StageName, StageForm>>(() => ({
     summary: defaultForm(),
     risk: defaultForm(),
+    gemini: defaultForm(),
     suggestion: defaultForm(),
   }));
   const [loadState, setLoadState] = useState<"loading" | "loaded" | "error">("loading");
@@ -102,6 +107,7 @@ export function SettingsPage() {
           setForms({
             summary: formFromSaved(loaded.summary),
             risk: formFromSaved(loaded.risk),
+            gemini: formFromSaved(loaded.gemini),
             suggestion: formFromSaved(loaded.suggestion),
           });
         }
@@ -150,6 +156,7 @@ export function SettingsPage() {
       const settings: LLMSettings = {
         summary: buildConfig(forms.summary),
         risk: buildConfig(forms.risk),
+        gemini: buildConfig(forms.gemini),
         suggestion: buildConfig(forms.suggestion),
       };
       const result = await saveSettings(settings);
@@ -210,7 +217,7 @@ export function SettingsPage() {
           className="space-y-6"
         >
           {/* LLM Pipeline Config — 3 stage cards */}
-          {(["summary", "risk", "suggestion"] as StageName[]).map((stage, i) => (
+          {(["summary", "risk", "gemini", "suggestion"] as StageName[]).map((stage, i) => (
             <motion.div
               key={stage}
               initial={{ opacity: 0, y: 10 }}
