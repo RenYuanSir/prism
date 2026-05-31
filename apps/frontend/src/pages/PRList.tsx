@@ -130,14 +130,160 @@ export function PRList() {
     <div className="min-h-screen flex flex-col">
       {/* Hero Section */}
       <div className="flex-1 flex items-center justify-center px-8 py-16 relative overflow-hidden">
-        {/* Prism spectral glow */}
+        {/* ── Prismatic light beams — animated refraction ── */}
         <div
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[500px] pointer-events-none"
-          style={{
-            background:
-              "radial-gradient(ellipse at center, rgb(var(--prism-purple) / 0.07) 0%, rgb(var(--prism-blue) / 0.04) 25%, rgb(var(--prism-green) / 0.02) 50%, transparent 70%), radial-gradient(ellipse at 30% 60%, rgb(var(--prism-red) / 0.04) 0%, transparent 50%), radial-gradient(ellipse at 70% 40%, rgb(var(--prism-orange) / 0.04) 0%, transparent 50%)",
-          }}
+          className="prism-beam w-[500px] h-[500px]"
+          style={
+            {
+              background:
+                "radial-gradient(circle, rgb(var(--prism-purple) / 0.35) 0%, transparent 70%)",
+              top: "10%",
+              left: "5%",
+              "--orbit-duration": "14s",
+              "--orbit-delay": "0s",
+            } as React.CSSProperties
+          }
         />
+        <div
+          className="prism-beam w-[450px] h-[450px]"
+          style={
+            {
+              background:
+                "radial-gradient(circle, rgb(var(--prism-blue) / 0.3) 0%, transparent 70%)",
+              top: "0%",
+              right: "0%",
+              "--orbit-duration": "11s",
+              "--orbit-delay": "-4s",
+            } as React.CSSProperties
+          }
+        />
+        <div
+          className="prism-beam w-[400px] h-[400px]"
+          style={
+            {
+              background:
+                "radial-gradient(circle, rgb(var(--prism-green) / 0.25) 0%, transparent 70%)",
+              bottom: "5%",
+              left: "20%",
+              "--orbit-duration": "16s",
+              "--orbit-delay": "-7s",
+            } as React.CSSProperties
+          }
+        />
+        <div
+          className="prism-beam w-[380px] h-[380px]"
+          style={
+            {
+              background:
+                "radial-gradient(circle, rgb(var(--prism-orange) / 0.25) 0%, transparent 70%)",
+              top: "25%",
+              right: "10%",
+              "--orbit-duration": "13s",
+              "--orbit-delay": "-2s",
+            } as React.CSSProperties
+          }
+        />
+        <div
+          className="prism-beam w-[300px] h-[300px]"
+          style={
+            {
+              background:
+                "radial-gradient(circle, rgb(var(--prism-red) / 0.2) 0%, transparent 70%)",
+              top: "40%",
+              left: "10%",
+              "--orbit-duration": "10s",
+              "--orbit-delay": "-5s",
+            } as React.CSSProperties
+          }
+        />
+        <div
+          className="prism-beam w-[280px] h-[280px]"
+          style={
+            {
+              background:
+                "radial-gradient(circle, rgb(var(--prism-yellow) / 0.22) 0%, transparent 70%)",
+              bottom: "15%",
+              right: "15%",
+              "--orbit-duration": "12s",
+              "--orbit-delay": "-9s",
+            } as React.CSSProperties
+          }
+        />
+
+        {/* ── Refraction specks — tiny floating light particles ── */}
+        <div
+          className="prism-speck w-2 h-2"
+          style={
+            {
+              background: "rgb(var(--prism-purple))",
+              top: "20%",
+              left: "15%",
+              "--speck-duration": "6s",
+              "--speck-delay": "0s",
+            } as React.CSSProperties
+          }
+        />
+        <div
+          className="prism-speck w-1.5 h-1.5"
+          style={
+            {
+              background: "rgb(var(--prism-blue))",
+              top: "60%",
+              right: "20%",
+              "--speck-duration": "7s",
+              "--speck-delay": "-2s",
+            } as React.CSSProperties
+          }
+        />
+        <div
+          className="prism-speck w-2 h-2"
+          style={
+            {
+              background: "rgb(var(--prism-green))",
+              bottom: "25%",
+              left: "30%",
+              "--speck-duration": "8s",
+              "--speck-delay": "-4s",
+            } as React.CSSProperties
+          }
+        />
+        <div
+          className="prism-speck w-1.5 h-1.5"
+          style={
+            {
+              background: "rgb(var(--prism-orange))",
+              top: "35%",
+              left: "45%",
+              "--speck-duration": "5s",
+              "--speck-delay": "-1s",
+            } as React.CSSProperties
+          }
+        />
+        <div
+          className="prism-speck w-1 h-1"
+          style={
+            {
+              background: "rgb(var(--prism-red))",
+              top: "15%",
+              right: "30%",
+              "--speck-duration": "9s",
+              "--speck-delay": "-6s",
+            } as React.CSSProperties
+          }
+        />
+        <div
+          className="prism-speck w-1.5 h-1.5"
+          style={
+            {
+              background: "rgb(var(--prism-yellow))",
+              bottom: "35%",
+              right: "25%",
+              "--speck-duration": "7s",
+              "--speck-delay": "-3s",
+            } as React.CSSProperties
+          }
+        />
+
         <div className="w-full max-w-xl relative z-10">
           {/* Header */}
           <motion.div

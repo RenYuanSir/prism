@@ -1,104 +1,119 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;510;600;590&family=JetBrains+Mono:wght@400;500&display=swap");
 
+/* ═══════════════════════════════════════════
+   CSS Custom Properties (unlayered — max priority)
+   ═══════════════════════════════════════════ */
+
+:root {
+  /* Background */
+  --color-bg: 8 9 10;
+  --color-panel: 15 16 17;
+  --color-surface: 25 26 27;
+  --color-elevated: 40 40 44;
+
+  /* Text */
+  --color-text-primary: 247 248 248;
+  --color-text-secondary: 208 214 224;
+  --color-text-tertiary: 138 143 152;
+  --color-text-muted: 98 102 109;
+
+  /* Brand */
+  --color-brand: 94 106 210;
+  --color-accent: 113 112 255;
+  --color-accent-hover: 130 143 255;
+  --color-success: 16 185 129;
+
+  /* Borders */
+  --border-color: 255 255 255;
+  --border-opacity: 0.08;
+  --border-subtle-opacity: 0.05;
+
+  /* Prism spectral palette */
+  --prism-red: 255 107 107;
+  --prism-orange: 255 169 77;
+  --prism-yellow: 255 212 59;
+  --prism-green: 105 219 124;
+  --prism-blue: 116 192 252;
+  --prism-purple: 151 117 250;
+
+  /* Glass effects */
+  --glass-bg: rgba(255, 255, 255, 0.02);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-hover-bg: rgba(255, 255, 255, 0.04);
+  --glass-hover-border: rgba(255, 255, 255, 0.12);
+
+  /* Scrollbar */
+  --scrollbar-thumb: rgba(255, 255, 255, 0.08);
+  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.15);
+
+  /* Selection */
+  --selection-bg: rgba(94, 106, 210, 0.3);
+  --selection-text: 247 248 248;
+
+  color-scheme: dark;
+}
+
+/* ── Light theme ── */
+:root.light {
+  --color-bg: 250 251 252;
+  --color-panel: 235 238 242;
+  --color-surface: 255 255 255;
+  --color-elevated: 243 245 248;
+
+  --color-text-primary: 17 20 28;
+  --color-text-secondary: 55 65 81;
+  --color-text-tertiary: 107 114 128;
+  --color-text-muted: 156 163 175;
+
+  --color-brand: 79 85 198;
+  --color-accent: 99 95 235;
+  --color-accent-hover: 79 75 212;
+  --color-success: 5 150 105;
+
+  --border-color: 0 0 0;
+  --border-opacity: 0.06;
+  --border-subtle-opacity: 0.03;
+
+  --prism-red: 220 38 38;
+  --prism-orange: 234 88 12;
+  --prism-yellow: 202 138 4;
+  --prism-green: 22 163 74;
+  --prism-blue: 37 99 235;
+  --prism-purple: 124 58 237;
+
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(0, 0, 0, 0.08);
+  --glass-hover-bg: rgba(255, 255, 255, 0.9);
+  --glass-hover-border: rgba(0, 0, 0, 0.12);
+
+  --scrollbar-thumb: rgba(0, 0, 0, 0.15);
+  --scrollbar-thumb-hover: rgba(0, 0, 0, 0.25);
+
+  --selection-bg: rgba(94, 106, 210, 0.2);
+  --selection-text: 17 20 28;
+
+  color-scheme: light;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
-  /* ── Dark theme (default) ── */
-  :root {
-    /* Background */
-    --color-bg: 8 9 10;
-    --color-panel: 15 16 17;
-    --color-surface: 25 26 27;
-    --color-elevated: 40 40 44;
-
-    /* Text */
-    --color-text-primary: 247 248 248;
-    --color-text-secondary: 208 214 224;
-    --color-text-tertiary: 138 143 152;
-    --color-text-muted: 98 102 109;
-
-    /* Brand */
-    --color-brand: 94 106 210;
-    --color-accent: 113 112 255;
-    --color-accent-hover: 130 143 255;
-    --color-success: 16 185 129;
-
-    /* Borders (white with opacity on dark bg) */
-    --border-color: 255 255 255;
-    --border-opacity: 0.08;
-    --border-subtle-opacity: 0.05;
-
-    /* ── Prism spectral palette ── */
-    --prism-red: 255 107 107;
-    --prism-orange: 255 169 77;
-    --prism-yellow: 255 212 59;
-    --prism-green: 105 219 124;
-    --prism-blue: 116 192 252;
-    --prism-purple: 151 117 250;
-
-    /* Glass effects */
-    --glass-bg: rgba(255, 255, 255, 0.02);
-    --glass-border: rgba(255, 255, 255, 0.08);
-    --glass-hover-bg: rgba(255, 255, 255, 0.04);
-    --glass-hover-border: rgba(255, 255, 255, 0.12);
-
-    /* Scrollbar */
-    --scrollbar-thumb: rgba(255, 255, 255, 0.08);
-    --scrollbar-thumb-hover: rgba(255, 255, 255, 0.15);
-
-    /* Selection */
-    --selection-bg: rgba(94, 106, 210, 0.3);
-    --selection-text: 247 248 248;
-  }
-
-  /* ── Light theme ── */
-  :root.light {
-    --color-bg: 250 251 252;
-    --color-panel: 240 242 245;
-    --color-surface: 255 255 255;
-    --color-elevated: 240 242 245;
-
-    --color-text-primary: 26 29 35;
-    --color-text-secondary: 74 85 104;
-    --color-text-tertiary: 113 128 150;
-    --color-text-muted: 160 174 192;
-
-    --color-brand: 94 106 210;
-    --color-accent: 99 95 235;
-    --color-accent-hover: 79 75 212;
-    --color-success: 5 150 105;
-
-    --border-color: 0 0 0;
-    --border-opacity: 0.08;
-    --border-subtle-opacity: 0.04;
-
-    --prism-red: 229 62 62;
-    --prism-orange: 221 107 32;
-    --prism-yellow: 214 158 46;
-    --prism-green: 56 161 105;
-    --prism-blue: 49 130 206;
-    --prism-purple: 107 70 193;
-
-    --glass-bg: rgba(0, 0, 0, 0.02);
-    --glass-border: rgba(0, 0, 0, 0.06);
-    --glass-hover-bg: rgba(0, 0, 0, 0.04);
-    --glass-hover-border: rgba(0, 0, 0, 0.1);
-
-    --scrollbar-thumb: rgba(0, 0, 0, 0.12);
-    --scrollbar-thumb-hover: rgba(0, 0, 0, 0.2);
-
-    --selection-bg: rgba(94, 106, 210, 0.2);
-    --selection-text: 26 29 35;
-  }
-
   * {
     font-feature-settings: "cv01", "ss03";
   }
 
+  html {
+    background-color: rgb(var(--color-bg));
+    color: rgb(var(--color-text-primary));
+  }
+
   body {
-    @apply bg-linear-black text-linear-text-primary antialiased;
+    background-color: rgb(var(--color-bg));
+    color: rgb(var(--color-text-primary));
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   }
 
@@ -127,7 +142,8 @@
   .glass-surface {
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
-    backdrop-filter: blur(12px);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
   }
 
   .glass-surface-hover:hover {
@@ -136,7 +152,11 @@
   }
 
   .text-gradient {
-    background: linear-gradient(135deg, #f7f8f8 0%, #8a8f98 100%);
+    background: linear-gradient(
+      135deg,
+      rgb(var(--color-text-primary)) 0%,
+      rgb(var(--color-text-tertiary)) 100%
+    );
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -165,11 +185,64 @@
     box-shadow: 0 0 20px rgba(113, 112, 255, 0.2), 0 0 40px rgba(113, 112, 255, 0.1);
   }
 
-  /* Prism spectral glow — subtle rainbow halo for decorative use */
-  .glow-prism {
-    box-shadow: 0 0 30px rgb(var(--prism-red) / 0.08), 0 0 60px rgb(var(--prism-orange) / 0.06), 0 0
-      90px rgb(var(--prism-yellow) / 0.04), 0 0 120px rgb(var(--prism-green) / 0.04), 0 0 150px
-      rgb(var(--prism-blue) / 0.06), 0 0 180px rgb(var(--prism-purple) / 0.08);
+  /* ── Prismatic light beam animation ── */
+  .prism-beam {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0;
+    animation: prismOrbit var(--orbit-duration, 12s) ease-in-out infinite;
+    animation-delay: var(--orbit-delay, 0s);
+    pointer-events: none;
+    will-change: transform, opacity;
+  }
+
+  @keyframes prismOrbit {
+    0%,
+    100% {
+      opacity: 0.12;
+      transform: translate(0, 0) scale(1);
+    }
+    25% {
+      opacity: 0.22;
+      transform: translate(60px, -30px) scale(1.15);
+    }
+    50% {
+      opacity: 0.08;
+      transform: translate(-20px, 40px) scale(0.9);
+    }
+    75% {
+      opacity: 0.18;
+      transform: translate(-50px, -20px) scale(1.1);
+    }
+  }
+
+  /* Subtle floating refraction specks */
+  .prism-speck {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+    animation: speckFloat var(--speck-duration, 8s) ease-in-out infinite;
+    animation-delay: var(--speck-delay, 0s);
+    will-change: transform, opacity;
+  }
+
+  @keyframes speckFloat {
+    0%,
+    100% {
+      opacity: 0;
+      transform: translateY(0) scale(0.8);
+    }
+    20% {
+      opacity: 0.7;
+    }
+    50% {
+      opacity: 0.4;
+      transform: translateY(-30px) scale(1.2);
+    }
+    80% {
+      opacity: 0.1;
+    }
   }
 
   .shimmer-bg {
@@ -188,15 +261,12 @@
   .tracking-display {
     letter-spacing: -1.056px;
   }
-
   .tracking-tight-custom {
     letter-spacing: -0.704px;
   }
-
   .font-weight-510 {
     font-weight: 510;
   }
-
   .font-weight-590 {
     font-weight: 590;
   }
