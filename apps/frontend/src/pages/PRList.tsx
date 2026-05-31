@@ -1,8 +1,11 @@
 import { parseGitHubPrUrl } from "@prism/shared";
 import { motion } from "framer-motion";
 import {
+  AlertTriangle,
   ArrowRight,
+  ArrowUpRight,
   CheckCircle2,
+  Clock,
   GitBranch,
   GitPullRequest,
   Shield,
@@ -10,14 +13,46 @@ import {
   XCircle,
   Zap,
 } from "lucide-react";
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { fetchHistory } from "../api/client";
+
+interface HistoryEntry {
+  id: string;
+  owner: string;
+  repo: string;
+  prNumber: number;
+  title: string;
+  createdAt: string;
+  riskCount: number;
+  criticalCount: number;
+  summarySnippet: string;
+}
+
+type RecentState =
+  | { status: "loading" }
+  | { status: "empty" }
+  | { status: "loaded"; entries: HistoryEntry[] };
 
 const features = [
   { icon: Zap, label: "Semantic Diff", desc: "AST-level change tracking" },
   { icon: Shield, label: "Risk Detection", desc: "AI-powered vulnerability scan" },
   { icon: GitBranch, label: "Impact Analysis", desc: "Dependency blast radius" },
 ];
+
+function formatTime(iso: string): string {
+  const d = new Date(iso);
+  const now = new Date();
+  const diff = now.getTime() - d.getTime();
+  const mins = Math.floor(diff / 60000);
+  const hours = Math.floor(diff / 3600000);
+  const days = Math.floor(diff / 86400000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  if (hours < 24) return `${hours}h ago`;
+  if (days < 7) return `${days}d ago`;
+  return d.toLocaleDateString();
+}
 
 export function PRList() {
   const navigate = useNavigate();
@@ -27,6 +62,23 @@ export function PRList() {
   const [isHovered, setIsHovered] = useState(false);
   const [urlInput, setUrlInput] = useState("");
   const [urlParseStatus, setUrlParseStatus] = useState<"idle" | "success" | "error">("idle");
+  const [recent, setRecent] = useState<RecentState>({ status: "loading" });
+
+  useEffect(() => {
+    async function loadRecent() {
+      try {
+        const result = await fetchHistory();
+        if (result.success && result.data && result.data.length > 0) {
+          setRecent({ status: "loaded", entries: result.data.slice(0, 5) });
+        } else {
+          setRecent({ status: "empty" });
+        }
+      } catch {
+        setRecent({ status: "empty" });
+      }
+    }
+    loadRecent();
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -240,18 +292,103 @@ export function PRList() {
       {/* Recent Reviews Section */}
       <div className="px-8 pb-8">
         <div className="max-w-xl mx-auto">
-          <div className="flex items-center gap-2 mb-4">
-            <GitPullRequest className="h-4 w-4 text-linear-text-muted" />
-            <h2 className="text-[13px] font-weight-510 text-linear-text-secondary tracking-wide">
-              RECENT REVIEWS
-            </h2>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <GitPullRequest className="h-4 w-4 text-linear-text-muted" />
+              <h2 className="text-[13px] font-weight-510 text-linear-text-secondary tracking-wide">
+                RECENT REVIEWS
+              </h2>
+            </div>
+            {recent.status === "loaded" && (
+              <Link
+                to="/history"
+                className="flex items-center gap-1 text-[11px] text-linear-text-muted hover:text-linear-text-secondary transition-colors"
+              >
+                View all
+                <ArrowUpRight className="h-3 w-3" />
+              </Link>
+            )}
           </div>
-          <div className="glass-surface rounded-xl p-12 text-center">
-            <GitPullRequest className="h-10 w-10 text-linear-text-muted/30 mx-auto mb-3" />
-            <p className="text-[13px] text-linear-text-muted">
-              No reviews yet. Start by reviewing a PR above.
-            </p>
-          </div>
+
+          {/* Loading skeletons */}
+          {recent.status === "loading" && (
+            <div className="space-y-2">
+              {[1, 2, 3].map((i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.1 }}
+                  className="glass-surface rounded-xl p-4 animate-pulse"
+                >
+                  <div className="h-3 bg-linear-surface/50 rounded w-36 mb-2" />
+                  <div className="h-4 bg-linear-surface/50 rounded w-full mb-1.5" />
+                  <div className="h-3 bg-linear-surface/50 rounded w-20" />
+                </motion.div>
+              ))}
+            </div>
+          )}
+
+          {/* Empty state */}
+          {recent.status === "empty" && (
+            <div className="glass-surface rounded-xl p-12 text-center">
+              <GitPullRequest className="h-10 w-10 text-linear-text-muted/30 mx-auto mb-3" />
+              <p className="text-[13px] text-linear-text-muted">
+                No reviews yet. Start by reviewing a PR above.
+              </p>
+            </div>
+          )}
+
+          {/* Loaded: review cards (max 5) */}
+          {recent.status === "loaded" && (
+            <div className="space-y-2">
+              {recent.entries.map((entry, i) => (
+                <motion.button
+                  key={entry.id}
+                  type="button"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.05 }}
+                  onClick={() =>
+                    navigate(
+                      `/review/${entry.owner}/${entry.repo}/${entry.prNumber}?historyId=${entry.id}`,
+                    )
+                  }
+                  className="w-full text-left glass-surface hover:bg-linear-elevated/50 border border-linear-border-subtle rounded-xl p-4 transition-all group"
+                >
+                  <div className="flex items-center justify-between mb-1.5">
+                    <div className="flex items-center gap-1.5 text-[12px] text-linear-text-secondary font-mono">
+                      <span className="text-linear-accent">{entry.owner}</span>
+                      <span className="text-linear-border">/</span>
+                      <span>{entry.repo}</span>
+                      <span className="text-linear-border">#</span>
+                      <span className="text-linear-accent">{entry.prNumber}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-[11px] text-linear-text-muted/70">
+                      {entry.criticalCount > 0 && (
+                        <span className="flex items-center gap-1 text-red-400">
+                          <AlertTriangle className="h-3 w-3" />
+                          {entry.criticalCount}
+                        </span>
+                      )}
+                      {entry.riskCount - entry.criticalCount > 0 && (
+                        <span className="text-yellow-400">
+                          {entry.riskCount - entry.criticalCount} issues
+                        </span>
+                      )}
+                      <span className="flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        {formatTime(entry.createdAt)}
+                      </span>
+                    </div>
+                  </div>
+                  <h3 className="text-[13px] font-weight-510 text-linear-text-primary truncate">
+                    {entry.title}
+                  </h3>
+                </motion.button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
