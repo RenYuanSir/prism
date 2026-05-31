@@ -45,6 +45,8 @@ const PROVIDER_PRESETS: Record<
   },
 };
 
+type StageName = "summary" | "risk" | "suggestion";
+
 const STAGE_LABELS: Record<string, { name: string; desc: string }> = {
   summary: {
     name: "Summary",
@@ -79,20 +81,22 @@ function defaultForm(): StageForm {
 }
 
 export function SettingsPage() {
-  const [forms, setForms] = useState<Record<string, StageForm>>({
+  const [forms, setForms] = useState<Record<StageName, StageForm>>(() => ({
     summary: defaultForm(),
     risk: defaultForm(),
     suggestion: defaultForm(),
-  });
+  }));
   const [loadState, setLoadState] = useState<"loading" | "loaded" | "error">("loading");
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [saveError, setSaveError] = useState("");
 
   // Load existing settings on mount
   useEffect(() => {
+    let cancelled = false;
     async function load() {
       try {
         const result = await fetchSettings();
+        if (cancelled) return;
         if (result.success && result.data) {
           const loaded = result.data;
           setForms({
@@ -101,43 +105,43 @@ export function SettingsPage() {
             suggestion: formFromSaved(loaded.suggestion),
           });
         }
-        setLoadState("loaded");
+        if (!cancelled) setLoadState("loaded");
       } catch {
-        setLoadState("error");
+        if (!cancelled) setLoadState("error");
       }
     }
     load();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const updateField = useCallback(
-    (stage: string, field: keyof StageForm, value: string | boolean) => {
+    (stage: StageName, field: keyof StageForm, value: string | boolean) => {
       setForms((prev) => ({
         ...prev,
         [stage]: { ...prev[stage], [field]: value },
       }));
-      if (saveState === "saved") setSaveState("idle");
+      setSaveState((prev) => (prev === "saved" ? "idle" : prev));
     },
-    [saveState],
+    [],
   );
 
-  const handlePresetChange = useCallback(
-    (stage: string, preset: string) => {
-      setForms((prev) => {
-        const cfg = PROVIDER_PRESETS[preset];
-        return {
-          ...prev,
-          [stage]: {
-            ...prev[stage],
-            preset,
-            model: cfg.defaultModel,
-            baseUrl: preset === "custom" ? prev[stage].baseUrl : cfg.baseUrl,
-          },
-        };
-      });
-      if (saveState === "saved") setSaveState("idle");
-    },
-    [saveState],
-  );
+  const handlePresetChange = useCallback((stage: StageName, preset: string) => {
+    setForms((prev) => {
+      const cfg = PROVIDER_PRESETS[preset];
+      return {
+        ...prev,
+        [stage]: {
+          ...prev[stage],
+          preset,
+          model: cfg.defaultModel,
+          baseUrl: preset === "custom" ? prev[stage].baseUrl : cfg.baseUrl,
+        },
+      };
+    });
+    setSaveState((prev) => (prev === "saved" ? "idle" : prev));
+  }, []);
 
   const handleSave = async () => {
     setSaveState("saving");
@@ -206,7 +210,7 @@ export function SettingsPage() {
           className="space-y-6"
         >
           {/* LLM Pipeline Config — 3 stage cards */}
-          {(["summary", "risk", "suggestion"] as const).map((stage, i) => (
+          {(["summary", "risk", "suggestion"] as StageName[]).map((stage, i) => (
             <motion.div
               key={stage}
               initial={{ opacity: 0, y: 10 }}
