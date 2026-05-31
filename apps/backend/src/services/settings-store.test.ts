@@ -30,6 +30,7 @@ describe("SettingsStore", () => {
     const config = {
       summary: { provider: "google" as const, apiKey: "key-1", model: "gemini-flash" },
       risk: { provider: "anthropic" as const, apiKey: "key-2", model: "claude-sonnet" },
+      gemini: { provider: "google" as const, apiKey: "key-2b", model: "gemini-flash" },
       suggestion: {
         provider: "openai-compatible" as const,
         apiKey: "key-3",
@@ -52,12 +53,14 @@ describe("SettingsStore", () => {
     const config1 = {
       summary: { provider: "google" as const, apiKey: "old-key", model: "old-model" },
       risk: { provider: "anthropic" as const, apiKey: "old-key", model: "old-model" },
+      gemini: { provider: "google" as const, apiKey: "old-key", model: "old-model" },
       suggestion: { provider: "anthropic" as const, apiKey: "old-key", model: "old-model" },
     };
     store.save(config1);
     const config2 = {
       summary: { provider: "openai" as const, apiKey: "new-key", model: "new-model" },
       risk: { provider: "openai" as const, apiKey: "new-key", model: "new-model" },
+      gemini: { provider: "openai" as const, apiKey: "new-key", model: "new-model" },
       suggestion: { provider: "openai" as const, apiKey: "new-key", model: "new-model" },
     };
     store.save(config2);
@@ -70,12 +73,14 @@ describe("SettingsStore", () => {
     const config = {
       summary: { provider: "google" as const, apiKey: "k1", model: "m1" },
       risk: { provider: "anthropic" as const, apiKey: "k2", model: "m2" },
+      gemini: { provider: "google" as const, apiKey: "k2b", model: "m2b" },
       suggestion: { provider: "openai" as const, apiKey: "k3", model: "m3" },
     };
     store.save(config);
     const loaded = await store.load();
     expect(loaded?.summary.baseUrl).toBeUndefined();
     expect(loaded?.risk.baseUrl).toBeUndefined();
+    expect(loaded?.gemini.baseUrl).toBeUndefined();
     expect(loaded?.suggestion.baseUrl).toBeUndefined();
     // Fields that were saved must still be present
     expect(loaded?.summary.provider).toBe("google");
