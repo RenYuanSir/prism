@@ -14,6 +14,10 @@
   <a href="README_EN.md"><img src="https://img.shields.io/badge/README-English-0288d1" alt="English"></a>
 </p>
 
+---
+
+<p align="center"><strong>演示视频请点击：</strong></p>
+
 <p align="center">
   <a href="https://www.bilibili.com/video/BV1y6VU6jEdC?vd_source=4958599fc247ce0b6bf3dac98a708afe" target="_blank">
     <img src="https://img.shields.io/badge/▶_Demo_Bilibili-00A1D6?style=for-the-badge&logo=bilibili&logoColor=white&labelColor=FB7299" alt="Demo on Bilibili">
