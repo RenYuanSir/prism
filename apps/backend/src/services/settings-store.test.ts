@@ -10,9 +10,7 @@ describe("SettingsStore", () => {
   let store: SettingsStore;
 
   beforeEach(() => {
-    try {
-      rmSync(TEST_DIR, { recursive: true, force: true });
-    } catch {}
+    rmSync(TEST_DIR, { recursive: true, force: true });
     mkdirSync(TEST_DIR, { recursive: true });
     store = new SettingsStore(TEST_DIR);
   });
@@ -39,7 +37,7 @@ describe("SettingsStore", () => {
         baseUrl: "https://api.deepseek.com/v1",
       },
     };
-    await store.save(config);
+    store.save(config);
     const loaded = await store.load();
     expect(loaded).toEqual(config);
   });
@@ -56,25 +54,31 @@ describe("SettingsStore", () => {
       risk: { provider: "anthropic" as const, apiKey: "old-key", model: "old-model" },
       suggestion: { provider: "anthropic" as const, apiKey: "old-key", model: "old-model" },
     };
-    await store.save(config1);
+    store.save(config1);
     const config2 = {
       summary: { provider: "openai" as const, apiKey: "new-key", model: "new-model" },
       risk: { provider: "openai" as const, apiKey: "new-key", model: "new-model" },
       suggestion: { provider: "openai" as const, apiKey: "new-key", model: "new-model" },
     };
-    await store.save(config2);
+    store.save(config2);
     const loaded = await store.load();
     expect(loaded).toEqual(config2);
   });
 
-  it("handles partial config (missing optional baseUrl)", async () => {
+  it("returns null for baseUrl when config was saved without one", async () => {
+    // Save a config that omits baseUrl entirely (as JSON will skip undefined keys)
     const config = {
-      summary: { provider: "anthropic" as const, apiKey: "k", model: "m" },
-      risk: { provider: "google" as const, apiKey: "k", model: "m" },
-      suggestion: { provider: "openai" as const, apiKey: "k", model: "m", baseUrl: undefined },
+      summary: { provider: "google" as const, apiKey: "k1", model: "m1" },
+      risk: { provider: "anthropic" as const, apiKey: "k2", model: "m2" },
+      suggestion: { provider: "openai" as const, apiKey: "k3", model: "m3" },
     };
-    await store.save(config);
+    store.save(config);
     const loaded = await store.load();
+    expect(loaded?.summary.baseUrl).toBeUndefined();
+    expect(loaded?.risk.baseUrl).toBeUndefined();
     expect(loaded?.suggestion.baseUrl).toBeUndefined();
+    // Fields that were saved must still be present
+    expect(loaded?.summary.provider).toBe("google");
+    expect(loaded?.suggestion.model).toBe("m3");
   });
 });

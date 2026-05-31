@@ -15,12 +15,13 @@ export class SettingsStore {
     }
   }
 
-  async save(config: LLMPipelineConfig): Promise<void> {
+  save(config: LLMPipelineConfig): void {
+    this.ensureDir();
     const json = JSON.stringify(config, null, 2);
     writeFileSync(this.filePath, json, "utf-8");
   }
 
-  async load(): Promise<LLMPipelineConfig | null> {
+  private _load(): LLMPipelineConfig | null {
     if (!existsSync(this.filePath)) return null;
     try {
       const raw = readFileSync(this.filePath, "utf-8");
@@ -30,14 +31,19 @@ export class SettingsStore {
     }
   }
 
+  async load(): Promise<LLMPipelineConfig | null> {
+    return this._load();
+  }
+
   /** Synchronous load — for use during startup before async is available */
   loadSync(): LLMPipelineConfig | null {
-    if (!existsSync(this.filePath)) return null;
-    try {
-      const raw = readFileSync(this.filePath, "utf-8");
-      return JSON.parse(raw) as LLMPipelineConfig;
-    } catch {
-      return null;
+    return this._load();
+  }
+
+  private ensureDir(): void {
+    const dir = this.filePath.substring(0, this.filePath.lastIndexOf("/"));
+    if (!existsSync(dir)) {
+      mkdirSync(dir, { recursive: true });
     }
   }
 }
