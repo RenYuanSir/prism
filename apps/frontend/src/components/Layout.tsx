@@ -93,7 +93,9 @@ export function Layout() {
         </aside>
 
         {/* Main content */}
-        <main className="flex-1 overflow-auto">
+        <main className="flex-1 overflow-auto relative">
+          {/* Prism light refraction — shared across all pages */}
+          <div className="prism-refraction z-0" />
           <motion.div
             key={location.pathname}
             initial={{ opacity: 0, y: 8 }}

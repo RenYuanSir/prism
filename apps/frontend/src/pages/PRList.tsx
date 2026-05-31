@@ -127,11 +127,9 @@ export function PRList() {
   const isValid = owner.trim() && repo.trim() && pullNumber.trim();
 
   return (
-    <div className="min-h-screen flex flex-col relative">
-      {/* Shared prism light refraction — spans both hero and recent reviews */}
-      <div className="prism-refraction fixed inset-0 z-0" />
+    <div className="min-h-screen flex flex-col">
       {/* Hero Section */}
-      <div className="flex-1 flex items-center justify-center px-8 py-16 relative z-10">
+      <div className="flex-1 flex items-center justify-center px-8 py-16">
         <div className="w-full max-w-xl">
           {/* Header */}
           <motion.div
@@ -307,7 +305,7 @@ export function PRList() {
       </div>
 
       {/* Recent Reviews Section */}
-      <div className="px-8 pb-8 relative z-10">
+      <div className="px-8 pb-8">
         <div className="max-w-xl mx-auto">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
