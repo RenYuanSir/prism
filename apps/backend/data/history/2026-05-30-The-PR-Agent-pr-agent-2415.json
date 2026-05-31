@@ -1,0 +1,186 @@
+{
+  "id": "2026-05-30-The-PR-Agent-pr-agent-2415",
+  "pr": {
+    "owner": "The-PR-Agent",
+    "repo": "pr-agent",
+    "prNumber": 2415,
+    "title": "feat(mosaico): add Docker Compose overlay for PR-Agent solution agent",
+    "description": "Add docker-compose.pr-agent.yml overlay that integrates PR-Agent as a MOSAICO solution agent. The configuration mirrors the demonstrator's in-process A2A server pattern with service registration, exposing PR-Agent on port 22000 with health checks and automatic ENDPOINT registration.",
+    "author": "ofir-frd",
+    "branch": "of/a2a-mosaico-fixes",
+    "baseBranch": "main"
+  },
+  "review": {
+    "summary": {
+      "summary": "This pull request introduces a Docker Compose overlay that integrates PR-Agent as a MOSAICO solution agent, replicating the demonstrator's in-process A2A server pattern. The change adds service registration, exposes PR-Agent on port 22000, and configures health checks with automatic ENDPOINT registration. It also updates the environment bridge to support the new integration.",
+      "stage": "summary"
+    },
+    "risk": {
+      "issues": [
+        {
+          "severity": "warning",
+          "message": "CUSTOM_MODEL_MAX_TOKENS config key may not be recognized by pr-agent",
+          "file": "pr_agent/mosaico/env_bridge.py",
+          "line": 46,
+          "explanation": "The fix sets config key 'CONFIG.CUSTOM_MODEL_MAX_TOKENS' to work around a missing MAX_TOKENS entry. However, pr-agent's internal code may not read this key; the original error 'not defined in MAX_TOKENS' might persist. This logic may not resolve the intended issue and could give a false sense of correctness."
+        }
+      ],
+      "stage": "risk"
+    },
+    "consensus": {
+      "consensusIssues": [
+        {
+          "issue": {
+            "severity": "warning",
+            "message": "CUSTOM_MODEL_MAX_TOKENS config key may not be recognized by pr-agent",
+            "file": "pr_agent/mosaico/env_bridge.py",
+            "line": 46,
+            "explanation": "The fix sets config key 'CONFIG.CUSTOM_MODEL_MAX_TOKENS' to work around a missing MAX_TOKENS entry. However, pr-agent's internal code may not read this key; the original error 'not defined in MAX_TOKENS' might persist. This logic may not resolve the intended issue and could give a false sense of correctness."
+          },
+          "confidence": "high",
+          "models": ["claude", "gemini"],
+          "modelFindings": [
+            {
+              "model": "claude",
+              "severity": "warning",
+              "message": "CUSTOM_MODEL_MAX_TOKENS config key may not be recognized by pr-agent",
+              "file": "pr_agent/mosaico/env_bridge.py",
+              "line": 46,
+              "explanation": "The fix sets config key 'CONFIG.CUSTOM_MODEL_MAX_TOKENS' to work around a missing MAX_TOKENS entry. However, pr-agent's internal code may not read this key; the original error 'not defined in MAX_TOKENS' might persist. This logic may not resolve the intended issue and could give a false sense of correctness."
+            },
+            {
+              "model": "gemini",
+              "severity": "warning",
+              "message": "Invalid `MODEL_MAX_TOKENS` environment value silently falls back to default",
+              "file": "pr_agent/mosaico/env_bridge.py",
+              "line": 43,
+              "explanation": "If the `MODEL_MAX_TOKENS` environment variable is set to a non-numeric value, the `int()` conversion fails and is silently caught, falling back to the hardcoded default. No warning is logged, which could hide misconfiguration from the operator."
+            }
+          ]
+        }
+      ],
+      "claudeOnly": [
+        {
+          "model": "claude",
+          "severity": "warning",
+          "message": "AGENT_CARD_URL may be malformed if PR_AGENT_HOST is empty",
+          "file": "docker/mosaico/docker-compose.pr-agent.yml",
+          "line": 23,
+          "explanation": "If PR_AGENT_HOST is not set and DEFAULT_TASK_AGENT_HOST is also not set, the URL becomes 'http://:22000/.well-known/agent-card.json' which is invalid. This can cause registration failure and break the agent discovery flow."
+        },
+        {
+          "model": "claude",
+          "severity": "warning",
+          "message": "AGENT_JSON file path may not exist",
+          "file": "docker/mosaico/docker-compose.pr-agent.yml",
+          "line": 25,
+          "explanation": "The environment variable AGENT_JSON points to '/app/pr-agent-solution-agent.json'. This file is not created or mounted anywhere in the compose overlay. The registration service likely expects a valid JSON file at that path; missing file will cause registration to fail."
+        },
+        {
+          "model": "claude",
+          "severity": "info",
+          "message": "Default token budget of 32000 may be inappropriate for some models",
+          "file": "pr_agent/mosaico/env_bridge.py",
+          "line": 13,
+          "explanation": "Hardcoded default DEFAULT_CUSTOM_MODEL_MAX_TOKENS = 32000 may be too high for smaller models (causing truncation or excessive cost) or too low for larger models (limiting review depth). Consider using a dynamic default based on model context length or making it configurable with a more conservative fallback."
+        }
+      ],
+      "geminiOnly": [
+        {
+          "model": "gemini",
+          "severity": "critical",
+          "message": "Network definition `agents_net` may conflict with base definition when merging compose files",
+          "file": "docker/mosaico/docker-compose.pr-agent.yml",
+          "line": 35,
+          "explanation": "The overlay declares a network named `agents_net` without `external: true`. If the base `base-definitions.yml` already defines this network as external (common for shared networks), merging the files will cause a conflict because network definitions must be identical. This will prevent Docker Compose from starting the stack."
+        },
+        {
+          "model": "gemini",
+          "severity": "critical",
+          "message": "Configuration key `CONFIG.CUSTOM_MODEL_MAX_TOKENS` may not be recognized by pr-agent",
+          "file": "pr_agent/mosaico/env_bridge.py",
+          "line": 46,
+          "explanation": "The code sets `CONFIG.CUSTOM_MODEL_MAX_TOKENS` to supply a token budget for custom models, but if pr-agent's settings schema does not consume this key, the token limit will be ignored, and reviews could still fail with 'not defined in MAX_TOKENS'. This makes the feature ineffective unless a corresponding pr-agent change introduces support for that config key."
+        },
+        {
+          "model": "gemini",
+          "severity": "warning",
+          "message": "Undefined `DEFAULT_TASK_AGENT_HOST` variable may cause empty agent card URLs",
+          "file": "docker/mosaico/docker-compose.pr-agent.yml",
+          "line": 18,
+          "explanation": "Both `AGENT_CARD_HOST` and `AGENT_CARD_URL` use `${PR_AGENT_HOST:-${DEFAULT_TASK_AGENT_HOST}}`. If neither `PR_AGENT_HOST` nor `DEFAULT_TASK_AGENT_HOST` is defined, the host portion will be empty, resulting in an invalid URL (e.g., `http://:22000/...`), which breaks registration and makes the agent unreachable."
+        },
+        {
+          "model": "gemini",
+          "severity": "info",
+          "message": "Registration service expects `/app/pr-agent-solution-agent.json` but the file is not added in this PR",
+          "file": "docker/mosaico/docker-compose.pr-agent.yml",
+          "line": 27,
+          "explanation": "The agent registration container is instructed to use `AGENT_JSON=/app/pr-agent-solution-agent.json`, but the PR does not include this file nor ensure it is present in the image. If the file is missing, registration will fail."
+        }
+      ],
+      "allAgreeCount": 1,
+      "claudeTotal": 4,
+      "geminiTotal": 5
+    },
+    "raceConditions": [],
+    "suggestion": {
+      "suggestions": [
+        {
+          "issue": {
+            "severity": "warning",
+            "message": "CUSTOM_MODEL_MAX_TOKENS config key may not be recognized by pr-agent",
+            "file": "pr_agent/mosaico/env_bridge.py",
+            "line": 46,
+            "explanation": "The fix sets config key 'CONFIG.CUSTOM_MODEL_MAX_TOKENS' to work around a missing MAX_TOKENS entry. However, pr-agent's internal code may not read this key; the original error 'not defined in MAX_TOKENS' might persist. This logic may not resolve the intended issue and could give a false sense of correctness."
+          },
+          "suggestedCode": "        # MOSAICO models are not in pr-agent's built-in MAX_TOKENS table; declare a budget\n        # so reviews don't fail with \"not defined in MAX_TOKENS\". Overridable via env.\n        max_tokens_env = os.getenv(ENV_MODEL_MAX_TOKENS)\n        try:\n            custom_max_tokens = int(max_tokens_env) if max_tokens_env else DEFAULT_CUSTOM_MODEL_MAX_TOKENS\n        except ValueError:\n            custom_max_tokens = DEFAULT_CUSTOM_MODEL_MAX_TOKENS\n\n        # Inject the custom model directly into pr-agent's internal MAX_TOKENS mapping\n        # to prevent \"not defined in MAX_TOKENS\" errors during token counting.\n        try:\n            from pr_agent.algo.utils import MAX_TOKENS\n            MAX_TOKENS[model] = custom_max_tokens\n            # Also add without provider prefix if present, as pr-agent's table often omits it\n            if \"/\" in model:\n                MAX_TOKENS[model.split(\"/\", 1)[1]] = custom_max_tokens\n        except ImportError:\n            # Fallback if internal module structure changes\n            settings.set(\"CONFIG.CUSTOM_MODEL_MAX_TOKENS\", custom_max_tokens)",
+          "explanation": "The original code sets a custom configuration key (`CONFIG.CUSTOM_MODEL_MAX_TOKENS`) that pr-agent's internal token counting logic does not read, meaning the 'not defined in MAX_TOKENS' error would still occur. This fix directly injects the custom model and its token budget into pr-agent's internal `MAX_TOKENS` dictionary (imported from `pr_agent.algo.utils`). It also registers the model name both with and without the provider prefix (e.g., `openai/`) to ensure compatibility with how pr-agent and litellm resolve model names."
+        }
+      ],
+      "stage": "suggestion"
+    }
+  },
+  "semanticDiff": {
+    "fileChanges": [
+      {
+        "filename": ".gitignore",
+        "status": "modified",
+        "additions": 1,
+        "deletions": 0,
+        "changeType": "modified",
+        "summary": "modified: .gitignore (+1/-0)",
+        "functionChanges": [],
+        "importChanges": [],
+        "exportChanges": []
+      },
+      {
+        "filename": "docker/mosaico/docker-compose.pr-agent.yml",
+        "status": "added",
+        "additions": 36,
+        "deletions": 0,
+        "changeType": "added",
+        "summary": "added: docker/mosaico/docker-compose.pr-agent.yml (+36/-0)",
+        "functionChanges": [],
+        "importChanges": [],
+        "exportChanges": []
+      },
+      {
+        "filename": "pr_agent/mosaico/env_bridge.py",
+        "status": "modified",
+        "additions": 11,
+        "deletions": 0,
+        "changeType": "modified",
+        "summary": "modified: pr_agent/mosaico/env_bridge.py (+11/-0)",
+        "functionChanges": [],
+        "importChanges": [],
+        "exportChanges": []
+      }
+    ],
+    "summary": "Analyzed 3 file(s): 0 function change(s), 0 import change(s), 0 export change(s)",
+    "totalFiles": 3,
+    "totalAdditions": 48,
+    "totalDeletions": 0
+  },
+  "createdAt": "2026-05-30T19:51:49.003Z"
+}

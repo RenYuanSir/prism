@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
-import { Activity, GitPullRequest, History, Settings } from "lucide-react";
+import { GitPullRequest, History, Settings } from "lucide-react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
+import { ThemeToggle } from "./ThemeToggle";
 
 const navItems = [
   { to: "/", icon: GitPullRequest, label: "PR Review" },
@@ -19,8 +20,33 @@ export function Layout() {
           {/* Logo */}
           <div className="p-5 border-b border-linear-border-subtle">
             <div className="flex items-center gap-3">
-              <div className="h-8 w-8 rounded-lg bg-linear-brand flex items-center justify-center glow-brand">
-                <Activity className="h-4 w-4 text-white" />
+              {/* Prism logo: spectral gradient square */}
+              <div
+                className="h-8 w-8 rounded-lg flex items-center justify-center"
+                style={{
+                  background:
+                    "linear-gradient(135deg, rgb(var(--prism-red)) 0%, rgb(var(--prism-orange)) 20%, rgb(var(--prism-yellow)) 40%, rgb(var(--prism-green)) 60%, rgb(var(--prism-blue)) 80%, rgb(var(--prism-purple)) 100%)",
+                }}
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  aria-hidden="true"
+                >
+                  <title>PRism logo</title>
+                  <path
+                    d="M8 2L14 5V11L8 14L2 11V5L8 2Z"
+                    stroke="white"
+                    strokeWidth="1.2"
+                    strokeLinejoin="round"
+                    fill="none"
+                  />
+                  <path d="M8 2V14" stroke="white" strokeWidth="0.6" opacity="0.6" />
+                  <path d="M2 5L8 8L14 5" stroke="white" strokeWidth="0.6" opacity="0.5" />
+                </svg>
               </div>
               <div>
                 <h1 className="font-weight-510 text-sm text-linear-text-primary">PRism</h1>
@@ -56,9 +82,10 @@ export function Layout() {
             ))}
           </nav>
 
-          {/* Status */}
-          <div className="p-4 border-t border-linear-border-subtle">
-            <div className="flex items-center gap-2 text-[11px] text-linear-text-muted">
+          {/* Footer: Theme toggle + status */}
+          <div className="p-3 border-t border-linear-border-subtle space-y-1">
+            <ThemeToggle />
+            <div className="flex items-center gap-2 px-3 py-1.5 text-[11px] text-linear-text-muted">
               <div className="h-1.5 w-1.5 rounded-full bg-linear-success animate-pulse" />
               <span className="font-weight-510 tracking-wide">SYSTEM READY</span>
             </div>

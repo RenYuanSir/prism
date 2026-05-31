@@ -1,0 +1,115 @@
+{
+  "id": "2026-05-30-facebook-react-28310",
+  "pr": {
+    "owner": "facebook",
+    "repo": "react",
+    "prNumber": 28310,
+    "title": "Add ignoreList to our source maps",
+    "description": "All our sources are considered third party and should be hidden in stack traces unless expanded. Our internals aren't actionable anyway.\r\n\r\nThis doesn't really do much without tooling that actually forwards this to new generated source maps, in which case they probably just add them to ignorelist anyway.",
+    "author": "sebmarkbage",
+    "branch": "ignorelist",
+    "baseBranch": "main"
+  },
+  "review": {
+    "summary": {
+      "summary": "This change adds an ignoreList to the generated source maps, marking all project sources as third-party so they will be hidden in stack traces by default. It improves the debugging experience by suppressing internal code that isn't actionable for users, though it requires compatible tooling to take effect.",
+      "stage": "summary"
+    },
+    "risk": {
+      "issues": [
+        {
+          "severity": "warning",
+          "message": "Hardcoded index 0 in ignoreList assumes a single source; fragile if sources array changes",
+          "file": "scripts/rollup/build.js",
+          "line": 578,
+          "explanation": "The ignoreList is set to [0] based on the assumption that sourcemapAfterClosure.sources always contains exactly one entry (preMinifiedFilename). If future changes add additional sources (e.g., for inline modules or concatenated files), this hardcoded index will incorrectly ignore the wrong source or fail to ignore intended ones. A more robust approach would be to dynamically generate an array of all indices (e.g., sources.map((_, i) => i)) to match the comment 'All our code is considered third-party'."
+        }
+      ],
+      "stage": "risk"
+    },
+    "consensus": {
+      "consensusIssues": [
+        {
+          "issue": {
+            "severity": "warning",
+            "message": "Hardcoded index 0 in ignoreList assumes a single source; fragile if sources array changes",
+            "file": "scripts/rollup/build.js",
+            "line": 578,
+            "explanation": "The ignoreList is set to [0] based on the assumption that sourcemapAfterClosure.sources always contains exactly one entry (preMinifiedFilename). If future changes add additional sources (e.g., for inline modules or concatenated files), this hardcoded index will incorrectly ignore the wrong source or fail to ignore intended ones. A more robust approach would be to dynamically generate an array of all indices (e.g., sources.map((_, i) => i)) to match the comment 'All our code is considered third-party'."
+          },
+          "confidence": "high",
+          "models": ["claude", "gemini"],
+          "modelFindings": [
+            {
+              "model": "claude",
+              "severity": "warning",
+              "message": "Hardcoded index 0 in ignoreList assumes a single source; fragile if sources array changes",
+              "file": "scripts/rollup/build.js",
+              "line": 578,
+              "explanation": "The ignoreList is set to [0] based on the assumption that sourcemapAfterClosure.sources always contains exactly one entry (preMinifiedFilename). If future changes add additional sources (e.g., for inline modules or concatenated files), this hardcoded index will incorrectly ignore the wrong source or fail to ignore intended ones. A more robust approach would be to dynamically generate an array of all indices (e.g., sources.map((_, i) => i)) to match the comment 'All our code is considered third-party'."
+            },
+            {
+              "model": "gemini",
+              "severity": "warning",
+              "message": "Marking all sources as ignored in the source map can break error monitoring tools that respect ignoreList (e.g., Sentry)",
+              "file": "scripts/rollup/build.js",
+              "line": 579,
+              "explanation": "Setting `sourcemapAfterClosure.ignoreList = [0]` marks all sources as third-party and ignored by default. Tools like Sentry and Chrome DevTools respect the `ignoreList` (or `x_google_ignoreList`) field to suppress stack frames from error reports. If all sources are ignored, error reporting tools may drop every frame, leaving developers with no actionable stack trace. This could severely degrade debugging capabilities unless all consuming systems are configured to override this behaviour."
+            }
+          ]
+        }
+      ],
+      "claudeOnly": [],
+      "geminiOnly": [
+        {
+          "model": "gemini",
+          "severity": "info",
+          "message": "Hardcoded ignoreList index assumes source map has exactly one source",
+          "file": "scripts/rollup/build.js",
+          "line": 579,
+          "explanation": "The line `sourcemapAfterClosure.ignoreList = [0]` only ignores the first source (index 0). Currently the source map is explicitly set with a single source (`sourcemapAfterClosure.sources = [preMinifiedFilename]`), so it works. However, if the source mapping logic changes to include multiple sources in the future, this hardcoded value would not cover all sources, potentially leaving some sources mistakenly visible. A maintainer could miss the need to update this index."
+        }
+      ],
+      "allAgreeCount": 1,
+      "claudeTotal": 1,
+      "geminiTotal": 2
+    },
+    "raceConditions": [],
+    "suggestion": {
+      "suggestions": [
+        {
+          "issue": {
+            "severity": "warning",
+            "message": "Hardcoded index 0 in ignoreList assumes a single source; fragile if sources array changes",
+            "file": "scripts/rollup/build.js",
+            "line": 578,
+            "explanation": "The ignoreList is set to [0] based on the assumption that sourcemapAfterClosure.sources always contains exactly one entry (preMinifiedFilename). If future changes add additional sources (e.g., for inline modules or concatenated files), this hardcoded index will incorrectly ignore the wrong source or fail to ignore intended ones. A more robust approach would be to dynamically generate an array of all indices (e.g., sources.map((_, i) => i)) to match the comment 'All our code is considered third-party'."
+          },
+          "suggestedCode": "          sourcemapAfterClosure.sources = [preMinifiedFilename];\n          sourcemapAfterClosure.file = filename;\n\n          // All our code is considered \"third-party\" and should be ignored by default.\n          sourcemapAfterClosure.ignoreList = sourcemapAfterClosure.sources.map((_, i) => i);\n\n          // We'll write the pre-minified source to disk as a separate file.\n          // Because it sits on disk, there's no need to have it in the `sourcesContent` array.\n          // That also makes the file easier to read, and available for use by scripts.",
+          "explanation": "Dynamically generating the ignoreList array using .map((_, i) => i) ensures that all sources in the sourcemap are correctly flagged as third-party, regardless of how many sources are present in the array. This removes the fragile hardcoded [0] assumption."
+        }
+      ],
+      "stage": "suggestion"
+    }
+  },
+  "semanticDiff": {
+    "fileChanges": [
+      {
+        "filename": "scripts/rollup/build.js",
+        "status": "modified",
+        "additions": 3,
+        "deletions": 0,
+        "changeType": "modified",
+        "summary": "modified: scripts/rollup/build.js (+3/-0)",
+        "functionChanges": [],
+        "importChanges": [],
+        "exportChanges": []
+      }
+    ],
+    "summary": "Analyzed 1 file(s): 0 function change(s), 0 import change(s), 0 export change(s)",
+    "totalFiles": 1,
+    "totalAdditions": 3,
+    "totalDeletions": 0
+  },
+  "createdAt": "2026-05-30T20:29:42.993Z"
+}

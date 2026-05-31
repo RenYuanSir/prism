@@ -35,9 +35,24 @@ type RecentState =
   | { status: "loaded"; entries: HistoryEntry[] };
 
 const features = [
-  { icon: Zap, label: "Semantic Diff", desc: "AST-level change tracking" },
-  { icon: Shield, label: "Risk Detection", desc: "AI-powered vulnerability scan" },
-  { icon: GitBranch, label: "Impact Analysis", desc: "Dependency blast radius" },
+  {
+    icon: Zap,
+    label: "Semantic Diff",
+    desc: "AST-level change tracking",
+    color: "rgb(var(--prism-purple))",
+  },
+  {
+    icon: Shield,
+    label: "Risk Detection",
+    desc: "AI-powered vulnerability scan",
+    color: "rgb(var(--prism-orange))",
+  },
+  {
+    icon: GitBranch,
+    label: "Impact Analysis",
+    desc: "Dependency blast radius",
+    color: "rgb(var(--prism-blue))",
+  },
 ];
 
 function formatTime(iso: string): string {
@@ -114,8 +129,16 @@ export function PRList() {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Hero Section */}
-      <div className="flex-1 flex items-center justify-center px-8 py-16">
-        <div className="w-full max-w-xl">
+      <div className="flex-1 flex items-center justify-center px-8 py-16 relative overflow-hidden">
+        {/* Prism spectral glow */}
+        <div
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[500px] pointer-events-none"
+          style={{
+            background:
+              "radial-gradient(ellipse at center, rgb(var(--prism-purple) / 0.07) 0%, rgb(var(--prism-blue) / 0.04) 25%, rgb(var(--prism-green) / 0.02) 50%, transparent 70%), radial-gradient(ellipse at 30% 60%, rgb(var(--prism-red) / 0.04) 0%, transparent 50%), radial-gradient(ellipse at 70% 40%, rgb(var(--prism-orange) / 0.04) 0%, transparent 50%)",
+          }}
+        />
+        <div className="w-full max-w-xl relative z-10">
           {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -278,7 +301,7 @@ export function PRList() {
                 transition={{ duration: 0.4, delay: 0.4 + i * 0.1 }}
                 className="glass-surface rounded-lg p-4 text-center glass-surface-hover transition-all cursor-default"
               >
-                <feature.icon className="h-5 w-5 text-linear-accent mx-auto mb-2" />
+                <feature.icon className="h-5 w-5 mx-auto mb-2" style={{ color: feature.color }} />
                 <div className="text-[12px] font-weight-510 text-linear-text-secondary">
                   {feature.label}
                 </div>

@@ -5,21 +5,92 @@
 @tailwind utilities;
 
 @layer base {
+  /* ── Dark theme (default) ── */
   :root {
-    --color-bg: #08090a;
-    --color-panel: #0f1011;
-    --color-surface: #191a1b;
-    --color-elevated: #28282c;
-    --color-text-primary: #f7f8f8;
-    --color-text-secondary: #d0d6e0;
-    --color-text-tertiary: #8a8f98;
-    --color-text-muted: #62666d;
-    --color-brand: #5e6ad2;
-    --color-accent: #7170ff;
-    --color-accent-hover: #828fff;
-    --color-border: rgba(255, 255, 255, 0.08);
-    --color-border-subtle: rgba(255, 255, 255, 0.05);
-    --color-success: #10b981;
+    /* Background */
+    --color-bg: 8 9 10;
+    --color-panel: 15 16 17;
+    --color-surface: 25 26 27;
+    --color-elevated: 40 40 44;
+
+    /* Text */
+    --color-text-primary: 247 248 248;
+    --color-text-secondary: 208 214 224;
+    --color-text-tertiary: 138 143 152;
+    --color-text-muted: 98 102 109;
+
+    /* Brand */
+    --color-brand: 94 106 210;
+    --color-accent: 113 112 255;
+    --color-accent-hover: 130 143 255;
+    --color-success: 16 185 129;
+
+    /* Borders (white with opacity on dark bg) */
+    --border-color: 255 255 255;
+    --border-opacity: 0.08;
+    --border-subtle-opacity: 0.05;
+
+    /* ── Prism spectral palette ── */
+    --prism-red: 255 107 107;
+    --prism-orange: 255 169 77;
+    --prism-yellow: 255 212 59;
+    --prism-green: 105 219 124;
+    --prism-blue: 116 192 252;
+    --prism-purple: 151 117 250;
+
+    /* Glass effects */
+    --glass-bg: rgba(255, 255, 255, 0.02);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-hover-bg: rgba(255, 255, 255, 0.04);
+    --glass-hover-border: rgba(255, 255, 255, 0.12);
+
+    /* Scrollbar */
+    --scrollbar-thumb: rgba(255, 255, 255, 0.08);
+    --scrollbar-thumb-hover: rgba(255, 255, 255, 0.15);
+
+    /* Selection */
+    --selection-bg: rgba(94, 106, 210, 0.3);
+    --selection-text: 247 248 248;
+  }
+
+  /* ── Light theme ── */
+  :root.light {
+    --color-bg: 250 251 252;
+    --color-panel: 240 242 245;
+    --color-surface: 255 255 255;
+    --color-elevated: 240 242 245;
+
+    --color-text-primary: 26 29 35;
+    --color-text-secondary: 74 85 104;
+    --color-text-tertiary: 113 128 150;
+    --color-text-muted: 160 174 192;
+
+    --color-brand: 94 106 210;
+    --color-accent: 99 95 235;
+    --color-accent-hover: 79 75 212;
+    --color-success: 5 150 105;
+
+    --border-color: 0 0 0;
+    --border-opacity: 0.08;
+    --border-subtle-opacity: 0.04;
+
+    --prism-red: 229 62 62;
+    --prism-orange: 221 107 32;
+    --prism-yellow: 214 158 46;
+    --prism-green: 56 161 105;
+    --prism-blue: 49 130 206;
+    --prism-purple: 107 70 193;
+
+    --glass-bg: rgba(0, 0, 0, 0.02);
+    --glass-border: rgba(0, 0, 0, 0.06);
+    --glass-hover-bg: rgba(0, 0, 0, 0.04);
+    --glass-hover-border: rgba(0, 0, 0, 0.1);
+
+    --scrollbar-thumb: rgba(0, 0, 0, 0.12);
+    --scrollbar-thumb-hover: rgba(0, 0, 0, 0.2);
+
+    --selection-bg: rgba(94, 106, 210, 0.2);
+    --selection-text: 26 29 35;
   }
 
   * {
@@ -31,42 +102,37 @@
     font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   }
 
-  /* Custom scrollbar - Linear style */
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
   }
-
   ::-webkit-scrollbar-track {
     background: transparent;
   }
-
   ::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.08);
+    background: var(--scrollbar-thumb);
     border-radius: 3px;
   }
-
   ::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.15);
+    background: var(--scrollbar-thumb-hover);
   }
 
-  /* Selection */
   ::selection {
-    background: rgba(94, 106, 210, 0.3);
-    color: #f7f8f8;
+    background: var(--selection-bg);
+    color: rgb(var(--selection-text));
   }
 }
 
 @layer components {
   .glass-surface {
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
     backdrop-filter: blur(12px);
   }
 
   .glass-surface-hover:hover {
-    background: rgba(255, 255, 255, 0.04);
-    border-color: rgba(255, 255, 255, 0.12);
+    background: var(--glass-hover-bg);
+    border-color: var(--glass-hover-border);
   }
 
   .text-gradient {
@@ -77,7 +143,15 @@
   }
 
   .text-gradient-brand {
-    background: linear-gradient(135deg, #7170ff 0%, #828fff 100%);
+    background: linear-gradient(
+      135deg,
+      rgb(var(--prism-red)) 0%,
+      rgb(var(--prism-orange)) 18%,
+      rgb(var(--prism-yellow)) 36%,
+      rgb(var(--prism-green)) 54%,
+      rgb(var(--prism-blue)) 72%,
+      rgb(var(--prism-purple)) 100%
+    );
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -89,6 +163,13 @@
 
   .glow-accent {
     box-shadow: 0 0 20px rgba(113, 112, 255, 0.2), 0 0 40px rgba(113, 112, 255, 0.1);
+  }
+
+  /* Prism spectral glow — subtle rainbow halo for decorative use */
+  .glow-prism {
+    box-shadow: 0 0 30px rgb(var(--prism-red) / 0.08), 0 0 60px rgb(var(--prism-orange) / 0.06), 0 0
+      90px rgb(var(--prism-yellow) / 0.04), 0 0 120px rgb(var(--prism-green) / 0.04), 0 0 150px
+      rgb(var(--prism-blue) / 0.06), 0 0 180px rgb(var(--prism-purple) / 0.08);
   }
 
   .shimmer-bg {

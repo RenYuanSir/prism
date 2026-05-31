@@ -1,0 +1,35 @@
+[
+  {
+    "id": "2026-05-30-facebook-react-28310",
+    "owner": "facebook",
+    "repo": "react",
+    "prNumber": 28310,
+    "title": "Add ignoreList to our source maps",
+    "createdAt": "2026-05-30T20:29:42.993Z",
+    "riskCount": 1,
+    "criticalCount": 0,
+    "summarySnippet": "This change adds an ignoreList to the generated source maps, marking all project sources as third-party so they will be "
+  },
+  {
+    "id": "2026-05-30-The-PR-Agent-pr-agent-2415",
+    "owner": "The-PR-Agent",
+    "repo": "pr-agent",
+    "prNumber": 2415,
+    "title": "feat(mosaico): add Docker Compose overlay for PR-Agent solution agent",
+    "createdAt": "2026-05-30T19:51:49.003Z",
+    "riskCount": 1,
+    "criticalCount": 0,
+    "summarySnippet": "This pull request introduces a Docker Compose overlay that integrates PR-Agent as a MOSAICO solution agent, replicating "
+  },
+  {
+    "id": "2026-05-30-renyuansir-prism-6",
+    "owner": "renyuansir",
+    "repo": "prism",
+    "prNumber": 6,
+    "title": "chore: Documentation + Linear UI redesign + PRism rebrand",
+    "createdAt": "2026-05-30T17:46:08.660Z",
+    "riskCount": 1,
+    "criticalCount": 0,
+    "summarySnippet": "This pull request rebrands the project from AI PR Review to PRism, updates all package names and imports, and adds compr"
+  }
+]

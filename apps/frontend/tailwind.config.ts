@@ -2,6 +2,7 @@ import type { Config } from "tailwindcss";
 
 const config: Config = {
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
+  darkMode: "class",
   theme: {
     extend: {
       fontFamily: {
@@ -18,20 +19,20 @@ const config: Config = {
       },
       colors: {
         linear: {
-          black: "#08090a",
-          panel: "#0f1011",
-          surface: "#191a1b",
-          elevated: "#28282c",
-          "text-primary": "#f7f8f8",
-          "text-secondary": "#d0d6e0",
-          "text-tertiary": "#8a8f98",
-          "text-muted": "#62666d",
-          brand: "#5e6ad2",
-          accent: "#7170ff",
-          "accent-hover": "#828fff",
-          border: "rgba(255,255,255,0.08)",
-          "border-subtle": "rgba(255,255,255,0.05)",
-          success: "#10b981",
+          black: "rgb(var(--color-bg) / <alpha-value>)",
+          panel: "rgb(var(--color-panel) / <alpha-value>)",
+          surface: "rgb(var(--color-surface) / <alpha-value>)",
+          elevated: "rgb(var(--color-elevated) / <alpha-value>)",
+          "text-primary": "rgb(var(--color-text-primary) / <alpha-value>)",
+          "text-secondary": "rgb(var(--color-text-secondary) / <alpha-value>)",
+          "text-tertiary": "rgb(var(--color-text-tertiary) / <alpha-value>)",
+          "text-muted": "rgb(var(--color-text-muted) / <alpha-value>)",
+          brand: "rgb(var(--color-brand) / <alpha-value>)",
+          accent: "rgb(var(--color-accent) / <alpha-value>)",
+          "accent-hover": "rgb(var(--color-accent-hover) / <alpha-value>)",
+          border: "rgb(var(--border-color) / var(--border-opacity))",
+          "border-subtle": "rgb(var(--border-color) / var(--border-subtle-opacity))",
+          success: "rgb(var(--color-success) / <alpha-value>)",
         },
       },
       animation: {
