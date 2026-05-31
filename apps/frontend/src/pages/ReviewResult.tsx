@@ -226,6 +226,16 @@ export function ReviewResult() {
     );
   }
 
+  // Stable summary text that persists across loading → success transition.
+  // Lifted outside AnimatePresence so it never unmounts/remounts,
+  // preventing the visual "flash" that looks like the summary changed.
+  const summaryText =
+    state.status === "loading" || state.status === "error"
+      ? state.partial.summary
+      : state.status === "success"
+        ? state.data.review.summary.summary
+        : undefined;
+
   return (
     <div className="p-8 max-w-6xl mx-auto">
       {/* Header */}
@@ -247,6 +257,20 @@ export function ReviewResult() {
         </div>
       </motion.div>
 
+      {/* AI Summary — rendered outside AnimatePresence so it stays visible */}
+      {summaryText && (
+        <motion.section
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-6"
+        >
+          <SectionHeader icon={Sparkles} title="AI Summary" accent="text-linear-accent" />
+          <div className="glass-surface rounded-xl p-6">
+            <p className="text-[14px] text-linear-text-secondary leading-relaxed">{summaryText}</p>
+          </div>
+        </motion.section>
+      )}
+
       <AnimatePresence mode="wait">
         {/* Loading State */}
         {state.status === "loading" && (
@@ -267,18 +291,6 @@ export function ReviewResult() {
                 }
               />
             </div>
-
-            {/* Summary — appears as soon as LLM responds */}
-            {state.partial.summary && (
-              <motion.section initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-                <SectionHeader icon={Sparkles} title="AI Summary" accent="text-linear-accent" />
-                <div className="glass-surface rounded-xl p-6">
-                  <p className="text-[14px] text-linear-text-secondary leading-relaxed">
-                    {state.partial.summary}
-                  </p>
-                </div>
-              </motion.section>
-            )}
 
             {/* Risk analysis — per-model cards, show individually */}
             {(state.partial.claudeFindings || state.partial.geminiFindings) && (
@@ -336,21 +348,6 @@ export function ReviewResult() {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0 }}
           >
-            {/* Show partial results that arrived before the error */}
-            {state.partial.summary && (
-              <motion.section
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mb-6"
-              >
-                <SectionHeader icon={Sparkles} title="AI Summary" accent="text-linear-accent" />
-                <div className="glass-surface rounded-xl p-6">
-                  <p className="text-[14px] text-linear-text-secondary leading-relaxed">
-                    {state.partial.summary}
-                  </p>
-                </div>
-              </motion.section>
-            )}
             <div className="glass-surface rounded-xl p-6 border-red-500/20">
               <div className="flex items-start gap-3">
                 <XCircle className="h-6 w-6 text-red-400 flex-shrink-0" />
@@ -480,20 +477,6 @@ function ReviewContent({ pr, semanticDiff, review, impactGraph }: ReviewContentP
           }
         />
       </motion.div>
-
-      {/* AI Summary */}
-      <motion.section
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-      >
-        <SectionHeader icon={Sparkles} title="AI Summary" accent="text-linear-accent" />
-        <div className="glass-surface rounded-xl p-6">
-          <p className="text-[14px] text-linear-text-secondary leading-relaxed">
-            {review.summary.summary}
-          </p>
-        </div>
-      </motion.section>
 
       {/* File Changes */}
       <motion.section

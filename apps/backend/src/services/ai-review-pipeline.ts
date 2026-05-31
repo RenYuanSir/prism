@@ -101,13 +101,22 @@ export class AIReviewPipeline {
     try {
       // Stage 1: Summary
       onEvent({ type: "stage:start", stage: "summary" });
+      const t0 = Date.now();
       const summary = await this.generateSummary(pr, semanticDiff);
+      console.log(
+        `[pipeline] Summary generated in ${Date.now() - t0}ms (model: ${this.summaryClient.model ?? "unknown"})`,
+      );
       onEvent({ type: "summary", summary: summary.summary });
 
       const raceCandidates = await this.getRaceCandidates(semanticDiff, fileContents);
 
       // Stage 2: Parallel Risk Analysis
+      // NOTE: "claude" role uses riskClient, "gemini" role uses summaryClient.
+      // This is intentional — using two different models gives diverse perspectives
+      // for consensus. If one model is consistently slower, check the env config:
+      // LLM_SUMMARY_MODEL (gemini role) vs LLM_RISK_MODEL (claude role).
       onEvent({ type: "stage:start", stage: "risk" });
+      const riskStart = Date.now();
       const [claudeResult, geminiResult] = await Promise.all([
         this.analyzeRisksWithModel(
           this.riskClient,
@@ -117,6 +126,7 @@ export class AIReviewPipeline {
           semanticDiff,
           raceCandidates,
         ).then((r) => {
+          console.log(`[pipeline] Model "claude" (riskClient) done in ${Date.now() - riskStart}ms`);
           onEvent({ type: "risk:model-done", model: "claude", findings: r.findings });
           return r;
         }),
@@ -128,10 +138,14 @@ export class AIReviewPipeline {
           semanticDiff,
           raceCandidates,
         ).then((r) => {
+          console.log(
+            `[pipeline] Model "gemini" (summaryClient) done in ${Date.now() - riskStart}ms`,
+          );
           onEvent({ type: "risk:model-done", model: "gemini", findings: r.findings });
           return r;
         }),
       ]);
+      console.log(`[pipeline] Risk analysis total: ${Date.now() - riskStart}ms`);
 
       // Stage 3: Consensus Merge
       const consensus = mergeConsensus(claudeResult.findings, geminiResult.findings);
@@ -141,7 +155,11 @@ export class AIReviewPipeline {
       const issuesForSuggestion = consensus.consensusIssues
         .filter((i) => i.confidence !== "low")
         .map((i) => i.issue);
+      const tSuggestion = Date.now();
       const suggestion = await this.generateSuggestions(issuesForSuggestion, diff);
+      console.log(
+        `[pipeline] Suggestions generated in ${Date.now() - tSuggestion}ms (model: ${this.suggestionClient.model ?? "unknown"})`,
+      );
       onEvent({ type: "suggestion", suggestions: suggestion.suggestions });
 
       onEvent({ type: "done" });

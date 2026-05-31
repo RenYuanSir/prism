@@ -4,6 +4,7 @@ import OpenAI from "openai";
 
 export interface LLMClient {
   generateText(prompt: string): Promise<string>;
+  readonly model?: string;
 }
 
 export interface LLMProviderConfig {
@@ -15,7 +16,7 @@ export interface LLMProviderConfig {
 
 export class AnthropicClient implements LLMClient {
   private client: Anthropic;
-  private model: string;
+  readonly model: string;
 
   constructor(config: LLMProviderConfig) {
     this.client = new Anthropic({ apiKey: config.apiKey, baseURL: config.baseUrl });
@@ -38,22 +39,24 @@ export class AnthropicClient implements LLMClient {
 }
 
 export class GoogleClient implements LLMClient {
-  private model;
+  private genModel;
+  readonly model: string;
 
   constructor(config: LLMProviderConfig) {
     const genAI = new GoogleGenerativeAI(config.apiKey);
-    this.model = genAI.getGenerativeModel({ model: config.model });
+    this.genModel = genAI.getGenerativeModel({ model: config.model });
+    this.model = config.model;
   }
 
   async generateText(prompt: string): Promise<string> {
-    const result = await this.model.generateContent(prompt);
+    const result = await this.genModel.generateContent(prompt);
     return result.response.text();
   }
 }
 
 export class OpenAICompatibleClient implements LLMClient {
   private client: OpenAI;
-  private model: string;
+  readonly model: string;
 
   constructor(config: LLMProviderConfig) {
     this.client = new OpenAI({
