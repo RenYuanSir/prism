@@ -8,7 +8,7 @@ export class SettingsStore {
   private filePath: string;
 
   constructor(baseDir?: string) {
-    const dir = baseDir ?? join(process.cwd(), "data", "settings");
+    const dir = baseDir ?? join(process.cwd(), "data");
     this.filePath = join(dir, SETTINGS_FILE);
     if (!existsSync(dir)) {
       mkdirSync(dir, { recursive: true });
