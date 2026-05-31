@@ -4,6 +4,69 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>PRism — AI Code Review</title>
+    <!-- Theme variables — inlined BEFORE any Vite/Tailwind CSS for maximum priority -->
+    <style>
+      :root {
+        --c-bg: 8, 9, 10;
+        --c-panel: 15, 16, 17;
+        --c-surface: 25, 26, 27;
+        --c-elevated: 40, 40, 44;
+        --c-text-primary: 247, 248, 248;
+        --c-text-secondary: 208, 214, 224;
+        --c-text-tertiary: 138, 143, 152;
+        --c-text-muted: 98, 102, 109;
+        --c-brand: 94, 106, 210;
+        --c-accent: 113, 112, 255;
+        --c-accent-hover: 130, 143, 255;
+        --c-success: 16, 185, 129;
+        --c-border-rgb: 255, 255, 255;
+        --c-border-alpha: 0.08;
+        --c-border-subtle-alpha: 0.05;
+        --c-glass-bg: 255, 255, 255;
+        --c-glass-alpha: 0.02;
+        --c-glass-border-alpha: 0.08;
+        --c-prism-red: 255, 107, 107;
+        --c-prism-orange: 255, 169, 77;
+        --c-prism-yellow: 255, 212, 59;
+        --c-prism-green: 105, 219, 124;
+        --c-prism-blue: 116, 192, 252;
+        --c-prism-purple: 151, 117, 250;
+        --c-scrollbar-alpha: 0.08;
+        --c-scrollbar-hover-alpha: 0.15;
+      }
+
+      html.light {
+        --c-bg: 248, 250, 252;
+        --c-panel: 236, 240, 244;
+        --c-surface: 255, 255, 255;
+        --c-elevated: 242, 245, 248;
+        --c-text-primary: 15, 23, 42;
+        --c-text-secondary: 51, 65, 85;
+        --c-text-tertiary: 100, 116, 139;
+        --c-text-muted: 148, 163, 184;
+        --c-brand: 79, 85, 198;
+        --c-accent: 99, 95, 235;
+        --c-accent-hover: 79, 75, 212;
+        --c-success: 5, 150, 105;
+        --c-border-rgb: 0, 0, 0;
+        --c-border-alpha: 0.06;
+        --c-border-subtle-alpha: 0.03;
+        --c-glass-bg: 255, 255, 255;
+        --c-glass-alpha: 0.70;
+        --c-glass-border-alpha: 0.08;
+        --c-prism-red: 220, 38, 38;
+        --c-prism-orange: 234, 88, 12;
+        --c-prism-yellow: 202, 138, 4;
+        --c-prism-green: 22, 163, 74;
+        --c-prism-blue: 37, 99, 235;
+        --c-prism-purple: 124, 58, 237;
+        --c-scrollbar-alpha: 0.15;
+        --c-scrollbar-hover-alpha: 0.25;
+      }
+
+      html { background: rgb(var(--c-bg)); color: rgb(var(--c-text-primary)); }
+      body { background: rgb(var(--c-bg)); color: rgb(var(--c-text-primary)); }
+    </style>
   </head>
   <body>
     <div id="root"></div>

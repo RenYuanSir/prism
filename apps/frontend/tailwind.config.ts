@@ -1,5 +1,12 @@
 import type { Config } from "tailwindcss";
 
+function clr(name: string) {
+  return `rgb(var(--c-${name}) / <alpha-value>)`;
+}
+function clrA(name: string, alphaVar: string) {
+  return `rgb(var(--c-${name}) / var(${alphaVar}))`;
+}
+
 const config: Config = {
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   darkMode: "class",
@@ -19,20 +26,20 @@ const config: Config = {
       },
       colors: {
         linear: {
-          black: "rgb(var(--color-bg) / <alpha-value>)",
-          panel: "rgb(var(--color-panel) / <alpha-value>)",
-          surface: "rgb(var(--color-surface) / <alpha-value>)",
-          elevated: "rgb(var(--color-elevated) / <alpha-value>)",
-          "text-primary": "rgb(var(--color-text-primary) / <alpha-value>)",
-          "text-secondary": "rgb(var(--color-text-secondary) / <alpha-value>)",
-          "text-tertiary": "rgb(var(--color-text-tertiary) / <alpha-value>)",
-          "text-muted": "rgb(var(--color-text-muted) / <alpha-value>)",
-          brand: "rgb(var(--color-brand) / <alpha-value>)",
-          accent: "rgb(var(--color-accent) / <alpha-value>)",
-          "accent-hover": "rgb(var(--color-accent-hover) / <alpha-value>)",
-          border: "rgb(var(--border-color) / var(--border-opacity))",
-          "border-subtle": "rgb(var(--border-color) / var(--border-subtle-opacity))",
-          success: "rgb(var(--color-success) / <alpha-value>)",
+          black: clr("bg"),
+          panel: clr("panel"),
+          surface: clr("surface"),
+          elevated: clr("elevated"),
+          "text-primary": clr("text-primary"),
+          "text-secondary": clr("text-secondary"),
+          "text-tertiary": clr("text-tertiary"),
+          "text-muted": clr("text-muted"),
+          brand: clr("brand"),
+          accent: clr("accent"),
+          "accent-hover": clr("accent-hover"),
+          border: clrA("border-rgb", "--c-border-alpha"),
+          "border-subtle": clrA("border-rgb", "--c-border-subtle-alpha"),
+          success: clr("success"),
         },
       },
       animation: {
@@ -43,10 +50,7 @@ const config: Config = {
         shimmer: "shimmer 2s linear infinite",
       },
       keyframes: {
-        fadeIn: {
-          "0%": { opacity: "0" },
-          "100%": { opacity: "1" },
-        },
+        fadeIn: { "0%": { opacity: "0" }, "100%": { opacity: "1" } },
         slideUp: {
           "0%": { opacity: "0", transform: "translateY(20px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },

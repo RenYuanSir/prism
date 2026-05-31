@@ -25,7 +25,7 @@ export function Layout() {
                 className="h-8 w-8 rounded-lg flex items-center justify-center"
                 style={{
                   background:
-                    "linear-gradient(135deg, rgb(var(--prism-red)) 0%, rgb(var(--prism-orange)) 20%, rgb(var(--prism-yellow)) 40%, rgb(var(--prism-green)) 60%, rgb(var(--prism-blue)) 80%, rgb(var(--prism-purple)) 100%)",
+                    "linear-gradient(135deg, rgb(var(--c-prism-red)) 0%, rgb(var(--c-prism-orange)) 20%, rgb(var(--c-prism-yellow)) 40%, rgb(var(--c-prism-green)) 60%, rgb(var(--c-prism-blue)) 80%, rgb(var(--c-prism-purple)) 100%)",
                 }}
               >
                 <svg

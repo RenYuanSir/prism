@@ -1,100 +1,5 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;510;600;590&family=JetBrains+Mono:wght@400;500&display=swap");
 
-/* ═══════════════════════════════════════════
-   CSS Custom Properties (unlayered — max priority)
-   ═══════════════════════════════════════════ */
-
-:root {
-  /* Background */
-  --color-bg: 8 9 10;
-  --color-panel: 15 16 17;
-  --color-surface: 25 26 27;
-  --color-elevated: 40 40 44;
-
-  /* Text */
-  --color-text-primary: 247 248 248;
-  --color-text-secondary: 208 214 224;
-  --color-text-tertiary: 138 143 152;
-  --color-text-muted: 98 102 109;
-
-  /* Brand */
-  --color-brand: 94 106 210;
-  --color-accent: 113 112 255;
-  --color-accent-hover: 130 143 255;
-  --color-success: 16 185 129;
-
-  /* Borders */
-  --border-color: 255 255 255;
-  --border-opacity: 0.08;
-  --border-subtle-opacity: 0.05;
-
-  /* Prism spectral palette */
-  --prism-red: 255 107 107;
-  --prism-orange: 255 169 77;
-  --prism-yellow: 255 212 59;
-  --prism-green: 105 219 124;
-  --prism-blue: 116 192 252;
-  --prism-purple: 151 117 250;
-
-  /* Glass effects */
-  --glass-bg: rgba(255, 255, 255, 0.02);
-  --glass-border: rgba(255, 255, 255, 0.08);
-  --glass-hover-bg: rgba(255, 255, 255, 0.04);
-  --glass-hover-border: rgba(255, 255, 255, 0.12);
-
-  /* Scrollbar */
-  --scrollbar-thumb: rgba(255, 255, 255, 0.08);
-  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.15);
-
-  /* Selection */
-  --selection-bg: rgba(94, 106, 210, 0.3);
-  --selection-text: 247 248 248;
-
-  color-scheme: dark;
-}
-
-/* ── Light theme ── */
-:root.light {
-  --color-bg: 250 251 252;
-  --color-panel: 235 238 242;
-  --color-surface: 255 255 255;
-  --color-elevated: 243 245 248;
-
-  --color-text-primary: 17 20 28;
-  --color-text-secondary: 55 65 81;
-  --color-text-tertiary: 107 114 128;
-  --color-text-muted: 156 163 175;
-
-  --color-brand: 79 85 198;
-  --color-accent: 99 95 235;
-  --color-accent-hover: 79 75 212;
-  --color-success: 5 150 105;
-
-  --border-color: 0 0 0;
-  --border-opacity: 0.06;
-  --border-subtle-opacity: 0.03;
-
-  --prism-red: 220 38 38;
-  --prism-orange: 234 88 12;
-  --prism-yellow: 202 138 4;
-  --prism-green: 22 163 74;
-  --prism-blue: 37 99 235;
-  --prism-purple: 124 58 237;
-
-  --glass-bg: rgba(255, 255, 255, 0.7);
-  --glass-border: rgba(0, 0, 0, 0.08);
-  --glass-hover-bg: rgba(255, 255, 255, 0.9);
-  --glass-hover-border: rgba(0, 0, 0, 0.12);
-
-  --scrollbar-thumb: rgba(0, 0, 0, 0.15);
-  --scrollbar-thumb-hover: rgba(0, 0, 0, 0.25);
-
-  --selection-bg: rgba(94, 106, 210, 0.2);
-  --selection-text: 17 20 28;
-
-  color-scheme: light;
-}
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -104,16 +9,8 @@
     font-feature-settings: "cv01", "ss03";
   }
 
-  html {
-    background-color: rgb(var(--color-bg));
-    color: rgb(var(--color-text-primary));
-  }
-
   body {
-    background-color: rgb(var(--color-bg));
-    color: rgb(var(--color-text-primary));
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+    @apply bg-linear-black text-linear-text-primary antialiased;
     font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   }
 
@@ -125,37 +22,37 @@
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: var(--scrollbar-thumb);
+    background: rgb(var(--c-border-rgb) / var(--c-scrollbar-alpha));
     border-radius: 3px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: var(--scrollbar-thumb-hover);
+    background: rgb(var(--c-border-rgb) / var(--c-scrollbar-hover-alpha));
   }
 
   ::selection {
-    background: var(--selection-bg);
-    color: rgb(var(--selection-text));
+    background: rgb(var(--c-brand) / 0.3);
+    color: rgb(var(--c-text-primary));
   }
 }
 
 @layer components {
   .glass-surface {
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
+    background: rgb(var(--c-glass-bg) / var(--c-glass-alpha));
+    border: 1px solid rgb(var(--c-glass-bg) / var(--c-glass-border-alpha));
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
   }
 
   .glass-surface-hover:hover {
-    background: var(--glass-hover-bg);
-    border-color: var(--glass-hover-border);
+    background: rgb(var(--c-glass-bg) / calc(var(--c-glass-alpha) + 0.03));
+    border-color: rgb(var(--c-glass-bg) / calc(var(--c-glass-border-alpha) + 0.05));
   }
 
   .text-gradient {
     background: linear-gradient(
       135deg,
-      rgb(var(--color-text-primary)) 0%,
-      rgb(var(--color-text-tertiary)) 100%
+      rgb(var(--c-text-primary)) 0%,
+      rgb(var(--c-text-tertiary)) 100%
     );
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -165,12 +62,12 @@
   .text-gradient-brand {
     background: linear-gradient(
       135deg,
-      rgb(var(--prism-red)) 0%,
-      rgb(var(--prism-orange)) 18%,
-      rgb(var(--prism-yellow)) 36%,
-      rgb(var(--prism-green)) 54%,
-      rgb(var(--prism-blue)) 72%,
-      rgb(var(--prism-purple)) 100%
+      rgb(var(--c-prism-red)) 0%,
+      rgb(var(--c-prism-orange)) 18%,
+      rgb(var(--c-prism-yellow)) 36%,
+      rgb(var(--c-prism-green)) 54%,
+      rgb(var(--c-prism-blue)) 72%,
+      rgb(var(--c-prism-purple)) 100%
     );
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -178,71 +75,11 @@
   }
 
   .glow-brand {
-    box-shadow: 0 0 20px rgba(94, 106, 210, 0.15), 0 0 60px rgba(94, 106, 210, 0.05);
+    box-shadow: 0 0 20px rgb(var(--c-brand) / 0.15), 0 0 60px rgb(var(--c-brand) / 0.05);
   }
 
   .glow-accent {
-    box-shadow: 0 0 20px rgba(113, 112, 255, 0.2), 0 0 40px rgba(113, 112, 255, 0.1);
-  }
-
-  /* ── Prismatic light beam animation ── */
-  .prism-beam {
-    position: absolute;
-    border-radius: 50%;
-    filter: blur(80px);
-    opacity: 0;
-    animation: prismOrbit var(--orbit-duration, 12s) ease-in-out infinite;
-    animation-delay: var(--orbit-delay, 0s);
-    pointer-events: none;
-    will-change: transform, opacity;
-  }
-
-  @keyframes prismOrbit {
-    0%,
-    100% {
-      opacity: 0.12;
-      transform: translate(0, 0) scale(1);
-    }
-    25% {
-      opacity: 0.22;
-      transform: translate(60px, -30px) scale(1.15);
-    }
-    50% {
-      opacity: 0.08;
-      transform: translate(-20px, 40px) scale(0.9);
-    }
-    75% {
-      opacity: 0.18;
-      transform: translate(-50px, -20px) scale(1.1);
-    }
-  }
-
-  /* Subtle floating refraction specks */
-  .prism-speck {
-    position: absolute;
-    border-radius: 50%;
-    pointer-events: none;
-    animation: speckFloat var(--speck-duration, 8s) ease-in-out infinite;
-    animation-delay: var(--speck-delay, 0s);
-    will-change: transform, opacity;
-  }
-
-  @keyframes speckFloat {
-    0%,
-    100% {
-      opacity: 0;
-      transform: translateY(0) scale(0.8);
-    }
-    20% {
-      opacity: 0.7;
-    }
-    50% {
-      opacity: 0.4;
-      transform: translateY(-30px) scale(1.2);
-    }
-    80% {
-      opacity: 0.1;
-    }
+    box-shadow: 0 0 20px rgb(var(--c-accent) / 0.2), 0 0 40px rgb(var(--c-accent) / 0.1);
   }
 
   .shimmer-bg {
@@ -254,6 +91,77 @@
     );
     background-size: 200% 100%;
     animation: shimmer 2s linear infinite;
+  }
+
+  /* ── Prism refraction beam ── */
+  .prism-refraction {
+    position: absolute;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  .prism-refraction::before {
+    content: "";
+    position: absolute;
+    /* Diagonal beam from top-left fanning out */
+    top: -30%;
+    left: -10%;
+    width: 60%;
+    height: 160%;
+    /* central bright beam */
+    background: linear-gradient(
+      135deg,
+      transparent 0%,
+      rgb(var(--c-prism-purple) / 0.06) 15%,
+      rgb(var(--c-prism-blue) / 0.1) 25%,
+      rgb(var(--c-prism-green) / 0.08) 35%,
+      rgb(var(--c-prism-yellow) / 0.12) 45%,
+      rgb(var(--c-prism-orange) / 0.08) 55%,
+      rgb(var(--c-prism-red) / 0.06) 65%,
+      transparent 80%
+    );
+    filter: blur(60px);
+    animation: prismSway 20s ease-in-out infinite;
+  }
+
+  .prism-refraction::after {
+    content: "";
+    position: absolute;
+    /* Secondary fan — narrower, offset timing */
+    top: -20%;
+    left: 5%;
+    width: 35%;
+    height: 140%;
+    background: linear-gradient(
+      135deg,
+      transparent 0%,
+      rgb(var(--c-prism-blue) / 0.05) 20%,
+      rgb(var(--c-prism-green) / 0.07) 35%,
+      rgb(var(--c-prism-yellow) / 0.06) 50%,
+      transparent 70%
+    );
+    filter: blur(40px);
+    animation: prismSway 25s ease-in-out infinite reverse;
+  }
+
+  @keyframes prismSway {
+    0%,
+    100% {
+      transform: rotate(-2deg) translateX(0);
+      opacity: 0.9;
+    }
+    25% {
+      transform: rotate(1deg) translateX(3%);
+      opacity: 1;
+    }
+    50% {
+      transform: rotate(-1deg) translateX(-2%);
+      opacity: 0.7;
+    }
+    75% {
+      transform: rotate(2deg) translateX(1%);
+      opacity: 0.85;
+    }
   }
 }
 
