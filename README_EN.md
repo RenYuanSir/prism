@@ -1,9 +1,7 @@
 <p align="center">
-  <img src="prism.png" width="600" alt="PRism logo">
+  <img src="prism.png" width="800" alt="PRism logo">
 </p>
-
-<h1 align="center">PRism</h1>
-<p align="center">AI-Powered Pull Request Review Assistant</p>
+<p align="center"><strong>AI-Powered GitHub Pull Request Code Review Platform</strong></p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/TypeScript-5.4-blue" alt="TypeScript">
@@ -13,81 +11,169 @@
   <img src="https://img.shields.io/badge/Vitest-2-green" alt="Vitest">
   <img src="https://img.shields.io/badge/Tailwind-3-06B6D4" alt="Tailwind CSS">
   <img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT">
+  <a href="README.md"><img src="https://img.shields.io/badge/README-中文-ff6f00" alt="中文"></a>
 </p>
 
+---
+
+<p align="center"><strong>Watch the demo:</strong></p>
+
 <p align="center">
-  <a href="README.md">中文</a>
+  <a href="https://www.bilibili.com/video/BV1y6VU6jEdC?vd_source=4958599fc247ce0b6bf3dac98a708afe" target="_blank">
+    <img src="https://img.shields.io/badge/▶_Demo_Bilibili-00A1D6?style=for-the-badge&logo=bilibili&logoColor=white&labelColor=FB7299" alt="Demo on Bilibili">
+  </a>
 </p>
 
 ---
 
 ## What is PRism?
 
-PRism is an AI-powered code review assistant designed for GitHub Pull Requests. It integrates multi-model AI consensus, AST-level semantic analysis, race condition detection, and dependency impact heatmaps into a unified review pipeline — helping developers identify potential risks before merging.
+PRism is an AI-powered code review assistant designed for GitHub Pull Requests. It integrates **multi-model AI consensus**, **AST-level semantic analysis**, **race condition detection**, and **dependency impact heatmaps** into a unified review pipeline — streaming results to the frontend in real-time via SSE, helping developers identify potential risks before merging.
 
-**The name:** Just as a prism disperses white light into a color spectrum, PRism breaks down multi-dimensional code changes in a Pull Request into structured review results. Multiple feature branches (rainbow colors) pass through the analysis pipeline and merge into a unified review report (white light).
+**The name:** Just as a prism disperses white light into a color spectrum, PRism breaks down multi-dimensional code changes in a Pull Request into structured review results. Multiple feature branches (rainbow colors) pass through the analysis pipeline and merge into a unified review report.
+
+## Core Design Philosophy
+
+### Augmenting Humans, Not Replacing Them
+
+The greatest value of an AI review tool does not lie in "replacing human review" — it lies in **letting reviewers spend their limited time on problems that genuinely require human judgment**. PRism does not output ESLint-level style suggestions. It focuses on deep semantic analysis: race conditions, cross-module dependency breakage, logic flaws, and subtle defects in AI-generated code. Every finding comes with an **explainable reasoning trail**, so reviewers understand *why* something is a problem rather than blindly trusting an AI verdict.
+
+### Model Selection Strategy: Heterogeneous Complementarity > Single Best
+
+The 2026 LLM landscape shows clearly: **no single model wins across all dimensions**. Claude excels at multi-file logical reasoning but is expensive; fine-tuned fast models have high recall for common defect patterns but may miss complex edge cases.
+
+PRism employs a **four-role architecture** — not merely "calling the API a few more times", but matching the most suitable capability to each stage:
+
+| Stage | Model Role | Recommended Model | Rationale |
+|------|---------|---------|---------|
+| **Summary** | Quick overview | `deepseek-v4-pro` | Needs accurate PR intent understanding; large models provide more stable long-context comprehension |
+| **Risk (Model 1)** | Primary risk scan | `deepseek-v4-flash` | Fast, low-cost, good coverage of common defect patterns |
+| **Risk (Model 2)** | Cross-validation | `gemini-3.5-flash` | Heterogeneous with Model 1; provides a different analytical perspective to strengthen consensus reliability |
+| **Suggestion** | Fix generation | `claude-sonnet-4-6` | Code generation scenarios demand the strongest code understanding and synthesis capability |
+
+The two Risk models run in parallel, then their findings are cross-validated via a **consensus merge algorithm** (file + line ±3 + severity matching). Findings confirmed by both models are marked as Consensus; findings from only one model are listed separately for human review. The core value of this approach is **false positive control**: a single model may hallucinate, but two heterogeneous models independently agreeing on the same line of code makes a false positive extremely unlikely.
+
+### Context Acquisition: Three-Layer Progressive Strategy
+
+Review depth vs. context scope is a fundamental trade-off — more context means more thorough analysis, but also higher token consumption and latency. PRism uses a **layered context strategy**:
+
+```
+Layer 1: Intra-file Context
+  └── AST parsing → function/class-level semantic change descriptions → feed to LLM
+  └── Instead of raw git diff text
+  └── Implementation: Tree-sitter WASM
+
+Layer 2: Call-chain Analysis
+  └── Cross-file import/export dependency graph construction
+  └── Identify all callers and callees of changed functions
+  └── Implementation: impact-analyzer (static dependency tracking)
+
+Layer 3: Concurrency Context
+  └── Async functions + Promise chains + shared state access pattern extraction
+  └── Injected into Risk stage prompts
+  └── Implementation: race-condition-analyzer
+```
+
+The significance of this strategy: Layer 1 answers "what did this function change" (accuracy), Layer 2 answers "who will be affected" (context understanding), Layer 3 answers "what could go wrong under concurrency" (deep reasoning). The three layers together do not require full-repository indexing, keeping token consumption manageable while demonstrating analytical capability far beyond conventional diff-based review.
+
+### Future Roadmap
+
+```
+MVP (Current)
+├── Semantic Diff (Tree-sitter AST)
+├── 4-Model Pipeline (Summary → Risk×2 → Consensus → Suggestion)
+├── Race Condition Detection + Execution Path Visualization
+├── Cross-File Impact Heatmap (static dependency analysis)
+├── SSE Streaming Real-Time Rendering
+├── Review History Persistence + Settings Management
+└── Light/Dark Theme + Prismatic Spectral Animation
+
+V1 (Near-term)
+├── Incremental Review (per-push updates, analyze new changes only)
+├── Historical Similar PR Risk Warning (vector embedding + similarity search)
+├── Review Quality Self-Scoring & Trend Analysis
+├── Enhanced Consensus Confidence Visualization
+├── PR Comment Auto-Post to GitHub (GitHub Suggestion format)
+└── GitLab + Gitee Support
+
+V2 (Mid-term Vision)
+├── IDE Plugin (VS Code Extension)
+├── Team Custom Review Rules (YAML configuration)
+├── AI-Generated Code Specialist Review (hallucination detection: non-existent API calls, undefined symbols)
+├── Runtime Behavior Analysis Integration (optional dynamic analysis)
+└── Open API + Webhook Event Stream
+```
 
 ## Features
 
 | Feature | Description |
 |---|---|
-| **Semantic Diff** | Tree-sitter AST parsing — change tracking at function/variable/import/export level |
-| **Multi-Model Consensus** | Dual-model parallel risk analysis with consensus voting (file + line ±3 + severity matching) |
-| **Race Condition Detection** | Local AST extraction + LLM enrichment, animated timeline visualization of conflict paths |
-| **Streaming Display** | SSE progressive rendering — results stream to frontend per pipeline stage as they complete |
-| **Impact Heatmap** | Dependency impact graph showing the blast radius of code changes |
-| **Review History** | Auto-persist reviews as JSON files with instant cached loading |
-| **URL Auto-Parse** | Paste a GitHub PR URL to auto-fill owner/repo/number fields |
-
-## Architecture
-
-```
-prism/
-├── apps/
-│   ├── frontend/       # React 18 + Vite + Tailwind CSS
-│   │   ├── src/pages/          # PRList, ReviewResult, HistoryPage, Settings
-│   │   ├── src/components/    # ConsensusView, RaceConditionTimeline, ImpactHeatmap, etc.
-│   │   └── src/api/           # SSE streaming client + REST API
-│   └── backend/        # Node.js + Express
-│       └── src/services/
-│           ├── ai-review-pipeline.ts      # Multi-stage review pipeline
-│           ├── consensus-merger.ts        # Dual-model consensus algorithm
-│           ├── race-condition-analyzer.ts # Concurrency pattern detection
-│           ├── history-store.ts           # JSON file persistence
-│           ├── llm-client.ts / llm-config.ts  # Multi-provider LLM abstraction
-│           ├── ast-parser.ts              # Tree-sitter WASM AST analysis
-│           ├── diff-analyzer.ts           # Semantic diff analysis
-│           ├── impact-analyzer.ts         # Dependency impact graph
-│           └── github.ts                  # Octokit REST client
-├── packages/
-│   └── shared/          # Shared TypeScript types (120+ exported types)
-└── pnpm-workspace.yaml  # Monorepo
-```
-
-**Review Pipeline:**
-
-```
-summary ──▶ parallel risk (Model A + Model B) ──▶ consensus merge ──▶ suggestion
-   │              │                │                │               │
-   ▼              ▼                ▼                ▼               ▼
- SSE event    SSE events       SSE event        SSE event       SSE event
-  Summary     Per-model risk    Consensus       Fix suggestions   Done
-```
+| **Semantic Diff** | Tree-sitter WASM AST parsing — function/import/export level change tracking, not text diff |
+| **Multi-Model Consensus** | Dual-model parallel risk analysis + consensus voting (file + line ±3 + severity matching), reducing false positives |
+| **Race Condition Detection** | Local AST concurrency pattern extraction + LLM-enriched execution paths, animated timeline visualization |
+| **Impact Heatmap** | Dependency graph via import/export analysis, impact scoring + drill-down detail panel |
+| **SSE Streaming** | Server-Sent Events progressive rendering — pipeline results stream to frontend as each stage completes |
+| **Review History** | Auto-persist reviews as JSON on completion, instant cached reload for past reviews |
+| **URL Auto-Parse** | Paste a GitHub PR URL to auto-extract owner/repo/number, supporting multiple URL formats |
+| **Light/Dark Theme** | Full dual-color-system, prismatic spectral gradients + glassmorphism + GPU-composited refraction animation |
+| **LLM Settings** | Four-stage independent Provider config (6 presets + Custom), API Key security masking, backend persistence |
 
 ## Tech Stack
 
 | Layer | Technology |
 |---|---|
 | Runtime | Node.js >= 18 |
-| Language | TypeScript 5.4+ (strict) |
+| Language | TypeScript 5.4 (strict mode) |
 | Package Manager | pnpm >= 8 (monorepo workspace) |
-| Frontend | React 18, Vite 5, Tailwind CSS 3 |
+| Frontend | React 18, Vite 5, Tailwind CSS 3, framer-motion |
 | Backend | Express 4, Tree-sitter WASM, Octokit |
-| LLM | OpenAI-compatible interface (DeepSeek, Qwen, Bailian, etc.) |
-| Testing | Vitest 2 (120 tests / 11 files) |
+| LLM Abstraction | Unified interface supporting Anthropic / Google / OpenAI / OpenAI-compatible |
+| Testing | Vitest 2 (140 tests / 13 files) |
 | Lint/Format | Biome |
-| Git Hooks | Husky 9 + lint-staged |
-| CI/CD | GitHub Actions |
+| Git Hooks | Husky 9 + lint-staged (pre-commit: format + typecheck + test) |
+| CI/CD | GitHub Actions (Quality → Test → Build) |
+
+## Architecture
+
+```
+prism/
+├── apps/
+│   ├── frontend/          # React 18 + Vite 5 + Tailwind CSS
+│   │   ├── src/pages/             # PRList, ReviewResult, HistoryPage, SettingsPage
+│   │   ├── src/components/        # ConsensusView, RaceConditionTimeline, ImpactHeatmap, etc.
+│   │   └── src/api/               # SSE streaming client + REST API
+│   └── backend/           # Node.js + Express
+│       └── src/services/
+│           ├── ai-review-pipeline.ts        # Multi-stage pipeline (summary → risk×2 → consensus → suggestion)
+│           ├── consensus-merger.ts          # Dual-model consensus algorithm (file + line ±3 + severity)
+│           ├── race-condition-analyzer.ts   # Concurrency pattern extraction & candidate detection
+│           ├── impact-analyzer.ts           # Cross-file dependency graph & impact scoring
+│           ├── diff-analyzer.ts             # AST semantic diff analysis
+│           ├── ast-parser.ts                # Tree-sitter WASM parser (TS/TSX/JS)
+│           ├── llm-client.ts                # Multi-provider LLM abstraction (Anthropic/Google/OpenAI)
+│           ├── llm-config.ts                # Four-stage Provider config + caching
+│           ├── history-store.ts             # Review result JSON persistence
+│           ├── settings-store.ts            # LLM settings JSON persistence
+│           └── github.ts                    # Octokit REST client
+├── packages/
+│   └── shared/             # Shared TypeScript types (120+ types) + utilities
+└── pnpm-workspace.yaml     # Monorepo
+```
+
+**Review Pipeline:**
+
+```
+  ┌──────────┐     ┌─────────────────────┐     ┌───────────┐     ┌────────────┐
+  │ Summary  │ ──▶ │   Risk (parallel)    │ ──▶ │ Consensus │ ──▶ │ Suggestion │
+  │          │     │  Model 1 │ Model 2   │     │   Merge   │     │            │
+  └──────────┘     └─────────────────────┘     └───────────┘     └────────────┘
+       │               │          │                 │                 │
+       ▼               ▼          ▼                 ▼                 ▼
+   SSE event       SSE events  SSE event       SSE event         SSE event
+    Summary       Model findings  Consensus     Fix suggestions     Done
+```
+
+Each event is pushed to the frontend in real-time via SSE, with AbortController support for cancellation.
 
 ## Quick Start
 
@@ -105,17 +191,20 @@ pnpm dev          # Frontend (:5173) + Backend (:3001)
 
 ## Environment Variables
 
-Each pipeline stage (summary / risk / suggestion) can independently use different LLM providers and models.
+Each pipeline stage (summary / risk / gemini / suggestion) can independently use different LLM providers and models.
 
 | Variable | Required | Description |
 |---|---|---|
 | `GITHUB_TOKEN` | ✅ | GitHub personal access token |
-| `LLM_SUMMARY_PROVIDER` | ✅ | Summary stage provider (e.g., `openai-compatible`) |
+| `LLM_SUMMARY_PROVIDER` | ✅ | Summary stage provider |
 | `LLM_SUMMARY_API_KEY` | ✅ | Summary stage API key |
 | `LLM_SUMMARY_MODEL` | ✅ | Summary stage model name |
-| `LLM_RISK_PROVIDER` | ✅ | Risk analysis provider |
-| `LLM_RISK_API_KEY` | ✅ | Risk analysis API key |
-| `LLM_RISK_MODEL` | ✅ | Risk analysis model name |
+| `LLM_RISK_PROVIDER` | ✅ | Risk Model 1 provider |
+| `LLM_RISK_API_KEY` | ✅ | Risk Model 1 API key |
+| `LLM_RISK_MODEL` | ✅ | Risk Model 1 model name |
+| `LLM_GEMINI_PROVIDER` | ✅ | Risk Model 2 provider |
+| `LLM_GEMINI_API_KEY` | ✅ | Risk Model 2 API key |
+| `LLM_GEMINI_MODEL` | ✅ | Risk Model 2 model name |
 | `LLM_SUGGESTION_PROVIDER` | ✅ | Suggestion generation provider |
 | `LLM_SUGGESTION_API_KEY` | ✅ | Suggestion generation API key |
 | `LLM_SUGGESTION_MODEL` | ✅ | Suggestion generation model name |
@@ -124,27 +213,29 @@ Each pipeline stage (summary / risk / suggestion) can independently use differen
 
 **Supported Providers:** `anthropic` | `google` | `openai` | `openai-compatible`
 
-The `openai-compatible` mode supports any OpenAI-compatible API. Set `LLM_*_BASE_URL` to point to your provider's endpoint.
+The `openai-compatible` mode supports any OpenAI-compatible API (DeepSeek, Qwen, Bailian, Kimi, etc.). Set `LLM_*_BASE_URL` to point to your provider's endpoint.
 
 ## API Endpoints
 
 | Endpoint | Method | Description |
 |---|---|---|
 | `/api/health` | GET | Health check |
-| `/api/pr/:owner/:repo/:number` | GET | Get PR metadata, diff, and semantic analysis |
+| `/api/pr/:owner/:repo/:number` | GET | Get PR metadata, raw diff, and semantic analysis |
 | `/api/review/:owner/:repo/:number` | POST | Full AI review (blocking, single response) |
-| `/api/review/:owner/:repo/:number/stream` | POST | SSE streaming AI review (progressive results) |
-| `/api/impact/:owner/:repo/:number` | POST | Dependency impact heatmap |
-| `/api/history` | GET | Review history list |
-| `/api/history/:id` | GET | Get saved review by ID |
+| `/api/review/:owner/:repo/:number/stream` | POST | SSE streaming AI review (progressive real-time results) |
+| `/api/impact/:owner/:repo/:number` | POST | Cross-file dependency impact heatmap |
+| `/api/history` | GET | Review history list (recent 100 entries) |
+| `/api/history/:id` | GET | Get full saved review details by ID |
+| `/api/settings` | GET | Get LLM config (API keys masked for security) |
+| `/api/settings` | POST | Save LLM config (with API keys, persisted to disk) |
 
 ## Scripts & Testing
 
 ```bash
 # Development
-pnpm dev              # Start all services
-pnpm dev:frontend     # Frontend only (5173)
-pnpm dev:backend      # Backend only (3001)
+pnpm dev              # Start frontend + backend
+pnpm dev:frontend     # Frontend only (localhost:5173)
+pnpm dev:backend      # Backend only (localhost:3001)
 
 # Build
 pnpm build            # Build all packages
@@ -154,26 +245,26 @@ pnpm build:shared     # Build shared package only
 pnpm lint             # Biome check
 pnpm lint:fix         # Auto-fix issues
 pnpm typecheck        # TypeScript strict check
-pnpm test             # Run all 120 tests
+pnpm test             # Run all 140 tests
 pnpm test -- --watch  # Watch mode
 ```
 
 ## CI/CD
 
-GitHub Actions runs on every PR:
+GitHub Actions runs three quality gates on every PR — all must pass before merge:
+
 1. **Quality** — `pnpm lint` + `pnpm typecheck`
-2. **Test** — `pnpm test` (120 tests)
+2. **Test** — `pnpm test` (140 tests / 13 files)
 3. **Build** — `pnpm build`
 
-All three must pass before merge.
-
-## Git Workflow
+## Contributing
 
 1. Branch from `main`: `git checkout -b feat/description`
 2. Code + tests
 3. `pnpm typecheck && pnpm lint && pnpm test` — all must pass
-4. Commit with conventional commits: `feat:` `fix:` `chore:` `docs:` `test:`
-5. Push and open PR — CI enforces quality gates
+4. Use Conventional Commits: `feat:` `fix:` `chore:` `docs:` `test:`
+5. Push and open a PR — CI enforces quality gates
+6. Delete branch after merge
 
 ## License
 
