@@ -1,8 +1,6 @@
 <p align="center">
-  <img src="prism.png" width="600" alt="PRism logo">
+  <img src="prism.png" width="800" alt="PRism logo">
 </p>
-
-<h1 align="center">PRism</h1>
 <p align="center">AI 驱动的 Pull Request 智能审查工具</p>
 
 <p align="center">
