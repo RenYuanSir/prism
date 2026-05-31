@@ -127,12 +127,12 @@ export function PRList() {
   const isValid = owner.trim() && repo.trim() && pullNumber.trim();
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col relative">
+      {/* Shared prism light refraction — spans both hero and recent reviews */}
+      <div className="prism-refraction fixed inset-0 z-0" />
       {/* Hero Section */}
-      <div className="flex-1 flex items-center justify-center px-8 py-16 relative overflow-hidden">
-        {/* Prism light refraction — diagonal beam top-left to bottom-right */}
-        <div className="prism-refraction absolute inset-0" />
-        <div className="w-full max-w-xl relative z-10">
+      <div className="flex-1 flex items-center justify-center px-8 py-16 relative z-10">
+        <div className="w-full max-w-xl">
           {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -307,10 +307,8 @@ export function PRList() {
       </div>
 
       {/* Recent Reviews Section */}
-      <div className="px-8 pb-8 relative overflow-hidden">
-        {/* Prism light refraction */}
-        <div className="prism-refraction absolute inset-0" />
-        <div className="max-w-xl mx-auto relative z-10">
+      <div className="px-8 pb-8 relative z-10">
+        <div className="max-w-xl mx-auto">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <GitPullRequest className="h-4 w-4 text-linear-text-muted" />
