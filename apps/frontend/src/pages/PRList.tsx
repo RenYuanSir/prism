@@ -307,8 +307,10 @@ export function PRList() {
       </div>
 
       {/* Recent Reviews Section */}
-      <div className="px-8 pb-8">
-        <div className="max-w-xl mx-auto">
+      <div className="px-8 pb-8 relative overflow-hidden">
+        {/* Prism light refraction */}
+        <div className="prism-refraction absolute inset-0" />
+        <div className="max-w-xl mx-auto relative z-10">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <GitPullRequest className="h-4 w-4 text-linear-text-muted" />
