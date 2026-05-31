@@ -11,6 +11,13 @@
   <img src="https://img.shields.io/badge/Vitest-2-green" alt="Vitest">
   <img src="https://img.shields.io/badge/Tailwind-3-06B6D4" alt="Tailwind CSS">
   <img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT">
+  <a href="README_EN.md"><img src="https://img.shields.io/badge/README-English-0288d1" alt="English"></a>
+</p>
+
+<p align="center">
+  <a href="https://www.bilibili.com/video/BV1y6VU6jEdC?vd_source=4958599fc247ce0b6bf3dac98a708afe" target="_blank">
+    <img src="https://img.shields.io/badge/▶_Demo_Bilibili-00A1D6?style=for-the-badge&logo=bilibili&logoColor=white&labelColor=FB7299" alt="Demo on Bilibili">
+  </a>
 </p>
 
 ---
@@ -258,9 +265,3 @@ GitHub Actions 在每个 PR 上运行三道门禁，全部通过方可合并：
 ## 许可证
 
 MIT
-
----
-
-<p align="center">
-  <a href="README_EN.md">English</a>
-</p>
