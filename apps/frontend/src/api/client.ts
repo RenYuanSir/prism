@@ -194,3 +194,36 @@ export async function fetchHistoryDetail(id: string): Promise<ApiResponse<Review
   }
   return json;
 }
+
+export interface LLMStageConfig {
+  provider: string;
+  model: string;
+  apiKey: string;
+  baseUrl?: string;
+}
+
+export interface LLMSettings {
+  summary: LLMStageConfig;
+  risk: LLMStageConfig;
+  suggestion: LLMStageConfig;
+}
+
+export interface SafeLLMSettings {
+  summary: Omit<LLMStageConfig, "apiKey">;
+  risk: Omit<LLMStageConfig, "apiKey">;
+  suggestion: Omit<LLMStageConfig, "apiKey">;
+}
+
+export async function fetchSettings(): Promise<ApiResponse<SafeLLMSettings | null>> {
+  const response = await fetch(`${BASE_URL}/settings`);
+  return response.json();
+}
+
+export async function saveSettings(settings: LLMSettings): Promise<ApiResponse<null>> {
+  const response = await fetch(`${BASE_URL}/settings`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(settings),
+  });
+  return response.json();
+}

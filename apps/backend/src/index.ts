@@ -3,11 +3,18 @@ import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
 import type { Request, Response } from "express";
-import { createDefaultPipeline } from "./services/ai-review-pipeline.js";
+import { AIReviewPipeline } from "./services/ai-review-pipeline.js";
 import { analyzeDiff } from "./services/diff-analyzer.js";
 import { GitHubService } from "./services/github.js";
 import { HistoryStore } from "./services/history-store.js";
 import { analyzeImpact } from "./services/impact-analyzer.js";
+import {
+  clearLLMConfigCache,
+  createPipelineClients,
+  loadLLMConfig,
+} from "./services/llm-config.js";
+import type { LLMPipelineConfig } from "./services/llm-config.js";
+import { SettingsStore } from "./services/settings-store.js";
 
 dotenv.config({ path: "../../.env" });
 
@@ -133,7 +140,7 @@ app.post("/api/review/:owner/:repo/:pullNumber", async (req: Request, res: Respo
     );
     const fileContents = Object.fromEntries(fileContentEntries);
 
-    const pipeline = createDefaultPipeline();
+    const pipeline = new AIReviewPipeline(createPipelineClients(loadLLMConfig()));
     const reviewResult = await pipeline.run(pr, diff, semanticDiff, fileContents);
 
     res.json({
@@ -214,7 +221,7 @@ app.post("/api/review/:owner/:repo/:pullNumber/stream", async (req: Request, res
     let collectedConsensus: AIConsensusResult | null = null;
     let collectedSuggestions: AIFixSuggestion[] = [];
 
-    const pipeline = createDefaultPipeline();
+    const pipeline = new AIReviewPipeline(createPipelineClients(loadLLMConfig()));
     await pipeline.runStream(pr, diff, semanticDiff, fileContents, (event) => {
       if (aborted) return;
       if (event.type === "summary" && event.summary) {
@@ -327,6 +334,64 @@ app.post("/api/impact/:owner/:repo/:pullNumber", async (req: Request, res: Respo
       success: false,
       error: `Failed to analyze impact: ${message}`,
     });
+  }
+});
+
+// ── Settings ──
+
+app.get("/api/settings", async (_req: Request, res: Response) => {
+  try {
+    const store = new SettingsStore();
+    const config = await store.load();
+    if (config) {
+      // Strip apiKey for security
+      const safe = {
+        summary: {
+          provider: config.summary.provider,
+          model: config.summary.model,
+          baseUrl: config.summary.baseUrl,
+        },
+        risk: {
+          provider: config.risk.provider,
+          model: config.risk.model,
+          baseUrl: config.risk.baseUrl,
+        },
+        suggestion: {
+          provider: config.suggestion.provider,
+          model: config.suggestion.model,
+          baseUrl: config.suggestion.baseUrl,
+        },
+      };
+      res.json({ success: true, data: safe });
+    } else {
+      res.json({ success: true, data: null });
+    }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    res.status(500).json({ success: false, error: message });
+  }
+});
+
+app.post("/api/settings", async (req: Request, res: Response) => {
+  try {
+    const store = new SettingsStore();
+    const config = req.body as LLMPipelineConfig;
+    // Basic validation
+    const stages = ["summary", "risk", "suggestion"] as const;
+    for (const stage of stages) {
+      if (!config[stage]?.provider || !config[stage]?.apiKey || !config[stage]?.model) {
+        res
+          .status(400)
+          .json({ success: false, error: `Missing required fields for ${stage} stage` });
+        return;
+      }
+    }
+    await store.save(config);
+    clearLLMConfigCache();
+    res.json({ success: true });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    res.status(500).json({ success: false, error: message });
   }
 });
 

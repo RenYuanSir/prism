@@ -18,7 +18,7 @@ import type {
 import type { PullRequest } from "@prism/shared";
 import { mergeConsensus } from "./consensus-merger.js";
 import type { LLMClient } from "./llm-client.js";
-import { createPipelineClients, loadLLMConfigFromEnv } from "./llm-config.js";
+import { createPipelineClients, loadLLMConfig } from "./llm-config.js";
 import {
   analyzeRaceConditionPatterns,
   detectRaceConditionCandidates,
@@ -588,7 +588,7 @@ Provide COMPLETE code replacements that can be directly applied. Include surroun
 }
 
 export function createDefaultPipeline(): AIReviewPipeline {
-  const config = loadLLMConfigFromEnv();
+  const config = loadLLMConfig();
   const clients = createPipelineClients(config);
   return new AIReviewPipeline(clients);
 }

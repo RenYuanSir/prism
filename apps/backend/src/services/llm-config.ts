@@ -1,5 +1,6 @@
 import type { LLMClient, LLMProviderConfig } from "./llm-client.js";
 import { createLLMClient } from "./llm-client.js";
+import { SettingsStore } from "./settings-store.js";
 
 export interface LLMPipelineConfig {
   summary: LLMProviderConfig;
@@ -24,7 +25,7 @@ function getEnvConfig(
   return { provider, apiKey, model, baseUrl };
 }
 
-export function loadLLMConfigFromEnv(): LLMPipelineConfig {
+function getEnvDefaults(): LLMPipelineConfig {
   return {
     summary: getEnvConfig("LLM_SUMMARY", {
       provider: "google",
@@ -39,6 +40,33 @@ export function loadLLMConfigFromEnv(): LLMPipelineConfig {
       model: "claude-3-5-sonnet-20241022",
     }),
   };
+}
+
+let cachedConfig: LLMPipelineConfig | null = null;
+
+/** Load config from settings.json if available, otherwise fall back to env vars */
+export function loadLLMConfig(): LLMPipelineConfig {
+  if (cachedConfig) return cachedConfig;
+
+  const store = new SettingsStore();
+  const saved = store.loadSync();
+  if (saved) {
+    cachedConfig = saved;
+    return cachedConfig;
+  }
+
+  cachedConfig = getEnvDefaults();
+  return cachedConfig;
+}
+
+/** Clear the cached config (called after saving new settings) */
+export function clearLLMConfigCache(): void {
+  cachedConfig = null;
+}
+
+/** Load config strictly from env vars (used by tests) */
+export function loadLLMConfigFromEnv(): LLMPipelineConfig {
+  return getEnvDefaults();
 }
 
 export function createPipelineClients(config: LLMPipelineConfig): {
