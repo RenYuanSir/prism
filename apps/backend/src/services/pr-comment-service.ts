@@ -49,11 +49,9 @@ export function filterIssuesForPosting(consensus: AIConsensusResult): FilteredIs
     }
   }
 
-  // Sort: critical first, then warning
-  result.sort((a, b) => {
-    const severityOrder = { critical: 0, warning: 1 };
-    return severityOrder[a.issue.severity] - severityOrder[b.issue.severity];
-  });
+  // Sort: critical first, then warning (info already filtered out)
+  const severityOrder: Record<string, number> = { critical: 0, warning: 1, info: 2 };
+  result.sort((a, b) => severityOrder[a.issue.severity] - severityOrder[b.issue.severity]);
 
   return result;
 }
