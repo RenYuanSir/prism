@@ -195,6 +195,27 @@ export async function fetchHistoryDetail(id: string): Promise<ApiResponse<Review
   return json;
 }
 
+export interface PostCommentResult {
+  htmlUrl: string;
+  id: number;
+}
+
+export async function postComment(
+  owner: string,
+  repo: string,
+  pullNumber: number,
+  summary: string,
+  consensus: Record<string, unknown>,
+  suggestions: unknown[],
+): Promise<ApiResponse<PostCommentResult>> {
+  const response = await fetch(`${BASE_URL}/review/${owner}/${repo}/${pullNumber}/comment`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ summary, consensus, suggestions }),
+  });
+  return response.json();
+}
+
 export interface LLMStageConfig {
   provider: string;
   model: string;
