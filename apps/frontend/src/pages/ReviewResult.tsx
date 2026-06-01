@@ -12,11 +12,13 @@ import {
   AlertTriangle,
   ArrowLeft,
   CheckCircle2,
+  ExternalLink,
   FileText,
   GitBranch,
   GitCommit,
   Lightbulb,
   Loader2,
+  Send,
   Sparkles,
   User,
   XCircle,
@@ -25,7 +27,13 @@ import {
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useParams, useSearchParams } from "react-router-dom";
-import { type ReviewResponse, fetchHistoryDetail, fetchImpact, streamReview } from "../api/client";
+import {
+  type ReviewResponse,
+  fetchHistoryDetail,
+  fetchImpact,
+  postComment,
+  streamReview,
+} from "../api/client";
 import { ConsensusView } from "../components/ConsensusView";
 import { FileChangeCard } from "../components/FileChangeCard";
 import { ImpactHeatmap } from "../components/ImpactHeatmap";
@@ -57,6 +65,12 @@ type ReviewState =
   | { status: "loading"; partial: PartialResults }
   | { status: "success"; data: ReviewResponse; impactGraph: ImpactGraph | null }
   | { status: "error"; message: string; partial: PartialResults };
+
+type PostState =
+  | { status: "idle" }
+  | { status: "posting" }
+  | { status: "success"; htmlUrl: string }
+  | { status: "error"; message: string };
 
 export function ReviewResult() {
   const { t } = useTranslation();
@@ -387,6 +401,9 @@ export function ReviewResult() {
               semanticDiff={state.data.semanticDiff}
               review={state.data.review}
               impactGraph={state.impactGraph}
+              owner={owner!}
+              repo={repo!}
+              pullNumber={pullNumber!}
             />
           </motion.div>
         )}
@@ -400,13 +417,50 @@ interface ReviewContentProps {
   semanticDiff: SemanticDiff;
   review: AIReviewResult;
   impactGraph: ImpactGraph | null;
+  owner: string;
+  repo: string;
+  pullNumber: string;
 }
 
-function ReviewContent({ pr, semanticDiff, review, impactGraph }: ReviewContentProps) {
+function ReviewContent({
+  pr,
+  semanticDiff,
+  review,
+  impactGraph,
+  owner,
+  repo,
+  pullNumber,
+}: ReviewContentProps) {
   const { t } = useTranslation();
   const criticalCount = review.risk.issues.filter((i) => i.severity === "critical").length;
   const warningCount = review.risk.issues.filter((i) => i.severity === "warning").length;
   const infoCount = review.risk.issues.filter((i) => i.severity === "info").length;
+
+  const [postState, setPostState] = useState<PostState>({ status: "idle" });
+
+  const handlePostToGitHub = async () => {
+    setPostState({ status: "posting" });
+    try {
+      const result = await postComment(
+        owner,
+        repo,
+        Number(pullNumber),
+        review.summary.summary,
+        review.consensus as unknown as Record<string, unknown>,
+        review.suggestion.suggestions as unknown[],
+      );
+      if (result.success && result.data) {
+        setPostState({ status: "success", htmlUrl: result.data.htmlUrl });
+      } else {
+        setPostState({ status: "error", message: result.error ?? "Unknown error" });
+      }
+    } catch (err) {
+      setPostState({
+        status: "error",
+        message: err instanceof Error ? err.message : "Unknown error",
+      });
+    }
+  };
 
   return (
     <motion.div
@@ -485,6 +539,58 @@ function ReviewContent({ pr, semanticDiff, review, impactGraph }: ReviewContentP
                 : t("reviewResult.infoCount", { n: infoCount })
           }
         />
+      </motion.div>
+
+      {/* Post to GitHub */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className="flex items-center justify-end gap-3"
+      >
+        {postState.status === "success" ? (
+          <a
+            href={postState.htmlUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-green-500/10 border border-green-500/30 text-green-400 text-[13px] font-weight-510 hover:bg-green-500/20 transition-colors"
+          >
+            <CheckCircle2 className="h-4 w-4" />
+            {t("reviewResult.postedToGitHub")}
+            <ExternalLink className="h-3.5 w-3.5" />
+          </a>
+        ) : postState.status === "error" ? (
+          <div className="flex items-center gap-2">
+            <span className="text-[12px] text-red-400">{postState.message}</span>
+            <button
+              type="button"
+              onClick={handlePostToGitHub}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-linear-brand text-white text-[13px] font-weight-510 hover:bg-linear-accent transition-colors"
+            >
+              <Send className="h-4 w-4" />
+              {t("reviewResult.retryPost")}
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={handlePostToGitHub}
+            disabled={postState.status === "posting"}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-linear-brand text-white text-[13px] font-weight-510 hover:bg-linear-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {postState.status === "posting" ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                {t("reviewResult.posting")}
+              </>
+            ) : (
+              <>
+                <Send className="h-4 w-4" />
+                {t("reviewResult.postToGitHub")}
+              </>
+            )}
+          </button>
+        )}
       </motion.div>
 
       {/* File Changes */}
