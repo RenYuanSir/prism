@@ -14,6 +14,7 @@ import {
   loadLLMConfig,
 } from "./services/llm-config.js";
 import type { LLMPipelineConfig } from "./services/llm-config.js";
+import { formatReviewBody } from "./services/pr-comment-service.js";
 import { SettingsStore } from "./services/settings-store.js";
 
 dotenv.config({ path: "../../.env" });
@@ -334,6 +335,49 @@ app.post("/api/impact/:owner/:repo/:pullNumber", async (req: Request, res: Respo
       success: false,
       error: `Failed to analyze impact: ${message}`,
     });
+  }
+});
+
+// ── Post Comment to GitHub ──
+
+app.post("/api/review/:owner/:repo/:pullNumber/comment", async (req: Request, res: Response) => {
+  const { owner, repo, pullNumber } = req.params;
+  const prNumber = Number(pullNumber);
+
+  if (!Number.isInteger(prNumber) || prNumber <= 0) {
+    res.status(400).json({ success: false, error: "pullNumber must be a positive integer" });
+    return;
+  }
+
+  const token = process.env.GITHUB_TOKEN;
+  if (!token) {
+    res.status(500).json({ success: false, error: "GITHUB_TOKEN is not set" });
+    return;
+  }
+
+  try {
+    const { summary, consensus, suggestions } = req.body as {
+      summary: string;
+      consensus: import("@prism/shared").AIConsensusResult;
+      suggestions: import("@prism/shared").AIFixSuggestion[];
+    };
+
+    if (!summary || !consensus || !suggestions) {
+      res.status(400).json({
+        success: false,
+        error: "Missing required fields: summary, consensus, suggestions",
+      });
+      return;
+    }
+
+    const github = new GitHubService(token);
+    const body = formatReviewBody(summary, consensus, suggestions, owner, repo, prNumber);
+    const review = await github.createReview(owner, repo, prNumber, body);
+
+    res.json({ success: true, data: review });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    res.status(500).json({ success: false, error: `Failed to post review: ${message}` });
   }
 });
 
