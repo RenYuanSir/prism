@@ -8,6 +8,7 @@ vi.mock("@octokit/rest", () => {
       get: vi.fn(),
       listFiles: vi.fn(),
       listCommits: vi.fn(),
+      createReview: vi.fn(),
     },
     repos: {
       getContent: vi.fn(),
@@ -258,6 +259,41 @@ describe("GitHubService", () => {
       await expect(service.getFileContent("owner", "repo", "src/", "main")).rejects.toThrow(
         "Cannot get content for src/",
       );
+    });
+  });
+
+  describe("createReview", () => {
+    it("should create a PR review with COMMENT event", async () => {
+      mockOctokit.pulls.createReview.mockResolvedValue({
+        data: {
+          id: 789,
+          html_url: "https://github.com/owner/repo/pull/42#pullrequestreview-789",
+          state: "COMMENTED",
+          body: "## 🤖 PRism AI Review\n\n### Summary\n\nTest summary",
+        },
+      });
+
+      const body = "## 🤖 PRism AI Review\n\n### Summary\n\nTest summary";
+      const result = await service.createReview("owner", "repo", 42, body);
+
+      expect(mockOctokit.pulls.createReview).toHaveBeenCalledWith({
+        owner: "owner",
+        repo: "repo",
+        pull_number: 42,
+        body,
+        event: "COMMENT",
+      });
+
+      expect(result).toEqual({
+        id: 789,
+        htmlUrl: "https://github.com/owner/repo/pull/42#pullrequestreview-789",
+      });
+    });
+
+    it("should handle GitHub API errors", async () => {
+      mockOctokit.pulls.createReview.mockRejectedValue(new Error("Not Found"));
+
+      await expect(service.createReview("owner", "repo", 999, "body")).rejects.toThrow("Not Found");
     });
   });
 });

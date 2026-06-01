@@ -93,4 +93,24 @@ export class GitHubService {
 
     throw new Error(`Cannot get content for ${path}`);
   }
+
+  async createReview(
+    owner: string,
+    repo: string,
+    pullNumber: number,
+    body: string,
+  ): Promise<{ id: number; htmlUrl: string }> {
+    const { data } = await this.octokit.pulls.createReview({
+      owner,
+      repo,
+      pull_number: pullNumber,
+      body,
+      event: "COMMENT",
+    });
+
+    return {
+      id: data.id,
+      htmlUrl: data.html_url,
+    };
+  }
 }
