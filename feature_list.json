@@ -1,0 +1,164 @@
+{
+  "features": [
+    {
+      "id": "feat-001",
+      "name": "PR Fetch & URL Auto-Parse",
+      "description": "Fetch PR metadata and raw diff from GitHub API; parse GitHub PR URL to extract owner/repo/number",
+      "dependencies": [],
+      "status": "done",
+      "evidence": "github.ts service, parseGitHubPrUrl in shared, all tests pass"
+    },
+    {
+      "id": "feat-002",
+      "name": "AST Semantic Diff Analysis",
+      "description": "Tree-sitter WASM parsing of TS/TSX/JS files; function/import/export-level change detection with regex fallback",
+      "dependencies": ["feat-001"],
+      "status": "done",
+      "evidence": "ast-parser.ts + diff-analyzer.ts, tests pass"
+    },
+    {
+      "id": "feat-003",
+      "name": "Multi-Model AI Review Pipeline",
+      "description": "4-stage pipeline: Summary → Risk×2 (parallel) → Consensus Merge → Suggestion; SSE streaming to frontend",
+      "dependencies": ["feat-002"],
+      "status": "done",
+      "evidence": "ai-review-pipeline.ts, consensus-merger.ts, llm-client.ts, tests pass"
+    },
+    {
+      "id": "feat-004",
+      "name": "LLM Provider Abstraction Layer",
+      "description": "Unified interface for Anthropic, Google Gemini, OpenAI, and OpenAI-compatible APIs; per-stage independent model config",
+      "dependencies": [],
+      "status": "done",
+      "evidence": "llm-client.ts, llm-config.ts, settings UI, tests pass"
+    },
+    {
+      "id": "feat-005",
+      "name": "Race Condition Detection",
+      "description": "Local AST-based concurrency pattern extraction (async/promise/shared-state); LLM-enriched execution path analysis; timeline visualization",
+      "dependencies": ["feat-002", "feat-003"],
+      "status": "done",
+      "evidence": "race-condition-analyzer.ts, RaceConditionTimeline.tsx, tests pass"
+    },
+    {
+      "id": "feat-006",
+      "name": "Cross-File Impact Heatmap",
+      "description": "Import/export dependency graph construction; impact scoring algorithm per file; visual heatmap component",
+      "dependencies": ["feat-002"],
+      "status": "done",
+      "evidence": "impact-analyzer.ts, ImpactHeatmap.tsx, tests pass"
+    },
+    {
+      "id": "feat-007",
+      "name": "SSE Streaming + Real-Time UI",
+      "description": "Server-Sent Events pipeline streaming; progressive UI rendering per stage; AbortController cancellation support",
+      "dependencies": ["feat-003"],
+      "status": "done",
+      "evidence": "ReviewResult.tsx SSE handling, PipelineProgress.tsx, client.ts streaming"
+    },
+    {
+      "id": "feat-008",
+      "name": "Review History Persistence",
+      "description": "Auto-save completed reviews as JSON files; history list page; cached review loading (no re-analysis); Settings store",
+      "dependencies": ["feat-003"],
+      "status": "done",
+      "evidence": "history-store.ts, HistoryPage.tsx, settings-store.ts, API endpoints"
+    },
+    {
+      "id": "feat-009",
+      "name": "Light/Dark Theme + Visual Polish",
+      "description": "Dual color system; prism spectrum gradients; glass-morphism styling; framer-motion staged animations; GPU-composited refraction effects",
+      "dependencies": [],
+      "status": "done",
+      "evidence": "ThemeToggle.tsx, Tailwind config, glass-surface/linear-text design tokens"
+    },
+    {
+      "id": "feat-010",
+      "name": "Incremental Review (per-push)",
+      "description": "Update review on each push; analyze only newly changed portions, preserving prior results",
+      "dependencies": ["feat-003", "feat-008"],
+      "status": "planned",
+      "evidence": ""
+    },
+    {
+      "id": "feat-011",
+      "name": "Historical Similar PR Risk Warning",
+      "description": "Vector embedding of review findings; similarity search against history; alert on recurring risk patterns across PRs",
+      "dependencies": ["feat-008"],
+      "status": "planned",
+      "evidence": ""
+    },
+    {
+      "id": "feat-012",
+      "name": "Review Quality Self-Scoring",
+      "description": "Auto-score review quality per run; trend analysis over time; confidence calibration metrics",
+      "dependencies": ["feat-003", "feat-008"],
+      "status": "planned",
+      "evidence": ""
+    },
+    {
+      "id": "feat-013",
+      "name": "PR Comment Auto-Post to GitHub",
+      "description": "Post review findings as GitHub PR comments using GitHub Suggestion format; configurable severity threshold for auto-posting",
+      "dependencies": ["feat-003"],
+      "status": "done",
+      "evidence": "Manual trigger via Post to GitHub button on review result page; severity filter critical+warning; PR Review COMMENT format; 148 tests pass, init.sh clean"
+    },
+    {
+      "id": "feat-014",
+      "name": "GitLab + Gitee Support",
+      "description": "Extend PR fetching and review to GitLab merge requests and Gitee pull requests",
+      "dependencies": ["feat-001", "feat-003"],
+      "status": "planned",
+      "evidence": ""
+    },
+    {
+      "id": "feat-015",
+      "name": "Consensus Confidence Visualization",
+      "description": "Enhanced dual-model agreement visualization; per-issue confidence bars; model disagreement zone highlighting",
+      "dependencies": ["feat-003", "feat-007"],
+      "status": "planned",
+      "evidence": ""
+    },
+    {
+      "id": "feat-016",
+      "name": "VS Code Extension",
+      "description": "Inline PR review results in VS Code; gutter markers for issues; quick-fix suggestions; sidebar panel for full pipeline",
+      "dependencies": ["feat-003"],
+      "status": "future",
+      "evidence": ""
+    },
+    {
+      "id": "feat-017",
+      "name": "Team Custom Review Rules (YAML)",
+      "description": "YAML-based configurable review rules; team-specific patterns; per-repo rule presets",
+      "dependencies": ["feat-003"],
+      "status": "future",
+      "evidence": ""
+    },
+    {
+      "id": "feat-018",
+      "name": "AI-Generated Code Hallucination Detection",
+      "description": "Detect calls to non-existent APIs; references to undefined symbols; fabricated library functions in AI-generated code",
+      "dependencies": ["feat-002"],
+      "status": "future",
+      "evidence": ""
+    },
+    {
+      "id": "feat-019",
+      "name": "Open API + Webhook Event Stream",
+      "description": "Public REST API for review integration; webhook events for pipeline lifecycle; third-party tool integration",
+      "dependencies": ["feat-003", "feat-008"],
+      "status": "future",
+      "evidence": ""
+    },
+    {
+      "id": "feat-020",
+      "name": "Runtime Behavior Analysis Integration",
+      "description": "Optional dynamic analysis hook; runtime trace of changed code paths; detect runtime-only issues not visible in static analysis",
+      "dependencies": ["feat-002", "feat-005"],
+      "status": "future",
+      "evidence": ""
+    }
+  ]
+}
