@@ -65,6 +65,10 @@
   "reviewResult.infoCount": "{{n}} 信息",
   "reviewResult.notFound": "审查记录未找到 — 可能已被删除",
   "reviewResult.loadFailed": "加载审查失败",
+  "reviewResult.postToGitHub": "发布到 GitHub",
+  "reviewResult.posting": "发布中...",
+  "reviewResult.postedToGitHub": "已发布到 GitHub",
+  "reviewResult.retryPost": "重试",
 
   "history.title": "审查历史",
   "history.subtitle": "查看过往 PR 审查记录和结果。",

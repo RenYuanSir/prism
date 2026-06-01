@@ -65,6 +65,10 @@
   "reviewResult.infoCount": "{{n}} info",
   "reviewResult.notFound": "Review not found — may have been deleted",
   "reviewResult.loadFailed": "Failed to load review",
+  "reviewResult.postToGitHub": "Post to GitHub",
+  "reviewResult.posting": "Posting...",
+  "reviewResult.postedToGitHub": "Posted to GitHub",
+  "reviewResult.retryPost": "Retry",
 
   "history.title": "Review History",
   "history.subtitle": "View past PR reviews and their results.",
