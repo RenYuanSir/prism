@@ -173,6 +173,19 @@ export interface SavedReview {
   createdAt: string;
 }
 
+/** Request body for posting review results as a GitHub PR Review */
+export interface PostCommentRequest {
+  summary: string;
+  consensus: AIConsensusResult;
+  suggestions: AIFixSuggestion[];
+}
+
+/** Response from posting review results to GitHub */
+export interface PostCommentResponse {
+  htmlUrl: string;
+  id: number;
+}
+
 export type ModelName = "claude" | "gemini";
 
 export interface ModelFinding {
