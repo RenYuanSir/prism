@@ -1,28 +1,37 @@
 import type { ChangeType, FileChange } from "@prism/shared";
 import { Box, FileCode, GitBranch, Package } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 interface FileChangeCardProps {
   fileChange: FileChange;
 }
 
 function ChangeTypeBadge({ type }: { type: ChangeType }) {
+  const { t } = useTranslation();
   const styles: Record<ChangeType, string> = {
     added: "bg-linear-success/10 text-linear-success ring-linear-success/20",
     modified: "bg-yellow-500/10 text-yellow-400 ring-yellow-500/20",
     removed: "bg-red-500/10 text-red-400 ring-red-500/20",
   };
 
+  const typeLabels: Record<ChangeType, string> = {
+    added: t("fileChange.added"),
+    modified: t("fileChange.modified"),
+    removed: t("fileChange.removed"),
+  };
+
   return (
     <span
       className={`inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium ring-1 ring-inset ${styles[type]}`}
     >
-      {type}
+      {typeLabels[type]}
     </span>
   );
 }
 
 function FileStatusBadge({ status }: { status: FileChange["status"] }) {
+  const { t } = useTranslation();
   const styles: Record<string, string> = {
     added: "bg-linear-success/10 text-linear-success",
     modified: "bg-yellow-500/10 text-yellow-400",
@@ -30,16 +39,24 @@ function FileStatusBadge({ status }: { status: FileChange["status"] }) {
     renamed: "bg-linear-brand/10 text-linear-accent",
   };
 
+  const statusLabels: Record<string, string> = {
+    added: t("fileChange.added"),
+    modified: t("fileChange.modified"),
+    removed: t("fileChange.removed"),
+    renamed: t("fileChange.renamed"),
+  };
+
   return (
     <span
       className={`inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium ${styles[status]}`}
     >
-      {status}
+      {statusLabels[status]}
     </span>
   );
 }
 
 export function FileChangeCard({ fileChange }: FileChangeCardProps) {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
 
   const hasDetails =
@@ -79,7 +96,7 @@ export function FileChangeCard({ fileChange }: FileChangeCardProps) {
               <div className="flex items-center gap-2 mb-2">
                 <GitBranch className="h-3 w-3 text-linear-text-muted" />
                 <span className="text-xs font-medium text-linear-text-tertiary uppercase tracking-wider">
-                  Functions
+                  {t("fileChange.functions")}
                 </span>
               </div>
               <div className="space-y-1 ml-5">
@@ -101,7 +118,7 @@ export function FileChangeCard({ fileChange }: FileChangeCardProps) {
               <div className="flex items-center gap-2 mb-2">
                 <Package className="h-3 w-3 text-linear-text-muted" />
                 <span className="text-xs font-medium text-linear-text-tertiary uppercase tracking-wider">
-                  Imports
+                  {t("fileChange.imports")}
                 </span>
               </div>
               <div className="space-y-1 ml-5">
@@ -121,7 +138,7 @@ export function FileChangeCard({ fileChange }: FileChangeCardProps) {
               <div className="flex items-center gap-2 mb-2">
                 <Box className="h-3 w-3 text-linear-text-muted" />
                 <span className="text-xs font-medium text-linear-text-tertiary uppercase tracking-wider">
-                  Exports
+                  {t("fileChange.exports")}
                 </span>
               </div>
               <div className="space-y-1 ml-5">

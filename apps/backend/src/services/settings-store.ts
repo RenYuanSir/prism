@@ -1,5 +1,5 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import type { LLMPipelineConfig } from "./llm-config.js";
 
 const SETTINGS_FILE = "settings.json";
@@ -41,7 +41,7 @@ export class SettingsStore {
   }
 
   private ensureDir(): void {
-    const dir = this.filePath.substring(0, this.filePath.lastIndexOf("/"));
+    const dir = dirname(this.filePath);
     if (!existsSync(dir)) {
       mkdirSync(dir, { recursive: true });
     }

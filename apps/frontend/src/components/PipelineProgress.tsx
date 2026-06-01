@@ -1,17 +1,20 @@
 import type { PipelineStage } from "@prism/shared";
 import { CheckCircle, Circle, Loader2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface PipelineProgressProps {
   currentStage: PipelineStage | "idle" | "complete";
 }
 
-const stages: { key: PipelineStage; label: string }[] = [
-  { key: "summary", label: "Summary" },
-  { key: "risk", label: "Risk Analysis" },
-  { key: "suggestion", label: "Suggestions" },
-];
-
 export function PipelineProgress({ currentStage }: PipelineProgressProps) {
+  const { t } = useTranslation();
+
+  const stages: { key: PipelineStage; label: string }[] = [
+    { key: "summary", label: t("pipeline.summary") },
+    { key: "risk", label: t("pipeline.riskAnalysis") },
+    { key: "suggestion", label: t("pipeline.suggestions") },
+  ];
+
   const getStageIndex = (stage: PipelineStage | "idle" | "complete"): number => {
     if (stage === "idle") return -1;
     if (stage === "complete") return stages.length;

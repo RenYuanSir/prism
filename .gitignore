@@ -2,6 +2,11 @@
 .claude/
 CLAUDE.md
 
+# Harness artifacts (session-scoped, not for version control)
+progress.md
+session-handoff.md
+feature_list.json
+
 # Project documentation
 CONTRIBUTING.md
 ARCHITECTURE.md

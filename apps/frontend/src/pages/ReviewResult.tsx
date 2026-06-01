@@ -23,6 +23,7 @@ import {
   Zap,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { type ReviewResponse, fetchHistoryDetail, fetchImpact, streamReview } from "../api/client";
 import { ConsensusView } from "../components/ConsensusView";
@@ -58,6 +59,7 @@ type ReviewState =
   | { status: "error"; message: string; partial: PartialResults };
 
 export function ReviewResult() {
+  const { t } = useTranslation();
   const { owner, repo, pullNumber } = useParams<{
     owner: string;
     repo: string;
@@ -77,7 +79,7 @@ export function ReviewResult() {
     if (!Number.isInteger(prNum) || prNum <= 0) {
       setState({
         status: "error",
-        message: "Invalid pull request number",
+        message: t("reviewResult.invalidPr"),
         partial: { isComplete: false },
       });
       return;
@@ -108,14 +110,14 @@ export function ReviewResult() {
           } else {
             setState({
               status: "error",
-              message: result.error ?? "Review not found — may have been deleted",
+              message: result.error ?? t("reviewResult.notFound"),
               partial: { isComplete: false },
             });
           }
         } catch (err) {
           setState({
             status: "error",
-            message: err instanceof Error ? err.message : "Failed to load review",
+            message: err instanceof Error ? err.message : t("reviewResult.loadFailed"),
             partial: { isComplete: false },
           });
         }
@@ -216,12 +218,12 @@ export function ReviewResult() {
     return () => {
       streamController?.abort();
     };
-  }, [owner, repo, pullNumber, historyId]);
+  }, [owner, repo, pullNumber, historyId, t]);
 
   if (!owner || !repo || !pullNumber) {
     return (
       <div className="p-8">
-        <p className="text-linear-text-tertiary">Invalid URL parameters</p>
+        <p className="text-linear-text-tertiary">{t("reviewResult.invalidUrl")}</p>
       </div>
     );
   }
@@ -245,7 +247,7 @@ export function ReviewResult() {
           className="inline-flex items-center gap-2 text-[13px] text-linear-text-tertiary hover:text-linear-text-secondary transition-colors mb-4"
         >
           <ArrowLeft className="h-4 w-4" />
-          {historyId ? "Back to History" : "Back to PR List"}
+          {historyId ? t("reviewResult.backToHistory") : t("reviewResult.backToList")}
         </Link>
         <div className="flex items-center gap-2 text-[13px] text-linear-text-muted font-mono">
           <GitCommit className="h-3.5 w-3.5" />
@@ -264,7 +266,11 @@ export function ReviewResult() {
           animate={{ opacity: 1, y: 0 }}
           className="mb-6"
         >
-          <SectionHeader icon={Sparkles} title="AI Summary" accent="text-linear-accent" />
+          <SectionHeader
+            icon={Sparkles}
+            title={t("reviewResult.aiSummary")}
+            accent="text-linear-accent"
+          />
           <div className="glass-surface rounded-xl p-6">
             <p className="text-[14px] text-linear-text-secondary leading-relaxed">{summaryText}</p>
           </div>
@@ -283,7 +289,7 @@ export function ReviewResult() {
           >
             <div className="glass-surface rounded-xl p-6">
               <h2 className="text-[15px] font-weight-510 text-linear-text-primary mb-4">
-                Analyzing Pull Request...
+                {t("reviewResult.analyzing")}
               </h2>
               <PipelineProgress
                 currentStage={
@@ -297,7 +303,7 @@ export function ReviewResult() {
               <motion.section initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
                 <SectionHeader
                   icon={AlertTriangle}
-                  title="Risk Analysis"
+                  title={t("reviewResult.riskAnalysis")}
                   accent="text-linear-accent"
                 />
                 <div className="grid grid-cols-2 gap-4">
@@ -319,7 +325,7 @@ export function ReviewResult() {
               <motion.section initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
                 <SectionHeader
                   icon={Lightbulb}
-                  title="Fix Suggestions"
+                  title={t("reviewResult.fixSuggestions")}
                   count={state.partial.suggestions.length}
                   accent="text-linear-accent"
                 />
@@ -352,13 +358,15 @@ export function ReviewResult() {
               <div className="flex items-start gap-3">
                 <XCircle className="h-6 w-6 text-red-400 flex-shrink-0" />
                 <div>
-                  <h3 className="text-[15px] font-weight-510 text-red-400 mb-1">Review Failed</h3>
+                  <h3 className="text-[15px] font-weight-510 text-red-400 mb-1">
+                    {t("reviewResult.failed")}
+                  </h3>
                   <p className="text-linear-text-secondary">{state.message}</p>
                   <Link
                     to="/"
                     className="inline-block mt-4 px-4 py-2 bg-linear-surface hover:bg-linear-elevated text-linear-text-primary rounded-md transition-colors text-[13px] font-weight-510 border border-linear-border"
                   >
-                    Try Another PR
+                    {t("reviewResult.tryAnother")}
                   </Link>
                 </div>
               </div>
@@ -395,6 +403,7 @@ interface ReviewContentProps {
 }
 
 function ReviewContent({ pr, semanticDiff, review, impactGraph }: ReviewContentProps) {
+  const { t } = useTranslation();
   const criticalCount = review.risk.issues.filter((i) => i.severity === "critical").length;
   const warningCount = review.risk.issues.filter((i) => i.severity === "warning").length;
   const infoCount = review.risk.issues.filter((i) => i.severity === "info").length;
@@ -428,7 +437,7 @@ function ReviewContent({ pr, semanticDiff, review, impactGraph }: ReviewContentP
           </div>
           <div className="flex items-center gap-1.5">
             <FileText className="h-3.5 w-3.5" />
-            <span>{semanticDiff.totalFiles} files changed</span>
+            <span>{t("reviewResult.filesChanged", { n: semanticDiff.totalFiles })}</span>
           </div>
         </div>
         {pr.description && (
@@ -446,34 +455,34 @@ function ReviewContent({ pr, semanticDiff, review, impactGraph }: ReviewContentP
         className="grid grid-cols-4 gap-3"
       >
         <StatCard
-          label="Files Changed"
+          label={t("reviewResult.statFiles")}
           value={semanticDiff.totalFiles.toString()}
           icon={FileText}
           color="neutral"
         />
         <StatCard
-          label="Additions"
+          label={t("reviewResult.statAdditions")}
           value={`+${semanticDiff.totalAdditions}`}
           icon={CheckCircle2}
           color="success"
         />
         <StatCard
-          label="Deletions"
+          label={t("reviewResult.statDeletions")}
           value={`-${semanticDiff.totalDeletions}`}
           icon={XCircle}
           color="danger"
         />
         <StatCard
-          label="Issues Found"
+          label={t("reviewResult.statIssues")}
           value={review.risk.issues.length.toString()}
           icon={AlertTriangle}
           color={criticalCount > 0 ? "danger" : warningCount > 0 ? "warning" : "success"}
           subtext={
             criticalCount > 0
-              ? `${criticalCount} critical`
+              ? t("reviewResult.criticalCount", { n: criticalCount })
               : warningCount > 0
-                ? `${warningCount} warnings`
-                : `${infoCount} info`
+                ? t("reviewResult.warningCount", { n: warningCount })
+                : t("reviewResult.infoCount", { n: infoCount })
           }
         />
       </motion.div>
@@ -486,7 +495,7 @@ function ReviewContent({ pr, semanticDiff, review, impactGraph }: ReviewContentP
       >
         <SectionHeader
           icon={FileText}
-          title="File Changes"
+          title={t("reviewResult.fileChanges")}
           count={semanticDiff.fileChanges.length}
           accent="text-linear-accent"
         />
@@ -511,7 +520,11 @@ function ReviewContent({ pr, semanticDiff, review, impactGraph }: ReviewContentP
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
         >
-          <SectionHeader icon={Zap} title="Cross-File Impact" accent="text-linear-accent" />
+          <SectionHeader
+            icon={Zap}
+            title={t("reviewResult.crossFileImpact")}
+            accent="text-linear-accent"
+          />
           <div className="glass-surface rounded-xl p-6">
             <ImpactHeatmap graph={impactGraph} />
           </div>
@@ -527,7 +540,7 @@ function ReviewContent({ pr, semanticDiff, review, impactGraph }: ReviewContentP
         >
           <SectionHeader
             icon={AlertTriangle}
-            title="Race Conditions Detected"
+            title={t("reviewResult.raceConditions")}
             count={review.raceConditions.length}
             accent="text-red-400"
           />
@@ -553,7 +566,7 @@ function ReviewContent({ pr, semanticDiff, review, impactGraph }: ReviewContentP
         >
           <SectionHeader
             icon={Lightbulb}
-            title="Fix Suggestions"
+            title={t("reviewResult.fixSuggestions")}
             count={review.suggestion.suggestions.length}
             accent="text-linear-accent"
           />
@@ -576,18 +589,19 @@ function ReviewContent({ pr, semanticDiff, review, impactGraph }: ReviewContentP
 }
 
 function RiskModelCard({ label, findings }: { label: string; findings?: ModelFinding[] }) {
+  const { t } = useTranslation();
   return (
     <div className="glass-surface rounded-xl p-4">
       <h4 className="text-[13px] font-weight-510 text-linear-text-secondary mb-3">
-        {label} {findings ? `(${findings.length} issues)` : ""}
+        {findings ? t("reviewResult.modelIssues", { label, count: findings.length }) : label}
       </h4>
       {findings === undefined ? (
         <div className="flex items-center gap-2 text-linear-text-muted">
           <Loader2 className="h-4 w-4 animate-spin" />
-          <span className="text-[13px]">Analyzing...</span>
+          <span className="text-[13px]">{t("reviewResult.modelAnalyzing")}</span>
         </div>
       ) : findings.length === 0 ? (
-        <p className="text-[13px] text-linear-text-muted">No issues found</p>
+        <p className="text-[13px] text-linear-text-muted">{t("reviewResult.modelNoIssues")}</p>
       ) : (
         findings.slice(0, 5).map((f, i) => (
           <div key={`${f.file}-${f.line}-${i}`} className="mb-2 p-2 bg-linear-surface/30 rounded">
@@ -618,7 +632,7 @@ function SectionHeader({
     <div className="flex items-center gap-2 mb-3">
       <Icon className={`h-4 w-4 ${accent}`} />
       <h2 className="text-[13px] font-weight-510 text-linear-text-secondary tracking-wide">
-        {title.toUpperCase()}
+        {title}
       </h2>
       {count !== undefined && <span className="text-[11px] text-linear-text-muted">({count})</span>}
     </div>

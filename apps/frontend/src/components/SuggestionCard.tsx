@@ -1,5 +1,6 @@
 import type { AIFixSuggestion } from "@prism/shared";
 import { FileText, Lightbulb } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { SeverityBadge } from "./SeverityBadge";
 
 interface SuggestionCardProps {
@@ -7,6 +8,7 @@ interface SuggestionCardProps {
 }
 
 export function SuggestionCard({ suggestion }: SuggestionCardProps) {
+  const { t } = useTranslation();
   return (
     <div className="bg-linear-surface/50 border border-linear-elevated rounded-lg p-4 transition-colors hover:border-linear-text-muted">
       <div className="flex items-start gap-3 mb-3">
@@ -30,7 +32,7 @@ export function SuggestionCard({ suggestion }: SuggestionCardProps) {
       <div className="ml-8 space-y-3">
         <div>
           <h4 className="text-xs font-medium text-linear-text-tertiary uppercase tracking-wider mb-2">
-            Suggested Fix
+            {t("suggestion.suggestedFix")}
           </h4>
           <pre className="bg-linear-panel border border-linear-elevated rounded-md p-3 overflow-x-auto">
             <code className="text-xs text-linear-text-secondary font-mono whitespace-pre">
@@ -40,7 +42,7 @@ export function SuggestionCard({ suggestion }: SuggestionCardProps) {
         </div>
         <div>
           <h4 className="text-xs font-medium text-linear-text-tertiary uppercase tracking-wider mb-1">
-            Explanation
+            {t("suggestion.explanation")}
           </h4>
           <p className="text-sm text-linear-text-secondary leading-relaxed">
             {suggestion.explanation}

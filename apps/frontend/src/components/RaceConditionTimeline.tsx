@@ -1,6 +1,7 @@
 import type { RaceConditionIssue } from "@prism/shared";
 import { Play, RotateCcw } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ConflictIndicator } from "./ConflictIndicator";
 import { ExecutionPathColumn } from "./ExecutionPathColumn";
 import { SeverityBadge } from "./SeverityBadge";
@@ -10,6 +11,7 @@ interface RaceConditionTimelineProps {
 }
 
 export function RaceConditionTimeline({ issues }: RaceConditionTimelineProps) {
+  const { t } = useTranslation();
   const [currentIssueIndex, setCurrentIssueIndex] = useState(0);
   const [animationStep, setAnimationStep] = useState(-1);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -71,7 +73,7 @@ export function RaceConditionTimeline({ issues }: RaceConditionTimelineProps) {
                   : "bg-linear-elevated text-linear-text-secondary"
               }`}
             >
-              Issue {i + 1}
+              {t("raceCondition.issueN", { n: i + 1 })}
             </button>
           ))}
         </div>
@@ -92,14 +94,20 @@ export function RaceConditionTimeline({ issues }: RaceConditionTimelineProps) {
             </p>
             {issue.confidence === "high" && (
               <p className="text-xs text-linear-success font-semibold">
-                HIGH CONFIDENCE — Both models detected this
+                {t("raceCondition.highConfidence")}
+              </p>
+            )}
+            {issue.confidence === "medium" && (
+              <p className="text-xs text-yellow-400 font-semibold">
+                {t("raceCondition.mediumConfidence")}
               </p>
             )}
           </div>
         </div>
 
         <p className="text-sm text-linear-text-secondary mb-2">
-          <span className="font-semibold">Shared State:</span> {issue.sharedState}
+          <span className="font-semibold">{t("raceCondition.sharedState")}</span>{" "}
+          {issue.sharedState}
         </p>
         <p className="text-sm text-linear-text-secondary mb-6">{issue.explanation}</p>
 
@@ -126,7 +134,7 @@ export function RaceConditionTimeline({ issues }: RaceConditionTimelineProps) {
               className="flex items-center gap-2 px-4 py-2 bg-linear-brand hover:bg-linear-accent text-white rounded-lg transition-colors"
             >
               <Play className="h-4 w-4" />
-              Play Animation
+              {t("raceCondition.play")}
             </button>
           )}
           {animationStep >= 0 && !isPlaying && (
@@ -136,12 +144,12 @@ export function RaceConditionTimeline({ issues }: RaceConditionTimelineProps) {
               className="flex items-center gap-2 px-4 py-2 bg-linear-elevated hover:bg-linear-text-muted text-white rounded-lg transition-colors"
             >
               <RotateCcw className="h-4 w-4" />
-              Replay
+              {t("raceCondition.replay")}
             </button>
           )}
           {animationStep >= 0 && (
             <span className="text-sm text-linear-text-tertiary">
-              Step {animationStep + 1} / {maxSteps}
+              {t("raceCondition.stepN", { current: animationStep + 1, total: maxSteps })}
             </span>
           )}
         </div>

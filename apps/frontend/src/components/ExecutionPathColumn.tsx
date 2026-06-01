@@ -1,4 +1,5 @@
 import type { ExecutionPath } from "@prism/shared";
+import { useTranslation } from "react-i18next";
 
 interface ExecutionPathColumnProps {
   path: ExecutionPath;
@@ -11,6 +12,7 @@ export function ExecutionPathColumn({
   currentStep,
   highlightConflict,
 }: ExecutionPathColumnProps) {
+  const { t } = useTranslation();
   return (
     <div className="flex-1">
       <div className="bg-linear-surface/50 border border-linear-elevated rounded-lg p-4 mb-3">
@@ -41,7 +43,11 @@ export function ExecutionPathColumn({
                   <p className="text-sm text-linear-text-secondary">{step.description}</p>
                   <p className="text-xs text-linear-text-muted font-mono mt-1">:{step.line}</p>
                 </div>
-                {isConflict && <span className="text-xs font-bold text-red-400">CONFLICT</span>}
+                {isConflict && (
+                  <span className="text-xs font-bold text-red-400">
+                    {t("raceCondition.conflict")}
+                  </span>
+                )}
               </div>
             </div>
           );

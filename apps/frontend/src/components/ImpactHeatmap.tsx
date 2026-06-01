@@ -1,6 +1,7 @@
 import type { ImpactGraph, ImpactNode } from "@prism/shared";
 import { AlertTriangle, ArrowRight, FileCode, Info, Layers, Zap } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 interface ImpactHeatmapProps {
   graph: ImpactGraph;
@@ -37,8 +38,15 @@ function HeatmapTile({
   isSelected,
   onClick,
 }: { node: ImpactNode; isSelected: boolean; onClick: () => void }) {
+  const { t } = useTranslation();
   const styles = impactStyles[node.impactLevel];
   const scorePercent = Math.round(node.impactScore * 100);
+
+  const impactLabels: Record<string, string> = {
+    high: t("impact.high"),
+    medium: t("impact.medium"),
+    low: t("impact.low"),
+  };
 
   return (
     <button
@@ -75,7 +83,7 @@ function HeatmapTile({
       </div>
       {node.affectedFileCount > 0 && (
         <p className="text-[10px] text-linear-text-muted mt-1">
-          {node.affectedFileCount} dependent{node.affectedFileCount !== 1 ? "s" : ""}
+          {t("impact.dependents", { n: node.affectedFileCount })}
         </p>
       )}
     </button>
@@ -83,10 +91,17 @@ function HeatmapTile({
 }
 
 function DetailPanel({ node, graph }: { node: ImpactNode; graph: ImpactGraph }) {
+  const { t } = useTranslation();
   const styles = impactStyles[node.impactLevel];
   const connectedEdges = graph.edges.filter(
     (e) => e.from === node.filename || e.to === node.filename,
   );
+
+  const impactLabels: Record<string, string> = {
+    high: t("impact.high"),
+    medium: t("impact.medium"),
+    low: t("impact.low"),
+  };
 
   return (
     <div className={`rounded-lg border p-4 ${styles.bg} ${styles.border}`}>
@@ -96,7 +111,7 @@ function DetailPanel({ node, graph }: { node: ImpactNode; graph: ImpactGraph }) 
         <span
           className={`ml-auto text-xs font-semibold px-2 py-0.5 rounded ${styles.badge} uppercase`}
         >
-          {node.impactLevel} impact
+          {t("impact.levelImpact", { level: impactLabels[node.impactLevel] })}
         </span>
       </div>
 
@@ -105,26 +120,30 @@ function DetailPanel({ node, graph }: { node: ImpactNode; graph: ImpactGraph }) 
           <p className="text-lg font-bold text-linear-text-secondary">
             {Math.round(node.impactScore * 100)}%
           </p>
-          <p className="text-[10px] text-linear-text-muted uppercase">Score</p>
+          <p className="text-[10px] text-linear-text-muted uppercase">{t("impact.score")}</p>
         </div>
         <div className="bg-linear-panel/50 rounded p-2 text-center">
           <p className="text-lg font-bold text-linear-text-secondary">
             {node.directDependents.length}
           </p>
-          <p className="text-[10px] text-linear-text-muted uppercase">Dependents</p>
+          <p className="text-[10px] text-linear-text-muted uppercase">
+            {t("impact.dependentsLabel")}
+          </p>
         </div>
         <div className="bg-linear-panel/50 rounded p-2 text-center">
           <p className="text-lg font-bold text-linear-text-secondary">
             {node.directDependencies.length}
           </p>
-          <p className="text-[10px] text-linear-text-muted uppercase">Dependencies</p>
+          <p className="text-[10px] text-linear-text-muted uppercase">
+            {t("impact.dependenciesLabel")}
+          </p>
         </div>
       </div>
 
       {node.changedExports.length > 0 && (
         <div className="mb-3">
           <p className="text-xs font-medium text-linear-text-tertiary uppercase tracking-wider mb-1">
-            Changed Exports
+            {t("impact.changedExports")}
           </p>
           <div className="flex flex-wrap gap-1">
             {node.changedExports.map((exp) => (
@@ -142,7 +161,7 @@ function DetailPanel({ node, graph }: { node: ImpactNode; graph: ImpactGraph }) 
       {node.directDependents.length > 0 && (
         <div className="mb-3">
           <p className="text-xs font-medium text-linear-text-tertiary uppercase tracking-wider mb-1">
-            Files That Depend On This
+            {t("impact.filesDepending")}
           </p>
           <div className="space-y-1">
             {node.directDependents.map((dep) => (
@@ -158,7 +177,7 @@ function DetailPanel({ node, graph }: { node: ImpactNode; graph: ImpactGraph }) 
       {node.directDependencies.length > 0 && (
         <div className="mb-3">
           <p className="text-xs font-medium text-linear-text-tertiary uppercase tracking-wider mb-1">
-            Dependencies
+            {t("impact.dependenciesLabel")}
           </p>
           <div className="space-y-1">
             {node.directDependencies.map((dep) => (
@@ -174,7 +193,7 @@ function DetailPanel({ node, graph }: { node: ImpactNode; graph: ImpactGraph }) 
       {connectedEdges.length > 0 && (
         <div>
           <p className="text-xs font-medium text-linear-text-tertiary uppercase tracking-wider mb-1">
-            Symbols
+            {t("impact.symbols")}
           </p>
           <div className="space-y-1">
             {connectedEdges.map((edge) => (
@@ -193,9 +212,16 @@ function DetailPanel({ node, graph }: { node: ImpactNode; graph: ImpactGraph }) 
 }
 
 export function ImpactHeatmap({ graph }: ImpactHeatmapProps) {
+  const { t } = useTranslation();
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
 
   const selectedNode = graph.nodes.find((n) => n.filename === selectedFile) ?? null;
+
+  const impactLabels: Record<string, string> = {
+    high: t("impact.high"),
+    medium: t("impact.medium"),
+    low: t("impact.low"),
+  };
 
   // Sort: high impact first, then by score descending
   const sortedNodes = [...graph.nodes].sort((a, b) => {
@@ -216,24 +242,29 @@ export function ImpactHeatmap({ graph }: ImpactHeatmapProps) {
         <div className="flex items-center gap-2">
           <Zap className="h-4 w-4 text-red-400" />
           <span className="text-sm text-linear-text-secondary">
-            <span className="font-bold text-red-400">{graph.highImpactCount}</span> high
+            <span className="font-bold text-red-400">{graph.highImpactCount}</span>{" "}
+            {impactLabels.high}
           </span>
         </div>
         <div className="flex items-center gap-2">
           <AlertTriangle className="h-4 w-4 text-yellow-400" />
           <span className="text-sm text-linear-text-secondary">
-            <span className="font-bold text-yellow-400">{graph.mediumImpactCount}</span> medium
+            <span className="font-bold text-yellow-400">{graph.mediumImpactCount}</span>{" "}
+            {impactLabels.medium}
           </span>
         </div>
         <div className="flex items-center gap-2">
           <Info className="h-4 w-4 text-linear-text-tertiary" />
           <span className="text-sm text-linear-text-secondary">
-            <span className="font-bold text-linear-text-tertiary">{graph.lowImpactCount}</span> low
+            <span className="font-bold text-linear-text-tertiary">{graph.lowImpactCount}</span>{" "}
+            {impactLabels.low}
           </span>
         </div>
         <div className="flex items-center gap-2 ml-auto">
           <Layers className="h-4 w-4 text-linear-text-muted" />
-          <span className="text-xs text-linear-text-muted">{graph.edges.length} dependencies</span>
+          <span className="text-xs text-linear-text-muted">
+            {t("impact.dependencies", { n: graph.edges.length })}
+          </span>
         </div>
       </div>
 
@@ -259,9 +290,7 @@ export function ImpactHeatmap({ graph }: ImpactHeatmapProps) {
             <DetailPanel node={selectedNode} graph={graph} />
           ) : (
             <div className="flex items-center justify-center h-full min-h-[200px] border border-dashed border-linear-elevated rounded-lg">
-              <p className="text-sm text-linear-text-muted">
-                Click a file tile to see impact details
-              </p>
+              <p className="text-sm text-linear-text-muted">{t("impact.clickHint")}</p>
             </div>
           )}
         </div>

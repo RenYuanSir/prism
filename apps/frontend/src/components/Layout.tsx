@@ -1,16 +1,19 @@
 import { motion } from "framer-motion";
 import { GitPullRequest, History, Settings } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
+import { LanguageToggle } from "./LanguageToggle";
 import { ThemeToggle } from "./ThemeToggle";
 
-const navItems = [
-  { to: "/", icon: GitPullRequest, label: "PR Review" },
-  { to: "/history", icon: History, label: "History" },
-  { to: "/settings", icon: Settings, label: "Settings" },
-];
-
 export function Layout() {
+  const { t } = useTranslation();
   const location = useLocation();
+
+  const navItems = [
+    { to: "/", icon: GitPullRequest, label: t("layout.prReview") },
+    { to: "/history", icon: History, label: t("layout.history") },
+    { to: "/settings", icon: Settings, label: t("layout.settings") },
+  ];
 
   return (
     <div className="min-h-screen bg-linear-black text-linear-text-primary">
@@ -50,7 +53,9 @@ export function Layout() {
               </div>
               <div>
                 <h1 className="font-weight-510 text-sm text-linear-text-primary">PRism</h1>
-                <p className="text-[11px] text-linear-text-muted tracking-wide">AI CODE REVIEW</p>
+                <p className="text-[11px] text-linear-text-muted tracking-wide">
+                  {t("layout.aiCodeReview")}
+                </p>
               </div>
             </div>
           </div>
@@ -84,10 +89,11 @@ export function Layout() {
 
           {/* Footer: Theme toggle + status */}
           <div className="p-3 border-t border-linear-border-subtle space-y-1">
+            <LanguageToggle />
             <ThemeToggle />
             <div className="flex items-center gap-2 px-3 py-1.5 text-[11px] text-linear-text-muted">
               <div className="h-1.5 w-1.5 rounded-full bg-linear-success animate-pulse" />
-              <span className="font-weight-510 tracking-wide">SYSTEM READY</span>
+              <span className="font-weight-510 tracking-wide">{t("layout.systemReady")}</span>
             </div>
           </div>
         </aside>

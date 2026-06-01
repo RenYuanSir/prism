@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { AlertCircle, Check, Eye, EyeOff, Loader2, Save, Settings, Sparkles } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { type LLMSettings, fetchSettings, saveSettings } from "../api/client";
 
 const PROVIDER_PRESETS: Record<
@@ -32,7 +33,7 @@ const PROVIDER_PRESETS: Record<
     defaultModel: "deepseek-chat",
   },
   bailian: {
-    label: "百炼 (Bailian)",
+    label: "百煉 (Bailian)",
     provider: "openai-compatible",
     baseUrl: "https://dashscope.aliyuncs.com/compatible-mode/v1",
     defaultModel: "deepseek-v4-pro",
@@ -46,25 +47,6 @@ const PROVIDER_PRESETS: Record<
 };
 
 type StageName = "summary" | "risk" | "gemini" | "suggestion";
-
-const STAGE_LABELS: Record<string, { name: string; desc: string }> = {
-  summary: {
-    name: "Summary",
-    desc: "Generates PR change overview. Fast model recommended.",
-  },
-  risk: {
-    name: "Risk Analysis (Model 1)",
-    desc: "Primary risk scanner. Detects bugs, security issues, and code smells.",
-  },
-  gemini: {
-    name: "Risk Analysis (Model 2)",
-    desc: "Secondary risk scanner for dual-model consensus. Different perspective recommended.",
-  },
-  suggestion: {
-    name: "Suggestions",
-    desc: "Generates fix suggestions for confirmed issues. Balanced model recommended.",
-  },
-};
 
 interface StageForm {
   preset: string;
@@ -85,6 +67,27 @@ function defaultForm(): StageForm {
 }
 
 export function SettingsPage() {
+  const { t } = useTranslation();
+
+  const stageLabels: Record<StageName, { name: string; desc: string }> = {
+    summary: {
+      name: t("settings.summary"),
+      desc: t("settings.summaryDesc"),
+    },
+    risk: {
+      name: t("settings.risk1"),
+      desc: t("settings.risk1Desc"),
+    },
+    gemini: {
+      name: t("settings.risk2"),
+      desc: t("settings.risk2Desc"),
+    },
+    suggestion: {
+      name: t("settings.suggestions"),
+      desc: t("settings.suggestionsDesc"),
+    },
+  };
+
   const [forms, setForms] = useState<Record<StageName, StageForm>>(() => ({
     summary: defaultForm(),
     risk: defaultForm(),
@@ -179,14 +182,12 @@ export function SettingsPage() {
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass-surface border border-linear-border text-[11px] font-weight-510 text-linear-text-tertiary mb-4">
           <Settings className="h-3 w-3" />
-          CONFIGURATION
+          {t("settings.badge")}
         </div>
         <h1 className="text-[32px] font-weight-510 tracking-tight-custom text-linear-text-primary mb-2">
-          Settings
+          {t("settings.title")}
         </h1>
-        <p className="text-[15px] text-linear-text-tertiary">
-          Configure LLM providers for each pipeline stage.
-        </p>
+        <p className="text-[15px] text-linear-text-tertiary">{t("settings.subtitle")}</p>
       </motion.div>
 
       {loadState === "loading" && (
@@ -198,13 +199,13 @@ export function SettingsPage() {
       {loadState === "error" && (
         <div className="glass-surface rounded-xl p-8 text-center">
           <AlertCircle className="h-8 w-8 text-red-400 mx-auto mb-3" />
-          <p className="text-linear-text-secondary mb-2">Failed to load settings</p>
+          <p className="text-linear-text-secondary mb-2">{t("settings.loadFailed")}</p>
           <button
             type="button"
             onClick={() => window.location.reload()}
             className="text-[13px] text-linear-accent hover:text-linear-accent-hover"
           >
-            Retry
+            {t("history.retry")}
           </button>
         </div>
       )}
@@ -216,7 +217,7 @@ export function SettingsPage() {
           transition={{ delay: 0.1 }}
           className="space-y-6"
         >
-          {/* LLM Pipeline Config — 3 stage cards */}
+          {/* LLM Pipeline Config — 4 stage cards */}
           {(["summary", "risk", "gemini", "suggestion"] as StageName[]).map((stage, i) => (
             <motion.div
               key={stage}
@@ -231,9 +232,9 @@ export function SettingsPage() {
                 </div>
                 <div>
                   <h3 className="text-[13px] font-weight-510 text-linear-text-secondary">
-                    {STAGE_LABELS[stage].name}
+                    {stageLabels[stage].name}
                   </h3>
-                  <p className="text-[11px] text-linear-text-muted">{STAGE_LABELS[stage].desc}</p>
+                  <p className="text-[11px] text-linear-text-muted">{stageLabels[stage].desc}</p>
                 </div>
               </div>
 
@@ -244,7 +245,7 @@ export function SettingsPage() {
                     htmlFor={`${stage}-provider`}
                     className="block text-[11px] font-weight-510 text-linear-text-muted tracking-wide uppercase mb-1.5"
                   >
-                    Provider
+                    {t("settings.provider")}
                   </label>
                   <select
                     id={`${stage}-provider`}
@@ -266,14 +267,17 @@ export function SettingsPage() {
                     htmlFor={`${stage}-model`}
                     className="block text-[11px] font-weight-510 text-linear-text-muted tracking-wide uppercase mb-1.5"
                   >
-                    Model
+                    {t("settings.model")}
                   </label>
                   <input
                     id={`${stage}-model`}
                     type="text"
                     value={forms[stage].model}
                     onChange={(e) => updateField(stage, "model", e.target.value)}
-                    placeholder={PROVIDER_PRESETS[forms[stage].preset].defaultModel || "model-name"}
+                    placeholder={
+                      PROVIDER_PRESETS[forms[stage].preset].defaultModel ||
+                      t("settings.modelPlaceholder")
+                    }
                     className="w-full px-3 py-2.5 bg-linear-black border border-linear-border rounded-md text-[13px] text-linear-text-primary placeholder-linear-text-muted/50 focus:outline-none focus:border-linear-accent/50 transition-colors"
                   />
                 </div>
@@ -284,7 +288,7 @@ export function SettingsPage() {
                     htmlFor={`${stage}-apikey`}
                     className="block text-[11px] font-weight-510 text-linear-text-muted tracking-wide uppercase mb-1.5"
                   >
-                    API Key
+                    {t("settings.apiKey")}
                   </label>
                   <div className="relative">
                     <input
@@ -303,7 +307,9 @@ export function SettingsPage() {
                       type="button"
                       onClick={() => updateField(stage, "showKey", !forms[stage].showKey)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-linear-text-muted hover:text-linear-text-tertiary"
-                      aria-label={forms[stage].showKey ? "Hide API key" : "Show API key"}
+                      aria-label={
+                        forms[stage].showKey ? t("settings.hideKey") : t("settings.showKey")
+                      }
                     >
                       {forms[stage].showKey ? (
                         <EyeOff className="h-4 w-4" />
@@ -322,7 +328,7 @@ export function SettingsPage() {
                       htmlFor={`${stage}-baseurl`}
                       className="block text-[11px] font-weight-510 text-linear-text-muted tracking-wide uppercase mb-1.5"
                     >
-                      Base URL
+                      {t("settings.baseUrl")}
                     </label>
                     <input
                       id={`${stage}-baseurl`}
@@ -351,12 +357,12 @@ export function SettingsPage() {
               ) : (
                 <Save className="h-4 w-4" />
               )}
-              {saveState === "saving" ? "Saving..." : "Save Settings"}
+              {saveState === "saving" ? t("settings.saving") : t("settings.save")}
             </button>
             {saveState === "saved" && (
               <span className="flex items-center gap-1 text-[13px] text-green-400">
                 <Check className="h-4 w-4" />
-                Saved
+                {t("settings.saved")}
               </span>
             )}
             {saveState === "error" && (
@@ -370,12 +376,14 @@ export function SettingsPage() {
           {/* Coming Soon sections */}
           <div className="pt-4 space-y-4">
             <ComingSoonSection
-              title="Notifications"
-              description="Configure how you receive review notifications."
+              title={t("settings.notifications")}
+              description={t("settings.notificationsDesc")}
+              comingSoonLabel={t("settings.comingSoon")}
             />
             <ComingSoonSection
-              title="Security"
-              description="Merge gates, auto-scan rules, and approval requirements."
+              title={t("settings.security")}
+              description={t("settings.securityDesc")}
+              comingSoonLabel={t("settings.comingSoon")}
             />
           </div>
         </motion.div>
@@ -387,9 +395,11 @@ export function SettingsPage() {
 function ComingSoonSection({
   title,
   description,
+  comingSoonLabel,
 }: {
   title: string;
   description: string;
+  comingSoonLabel: string;
 }) {
   return (
     <div className="glass-surface rounded-xl p-6 opacity-50 pointer-events-none">
@@ -399,7 +409,7 @@ function ComingSoonSection({
           <div className="flex items-center gap-2">
             <h3 className="text-[13px] font-weight-510 text-linear-text-secondary">{title}</h3>
             <span className="px-1.5 py-0.5 rounded text-[10px] font-weight-590 bg-linear-accent/10 text-linear-accent">
-              COMING SOON
+              {comingSoonLabel}
             </span>
           </div>
           <p className="text-[11px] text-linear-text-muted">{description}</p>

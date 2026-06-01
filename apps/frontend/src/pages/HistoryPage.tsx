@@ -1,8 +1,10 @@
 import { motion } from "framer-motion";
 import { ArrowRight, Clock, GitPullRequest, History } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { fetchHistory } from "../api/client";
+import { formatTime } from "../utils/time";
 
 interface HistoryEntry {
   id: string;
@@ -22,21 +24,8 @@ type PageState =
   | { status: "list"; entries: HistoryEntry[] }
   | { status: "error"; message: string };
 
-function formatTime(iso: string): string {
-  const d = new Date(iso);
-  const now = new Date();
-  const diff = now.getTime() - d.getTime();
-  const mins = Math.floor(diff / 60000);
-  const hours = Math.floor(diff / 3600000);
-  const days = Math.floor(diff / 86400000);
-  if (mins < 1) return "just now";
-  if (mins < 60) return `${mins}m ago`;
-  if (hours < 24) return `${hours}h ago`;
-  if (days < 7) return `${days}d ago`;
-  return d.toLocaleDateString();
-}
-
 export function HistoryPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [state, setState] = useState<PageState>({ status: "loading" });
 
@@ -70,14 +59,12 @@ export function HistoryPage() {
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass-surface border border-linear-border text-[11px] font-weight-510 text-linear-text-tertiary mb-4">
           <History className="h-3 w-3" />
-          REVIEW LOG
+          {t("history.badge")}
         </div>
         <h1 className="text-[32px] font-weight-510 tracking-tight-custom text-linear-text-primary mb-2">
-          Review History
+          {t("history.title")}
         </h1>
-        <p className="text-[15px] text-linear-text-tertiary">
-          View past PR reviews and their results.
-        </p>
+        <p className="text-[15px] text-linear-text-tertiary">{t("history.subtitle")}</p>
       </motion.div>
 
       {/* Loading State */}
@@ -111,15 +98,14 @@ export function HistoryPage() {
             <GitPullRequest className="h-8 w-8 text-linear-text-muted/50" />
           </div>
           <h3 className="text-[15px] font-weight-510 text-linear-text-secondary mb-2">
-            No History Yet
+            {t("history.emptyTitle")}
           </h3>
           <p className="text-[13px] text-linear-text-muted max-w-md mx-auto leading-relaxed">
-            Your review history will appear here once you start reviewing pull requests. Each review
-            is cached for quick access.
+            {t("history.emptyDesc")}
           </p>
           <div className="mt-6 flex items-center justify-center gap-2 text-[11px] text-linear-text-muted">
             <Clock className="h-3.5 w-3.5" />
-            <span>Your reviews will be saved automatically</span>
+            <span>{t("history.emptyHint")}</span>
           </div>
         </motion.div>
       )}
@@ -152,12 +138,12 @@ export function HistoryPage() {
                 <div className="flex items-center gap-2">
                   {entry.criticalCount > 0 && (
                     <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-red-500/10 text-red-400">
-                      {entry.criticalCount} critical
+                      {t("reviewResult.criticalCount", { n: entry.criticalCount })}
                     </span>
                   )}
                   {entry.riskCount - entry.criticalCount > 0 && (
                     <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-yellow-500/10 text-yellow-400">
-                      {entry.riskCount - entry.criticalCount} issues
+                      {t("history.issuesCount", { n: entry.riskCount - entry.criticalCount })}
                     </span>
                   )}
                   <ArrowRight className="h-4 w-4 text-linear-text-muted opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -169,7 +155,9 @@ export function HistoryPage() {
               <p className="text-[13px] text-linear-text-muted leading-relaxed line-clamp-2 mb-2">
                 {entry.summarySnippet}
               </p>
-              <p className="text-[11px] text-linear-text-muted/70">{formatTime(entry.createdAt)}</p>
+              <p className="text-[11px] text-linear-text-muted/70">
+                {formatTime(entry.createdAt, t)}
+              </p>
             </motion.button>
           ))}
         </div>
@@ -188,7 +176,7 @@ export function HistoryPage() {
             onClick={() => window.location.reload()}
             className="px-4 py-2 bg-linear-surface hover:bg-linear-elevated text-linear-text-primary rounded-md transition-colors text-[13px] font-weight-510 border border-linear-border"
           >
-            Retry
+            {t("history.retry")}
           </button>
         </motion.div>
       )}

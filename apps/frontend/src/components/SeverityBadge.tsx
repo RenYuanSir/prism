@@ -1,10 +1,13 @@
 import type { AIRiskSeverity } from "@prism/shared";
+import { useTranslation } from "react-i18next";
 
 interface SeverityBadgeProps {
   severity: AIRiskSeverity;
 }
 
 export function SeverityBadge({ severity }: SeverityBadgeProps) {
+  const { t } = useTranslation();
+
   const styles: Record<AIRiskSeverity, string> = {
     critical: "bg-red-500/10 text-red-400 ring-red-500/20",
     warning: "bg-yellow-500/10 text-yellow-400 ring-yellow-500/20",
@@ -15,7 +18,7 @@ export function SeverityBadge({ severity }: SeverityBadgeProps) {
     <span
       className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset ${styles[severity]}`}
     >
-      {severity}
+      {t(`severity.${severity}`)}
     </span>
   );
 }

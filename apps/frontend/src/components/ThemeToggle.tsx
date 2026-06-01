@@ -1,5 +1,6 @@
 import { Moon, Sun } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 function resolveTheme(): boolean {
   const stored = localStorage.getItem("theme");
@@ -8,6 +9,7 @@ function resolveTheme(): boolean {
 }
 
 export function ThemeToggle() {
+  const { t } = useTranslation();
   const [isLight, setIsLight] = useState(resolveTheme);
 
   useEffect(() => {
@@ -22,10 +24,10 @@ export function ThemeToggle() {
       type="button"
       onClick={toggle}
       className="flex items-center gap-2.5 px-3 py-2 rounded-md text-[13px] font-weight-510 text-linear-text-tertiary hover:bg-linear-surface/50 hover:text-linear-text-secondary transition-all duration-200 w-full"
-      aria-label={isLight ? "Switch to dark mode" : "Switch to light mode"}
+      aria-label={isLight ? t("layout.themeSwitchDark") : t("layout.themeSwitchLight")}
     >
       {isLight ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
-      {isLight ? "Dark Mode" : "Light Mode"}
+      {isLight ? t("layout.themeDark") : t("layout.themeLight")}
     </button>
   );
 }

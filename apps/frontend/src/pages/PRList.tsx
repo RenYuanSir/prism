@@ -14,8 +14,10 @@ import {
   Zap,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link, useNavigate } from "react-router-dom";
 import { fetchHistory } from "../api/client";
+import { formatTime } from "../utils/time";
 
 interface HistoryEntry {
   id: string;
@@ -34,42 +36,8 @@ type RecentState =
   | { status: "empty" }
   | { status: "loaded"; entries: HistoryEntry[] };
 
-const features = [
-  {
-    icon: Zap,
-    label: "Semantic Diff",
-    desc: "AST-level change tracking",
-    color: "rgb(var(--c-prism-purple))",
-  },
-  {
-    icon: Shield,
-    label: "Risk Detection",
-    desc: "AI-powered vulnerability scan",
-    color: "rgb(var(--c-prism-orange))",
-  },
-  {
-    icon: GitBranch,
-    label: "Impact Analysis",
-    desc: "Dependency blast radius",
-    color: "rgb(var(--c-prism-blue))",
-  },
-];
-
-function formatTime(iso: string): string {
-  const d = new Date(iso);
-  const now = new Date();
-  const diff = now.getTime() - d.getTime();
-  const mins = Math.floor(diff / 60000);
-  const hours = Math.floor(diff / 3600000);
-  const days = Math.floor(diff / 86400000);
-  if (mins < 1) return "just now";
-  if (mins < 60) return `${mins}m ago`;
-  if (hours < 24) return `${hours}h ago`;
-  if (days < 7) return `${days}d ago`;
-  return d.toLocaleDateString();
-}
-
 export function PRList() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [owner, setOwner] = useState("");
   const [repo, setRepo] = useState("");
@@ -78,6 +46,27 @@ export function PRList() {
   const [urlInput, setUrlInput] = useState("");
   const [urlParseStatus, setUrlParseStatus] = useState<"idle" | "success" | "error">("idle");
   const [recent, setRecent] = useState<RecentState>({ status: "loading" });
+
+  const features = [
+    {
+      icon: Zap,
+      label: t("prList.feature1Title"),
+      desc: t("prList.feature1Desc"),
+      color: "rgb(var(--c-prism-purple))",
+    },
+    {
+      icon: Shield,
+      label: t("prList.feature2Title"),
+      desc: t("prList.feature2Desc"),
+      color: "rgb(var(--c-prism-orange))",
+    },
+    {
+      icon: GitBranch,
+      label: t("prList.feature3Title"),
+      desc: t("prList.feature3Desc"),
+      color: "rgb(var(--c-prism-blue))",
+    },
+  ];
 
   useEffect(() => {
     async function loadRecent() {
@@ -140,14 +129,25 @@ export function PRList() {
           >
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass-surface border border-linear-border text-[11px] font-weight-510 text-linear-text-tertiary mb-6">
               <Sparkles className="h-3 w-3 text-linear-accent" />
-              AI-POWERED CODE REVIEW
+              {t("prList.title")}
             </div>
             <h1 className="text-[48px] font-weight-510 tracking-display leading-none text-linear-text-primary mb-4">
-              Review Code <span className="text-gradient-brand">Intelligently</span>
+              <span
+                className="font-bold"
+                style={{
+                  background:
+                    "linear-gradient(135deg, #ef4444 0%, #f97316 25%, #eab308 50%, #22c55e 75%, #8b5cf6 100%)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
+                }}
+              >
+                PRism
+              </span>
+              {t("prList.tagline")}
             </h1>
             <p className="text-[15px] text-linear-text-tertiary leading-relaxed max-w-md mx-auto">
-              Enter a GitHub pull request to get an AI-powered analysis with semantic diff, risk
-              detection, and impact heatmaps.
+              {t("prList.description")}
             </p>
           </motion.div>
 
@@ -166,7 +166,7 @@ export function PRList() {
                   htmlFor="pr-url"
                   className="block text-[11px] font-weight-510 text-linear-text-muted tracking-wide uppercase mb-1.5"
                 >
-                  GitHub PR URL
+                  {t("prList.urlLabel")}
                 </label>
                 <div className="relative">
                   <input
@@ -174,7 +174,7 @@ export function PRList() {
                     type="text"
                     value={urlInput}
                     onChange={(e) => handleUrlChange(e.target.value)}
-                    placeholder="Paste a GitHub PR URL to auto-fill…"
+                    placeholder={t("prList.urlPlaceholder")}
                     className={`w-full px-3 py-2.5 bg-linear-black border rounded-md text-[13px] text-linear-text-primary placeholder-linear-text-muted/50 focus:outline-none transition-colors pr-9 ${
                       urlParseStatus === "success"
                         ? "border-green-500/50 focus:border-green-500"
@@ -186,18 +186,18 @@ export function PRList() {
                   {urlParseStatus === "success" && (
                     <CheckCircle2
                       className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500"
-                      aria-label="URL parsed successfully"
+                      aria-label={t("prList.urlParsed")}
                     />
                   )}
                   {urlParseStatus === "error" && (
                     <XCircle
                       className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-red-500"
-                      aria-label="Invalid GitHub PR URL"
+                      aria-label={t("prList.invalidUrl")}
                     />
                   )}
                 </div>
                 {urlParseStatus === "error" && (
-                  <p className="text-[13px] text-red-500 mt-1">Invalid GitHub PR URL</p>
+                  <p className="text-[13px] text-red-500 mt-1">{t("prList.invalidUrl")}</p>
                 )}
               </div>
 
@@ -207,14 +207,14 @@ export function PRList() {
                     htmlFor="owner"
                     className="block text-[11px] font-weight-510 text-linear-text-muted tracking-wide uppercase mb-1.5"
                   >
-                    Owner
+                    {t("prList.ownerLabel")}
                   </label>
                   <input
                     id="owner"
                     type="text"
                     value={owner}
                     onChange={(e) => handleManualFieldChange(setOwner, e.target.value)}
-                    placeholder="facebook"
+                    placeholder={t("prList.ownerPlaceholder")}
                     className="w-full px-3 py-2.5 bg-linear-black border border-linear-border rounded-md text-[13px] text-linear-text-primary placeholder-linear-text-muted/50 focus:outline-none focus:border-linear-accent/50 transition-colors"
                   />
                 </div>
@@ -223,14 +223,14 @@ export function PRList() {
                     htmlFor="repo"
                     className="block text-[11px] font-weight-510 text-linear-text-muted tracking-wide uppercase mb-1.5"
                   >
-                    Repository
+                    {t("prList.repoLabel")}
                   </label>
                   <input
                     id="repo"
                     type="text"
                     value={repo}
                     onChange={(e) => handleManualFieldChange(setRepo, e.target.value)}
-                    placeholder="react"
+                    placeholder={t("prList.repoPlaceholder")}
                     className="w-full px-3 py-2.5 bg-linear-black border border-linear-border rounded-md text-[13px] text-linear-text-primary placeholder-linear-text-muted/50 focus:outline-none focus:border-linear-accent/50 transition-colors"
                   />
                 </div>
@@ -240,14 +240,14 @@ export function PRList() {
                   htmlFor="pr"
                   className="block text-[11px] font-weight-510 text-linear-text-muted tracking-wide uppercase mb-1.5"
                 >
-                  Pull Request Number
+                  {t("prList.prLabel")}
                 </label>
                 <input
                   id="pr"
                   type="number"
                   value={pullNumber}
                   onChange={(e) => handleManualFieldChange(setPullNumber, e.target.value)}
-                  placeholder="28735"
+                  placeholder={t("prList.prPlaceholder")}
                   min="1"
                   className="w-full px-3 py-2.5 bg-linear-black border border-linear-border rounded-md text-[13px] text-linear-text-primary placeholder-linear-text-muted/50 focus:outline-none focus:border-linear-accent/50 transition-colors"
                 />
@@ -268,7 +268,7 @@ export function PRList() {
               }`}
             >
               <Sparkles className="h-4 w-4" />
-              Start Review
+              {t("prList.startReview")}
               <motion.span
                 animate={{ x: isHovered && isValid ? 4 : 0 }}
                 transition={{ duration: 0.2 }}
@@ -311,7 +311,7 @@ export function PRList() {
             <div className="flex items-center gap-2">
               <GitPullRequest className="h-4 w-4 text-linear-text-muted" />
               <h2 className="text-[13px] font-weight-510 text-linear-text-secondary tracking-wide">
-                RECENT REVIEWS
+                {t("prList.recentReviews")}
               </h2>
             </div>
             {recent.status === "loaded" && (
@@ -319,7 +319,7 @@ export function PRList() {
                 to="/history"
                 className="flex items-center gap-1 text-[11px] text-linear-text-muted hover:text-linear-text-secondary transition-colors"
               >
-                View all
+                {t("prList.viewAll")}
                 <ArrowUpRight className="h-3 w-3" />
               </Link>
             )}
@@ -348,9 +348,7 @@ export function PRList() {
           {recent.status === "empty" && (
             <div className="glass-surface rounded-xl p-12 text-center">
               <GitPullRequest className="h-10 w-10 text-linear-text-muted/30 mx-auto mb-3" />
-              <p className="text-[13px] text-linear-text-muted">
-                No reviews yet. Start by reviewing a PR above.
-              </p>
+              <p className="text-[13px] text-linear-text-muted">{t("prList.emptyHistory")}</p>
             </div>
           )}
 
@@ -393,7 +391,7 @@ export function PRList() {
                       )}
                       <span className="flex items-center gap-1">
                         <Clock className="h-3 w-3" />
-                        {formatTime(entry.createdAt)}
+                        {formatTime(entry.createdAt, t)}
                       </span>
                     </div>
                   </div>

@@ -1,6 +1,7 @@
 import type { ConsensusIssue } from "@prism/shared";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { SeverityBadge } from "./SeverityBadge";
 
 interface ConsensusIssueCardProps {
@@ -8,6 +9,7 @@ interface ConsensusIssueCardProps {
 }
 
 export function ConsensusIssueCard({ issue }: ConsensusIssueCardProps) {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(issue.confidence === "high");
 
   const confidenceStyles = {
@@ -17,9 +19,9 @@ export function ConsensusIssueCard({ issue }: ConsensusIssueCardProps) {
   };
 
   const confidenceLabel = {
-    high: "\u{1F512} HIGH CONFIDENCE — Both models agree",
-    medium: "⚠️ MEDIUM CONFIDENCE — Single model finding",
-    low: "ℹ️ LOW CONFIDENCE — Minor, single model",
+    high: t("consensus.highConfidence"),
+    medium: t("consensus.mediumConfidence"),
+    low: t("consensus.lowConfidence"),
   };
 
   return (
@@ -53,7 +55,7 @@ export function ConsensusIssueCard({ issue }: ConsensusIssueCardProps) {
           {issue.modelFindings.map((finding) => (
             <div key={finding.model} className="text-sm">
               <p className="text-xs font-medium text-linear-text-tertiary uppercase tracking-wider mb-1">
-                {finding.model === "claude" ? "Claude says:" : "Gemini says:"}
+                {finding.model === "claude" ? t("consensus.claudeSays") : t("consensus.geminiSays")}
               </p>
               <p className="text-linear-text-secondary">{finding.explanation}</p>
             </div>
