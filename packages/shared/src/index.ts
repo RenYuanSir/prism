@@ -1,4 +1,4 @@
-// Shared types for the PRism application
+﻿// Shared types for the PRism application
 
 export interface PRFile {
   filename: string;
@@ -104,7 +104,9 @@ export type StreamEvent =
   | { type: "consensus"; consensus: AIConsensusResult }
   | { type: "suggestion"; suggestions: AIFixSuggestion[] }
   | { type: "done" }
-  | { type: "error"; message: string };
+  | { type: "error"; message: string }
+  | { type: "incremental:delta"; delta: IncrementalDelta }
+  | { type: "incremental:preserved"; issues: AIRiskIssue[]; raceConditions: RaceConditionIssue[] };
 
 export type AIRiskSeverity = "critical" | "warning" | "info";
 
@@ -173,6 +175,14 @@ export interface SavedReview {
   review: AIReviewResult;
   semanticDiff: SemanticDiff;
   createdAt: string;
+}
+
+export interface IncrementalDelta {
+  changedFiles: string[];
+  unchangedFiles: string[];
+  previousReviewId: string;
+  previousHeadSha: string;
+  currentHeadSha: string;
 }
 
 export interface IncrementalDelta {
