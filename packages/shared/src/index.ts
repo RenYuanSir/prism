@@ -168,6 +168,7 @@ export interface SavedReview {
     author: string;
     branch: string;
     baseBranch: string;
+    headSha: string;
   };
   review: AIReviewResult;
   semanticDiff: SemanticDiff;

@@ -261,6 +261,7 @@ app.post("/api/review/:owner/:repo/:pullNumber/stream", async (req: Request, res
           author: pr.author,
           branch: pr.branch,
           baseBranch: pr.baseBranch,
+          headSha: pr.headSha,
         },
         review: {
           summary: { summary: collectedSummary, stage: "summary" },
@@ -338,7 +339,7 @@ app.post("/api/impact/:owner/:repo/:pullNumber", async (req: Request, res: Respo
   }
 });
 
-// ── Post Comment to GitHub ──
+// 鈹€鈹€ Post Comment to GitHub 鈹€鈹€
 
 app.post("/api/review/:owner/:repo/:pullNumber/comment", async (req: Request, res: Response) => {
   const { owner, repo, pullNumber } = req.params;
@@ -381,7 +382,7 @@ app.post("/api/review/:owner/:repo/:pullNumber/comment", async (req: Request, re
   }
 });
 
-// ── Settings ──
+// 鈹€鈹€ Settings 鈹€鈹€
 
 app.get("/api/settings", async (_req: Request, res: Response) => {
   try {

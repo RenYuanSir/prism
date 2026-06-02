@@ -27,6 +27,7 @@ function createMockPR(): PullRequest {
     author: "developer",
     branch: "feat/auth",
     baseBranch: "main",
+    headSha: "abc123",
     files: [
       {
         filename: "src/auth.ts",
@@ -573,6 +574,7 @@ describe("AIReviewPipeline parallel risk analysis", () => {
       author: "test",
       branch: "feature",
       baseBranch: "main",
+      headSha: "abc123",
       files: [],
       commits: [],
     };
@@ -663,6 +665,7 @@ describe("AIReviewPipeline race condition integration", () => {
       author: "test",
       branch: "feature",
       baseBranch: "main",
+      headSha: "abc123",
       files: [],
       commits: [],
     };
@@ -707,6 +710,7 @@ describe("AIReviewPipeline race condition integration", () => {
       author: "test",
       branch: "feature",
       baseBranch: "main",
+      headSha: "abc123",
       files: [],
       commits: [],
     };
@@ -756,6 +760,7 @@ describe("AIReviewPipeline race condition integration", () => {
       author: "test",
       branch: "feature",
       baseBranch: "main",
+      headSha: "abc123",
       files: [],
       commits: [],
     };
@@ -770,7 +775,7 @@ describe("AIReviewPipeline race condition integration", () => {
 
     const result = await pipeline.run(pr, "diff", semanticDiff);
 
-    // Different files → no match → both get medium confidence
+    // Different files 鈫?no match 鈫?both get medium confidence
     expect(result.raceConditions).toHaveLength(2);
     const claudeOnly = result.raceConditions.find((rc) => rc.sharedState === "orderCount");
     const geminiOnly = result.raceConditions.find((rc) => rc.sharedState === "userCache");
@@ -814,6 +819,7 @@ describe("AIReviewPipeline race condition integration", () => {
       author: "test",
       branch: "feature",
       baseBranch: "main",
+      headSha: "abc123",
       files: [],
       commits: [],
     };
@@ -850,6 +856,7 @@ describe("AIReviewPipeline race condition integration", () => {
       author: "test",
       branch: "feature",
       baseBranch: "main",
+      headSha: "abc123",
       files: [],
       commits: [],
     };
@@ -974,6 +981,7 @@ describe("AIReviewPipeline race condition integration", () => {
       author: "test",
       branch: "feature",
       baseBranch: "main",
+      headSha: "abc123",
       files: [],
       commits: [],
     };
@@ -1020,6 +1028,7 @@ describe("runStream", () => {
       author: "test",
       branch: "feat",
       baseBranch: "main",
+      headSha: "abc123",
       files: [],
       commits: [],
     };
@@ -1061,6 +1070,7 @@ describe("runStream", () => {
         author: "test",
         branch: "feat",
         baseBranch: "main",
+        headSha: "abc123",
         files: [],
         commits: [],
       },
@@ -1105,6 +1115,7 @@ describe("runStream", () => {
         author: "test",
         branch: "feat",
         baseBranch: "main",
+        headSha: "abc123",
         files: [],
         commits: [],
       },
@@ -1148,6 +1159,7 @@ describe("runStream", () => {
         author: "test",
         branch: "feat",
         baseBranch: "main",
+        headSha: "abc123",
         files: [],
         commits: [],
       },
@@ -1191,6 +1203,7 @@ describe("runStream", () => {
         author: "test",
         branch: "feat",
         baseBranch: "main",
+        headSha: "abc123",
         files: [],
         commits: [],
       },
@@ -1223,6 +1236,7 @@ describe("runStream", () => {
         author: "test",
         branch: "feat",
         baseBranch: "main",
+        headSha: "abc123",
         files: [],
         commits: [],
       },
@@ -1249,7 +1263,7 @@ describe("runStream", () => {
       suggestionClient: failingClient as LLMClient,
     });
 
-    // runStream should NOT throw — it communicates errors via callback
+    // runStream should NOT throw 鈥?it communicates errors via callback
     await pipeline.runStream(
       {
         id: 1,
@@ -1258,6 +1272,7 @@ describe("runStream", () => {
         author: "test",
         branch: "feat",
         baseBranch: "main",
+        headSha: "abc123",
         files: [],
         commits: [],
       },
