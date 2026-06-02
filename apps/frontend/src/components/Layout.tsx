@@ -66,7 +66,7 @@ export function Layout() {
               <NavLink
                 key={item.to}
                 to={item.to}
-                className={({ isActive }) =>
+                className={({ isActive }: { isActive: boolean }) =>
                   `flex items-center gap-2.5 px-3 py-2 rounded-md text-[13px] font-weight-510 transition-all duration-200 ${
                     isActive
                       ? "bg-linear-surface text-linear-text-primary border border-linear-border-subtle"
