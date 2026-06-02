@@ -7,8 +7,8 @@ import { AIReviewPipeline } from "./services/ai-review-pipeline.js";
 import { analyzeDiff } from "./services/diff-analyzer.js";
 import { GitHubService } from "./services/github.js";
 import { HistoryStore } from "./services/history-store.js";
-import { IncrementalReviewService } from "./services/incremental-review-service.js";
 import { analyzeImpact } from "./services/impact-analyzer.js";
+import { IncrementalReviewService } from "./services/incremental-review-service.js";
 import {
   clearLLMConfigCache,
   createPipelineClients,

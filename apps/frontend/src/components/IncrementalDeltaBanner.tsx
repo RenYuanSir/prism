@@ -26,7 +26,7 @@ export function IncrementalDeltaBanner({ changedFiles, unchangedFiles, preserved
           <div>
             <p className="text-[13px] font-weight-510 text-linear-text-primary">
               {changedFiles.length} file{changedFiles.length !== 1 ? "s" : ""} changed
-              {unchangedFiles.length > 0 && ", " + unchangedFiles.length + " unchanged"}
+              {unchangedFiles.length > 0 && `, ${unchangedFiles.length} unchanged`}
             </p>
             <p className="text-[11px] text-linear-text-muted">
               {preservedIssues.length} finding{preservedIssues.length !== 1 ? "s" : ""} preserved
@@ -61,7 +61,7 @@ export function IncrementalDeltaBanner({ changedFiles, unchangedFiles, preserved
             <div className="mt-3 pt-3 border-t border-linear-border-subtle space-y-2">
               {preservedIssues.map((issue, i) => (
                 <div
-                  key={issue.file + "-" + issue.line + "-" + i}
+                  key={`${issue.file}-${issue.line}-${i}`}
                   className="flex items-start gap-2 text-[12px]"
                 >
                   <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-linear-surface text-linear-text-muted shrink-0 mt-0.5">
