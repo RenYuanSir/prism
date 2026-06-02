@@ -98,64 +98,30 @@
     position: fixed;
     inset: 0;
     pointer-events: none;
-    overflow: hidden;
     transform: translateZ(0);
     will-change: transform;
-  }
-
-  .prism-refraction::before {
-    content: "";
-    position: absolute;
-    /* Full-width diagonal fan: top-left → bottom-right */
-    top: -40%;
-    left: 0;
-    width: 100%;
-    height: 180%;
-    background: linear-gradient(
-      135deg,
-      transparent 0%,
-      rgb(var(--c-prism-purple) / calc(0.12 * var(--c-prism-boost))) 12%,
-      rgb(var(--c-prism-blue) / calc(0.16 * var(--c-prism-boost))) 22%,
-      rgb(var(--c-prism-green) / calc(0.12 * var(--c-prism-boost))) 34%,
-      rgb(var(--c-prism-yellow) / calc(0.18 * var(--c-prism-boost))) 46%,
-      rgb(var(--c-prism-orange) / calc(0.13 * var(--c-prism-boost))) 58%,
-      rgb(var(--c-prism-red) / calc(0.1 * var(--c-prism-boost))) 70%,
-      transparent 85%
-    );
-    filter: blur(70px);
-    animation: prismSwayA 22s ease-in-out infinite;
   }
 
   .prism-refraction::after {
     content: "";
     position: absolute;
-    /* Counter-diagonal: bottom-right → top-left, offset timing */
-    top: -30%;
+    /* Counter-diagonal: bottom-right → top-left, full coverage */
+    top: -20%;
     right: 0;
-    width: 65%;
+    width: 100%;
     height: 160%;
     background: linear-gradient(
       225deg,
-      transparent 0%,
-      rgb(var(--c-prism-yellow) / calc(0.1 * var(--c-prism-boost))) 15%,
-      rgb(var(--c-prism-green) / calc(0.13 * var(--c-prism-boost))) 30%,
-      rgb(var(--c-prism-blue) / calc(0.1 * var(--c-prism-boost))) 45%,
-      rgb(var(--c-prism-purple) / calc(0.14 * var(--c-prism-boost))) 55%,
-      rgb(var(--c-prism-red) / calc(0.08 * var(--c-prism-boost))) 68%,
-      transparent 85%
+      rgb(var(--c-prism-purple) / calc(0.03 * var(--c-prism-boost))) 0%,
+      rgb(var(--c-prism-blue) / calc(0.08 * var(--c-prism-boost))) 22%,
+      rgb(var(--c-prism-green) / calc(0.06 * var(--c-prism-boost))) 40%,
+      rgb(var(--c-prism-yellow) / calc(0.09 * var(--c-prism-boost))) 55%,
+      rgb(var(--c-prism-orange) / calc(0.05 * var(--c-prism-boost))) 72%,
+      rgb(var(--c-prism-red) / calc(0.03 * var(--c-prism-boost))) 88%,
+      rgb(var(--c-prism-purple) / calc(0.02 * var(--c-prism-boost))) 100%
     );
-    filter: blur(50px);
-    animation: prismSwayB 28s ease-in-out infinite;
-  }
-
-  @keyframes prismSwayA {
-    0%,
-    100% {
-      transform: translate3d(0, 0, 0) rotate(0deg);
-    }
-    50% {
-      transform: translate3d(30px, -15px, 0) rotate(1.5deg);
-    }
+    filter: blur(80px);
+    animation: prismSwayB 15s ease-in-out infinite;
   }
 
   @keyframes prismSwayB {
