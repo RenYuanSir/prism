@@ -23,6 +23,7 @@ export interface PullRequest {
   author: string;
   branch: string;
   baseBranch: string;
+  headSha: string;
   files: PRFile[];
   commits: PRCommit[];
 }
@@ -171,6 +172,14 @@ export interface SavedReview {
   review: AIReviewResult;
   semanticDiff: SemanticDiff;
   createdAt: string;
+}
+
+export interface IncrementalDelta {
+  changedFiles: string[];
+  unchangedFiles: string[];
+  previousReviewId: string;
+  previousHeadSha: string;
+  currentHeadSha: string;
 }
 
 /** Request body for posting review results as a GitHub PR Review */
