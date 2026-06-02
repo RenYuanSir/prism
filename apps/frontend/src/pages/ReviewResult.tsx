@@ -7,6 +7,7 @@ import type {
   SemanticDiff,
 } from "@prism/shared";
 import type { PipelineStage } from "@prism/shared";
+import type { IncrementalDelta } from "@prism/shared";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   AlertTriangle,
@@ -37,6 +38,7 @@ import {
 import { ConsensusView } from "../components/ConsensusView";
 import { FileChangeCard } from "../components/FileChangeCard";
 import { ImpactHeatmap } from "../components/ImpactHeatmap";
+import { IncrementalDeltaBanner } from "../components/IncrementalDeltaBanner.js";
 import { PipelineProgress } from "../components/PipelineProgress";
 import { RaceConditionTimeline } from "../components/RaceConditionTimeline";
 import { SeverityBadge } from "../components/SeverityBadge";
@@ -81,6 +83,10 @@ export function ReviewResult() {
   }>();
   const [searchParams] = useSearchParams();
   const historyId = searchParams.get("historyId");
+
+  const [incrementalDelta, setIncrementalDelta] = useState<IncrementalDelta | null>(null);
+  const [preservedIssues, setPreservedIssues] = useState<AIRiskIssue[]>([]);
+  const [isReReviewing, setIsReReviewing] = useState(false);
 
   const [state, setState] = useState<ReviewState>({
     status: "loading",
@@ -148,6 +154,7 @@ export function ReviewResult() {
       owner,
       repo,
       prNum,
+      false,
       (event) => {
         switch (event.type) {
           case "stage:start":
@@ -170,6 +177,16 @@ export function ReviewResult() {
           case "suggestion":
             partial.suggestions = event.suggestions as AIFixSuggestion[];
             setState({ status: "loading", partial: { ...partial } });
+            break;
+          case "incremental:delta":
+            if (event.delta) {
+              setIncrementalDelta(event.delta as IncrementalDelta);
+            }
+            break;
+          case "incremental:preserved":
+            if (event.issues) {
+              setPreservedIssues(event.issues as AIRiskIssue[]);
+            }
             break;
         }
       },
@@ -592,6 +609,33 @@ function ReviewContent({
           </button>
         )}
       </motion.div>
+
+      {isReReviewing && incrementalDelta && (
+        <IncrementalDeltaBanner
+          changedFiles={incrementalDelta.changedFiles}
+          unchangedFiles={incrementalDelta.unchangedFiles}
+          preservedIssues={preservedIssues}
+        />
+      )}
+
+      {!isReReviewing && historyId && (
+        <div className="mb-6">
+          <button
+            type="button"
+            onClick={async () => {
+              setIsReReviewing(true);
+              setIncrementalDelta(null);
+              setPreservedIssues([]);
+              setState({ status: "loading", partial: { isComplete: false } });
+              streamReview(owner!, repo!, prNum, true, onEvent, onError, onDone);
+            }}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg glass-surface border border-linear-border-subtle hover:bg-linear-elevated/50 text-[13px] font-weight-510 text-linear-text-secondary transition-all"
+          >
+            <RefreshCw className="h-4 w-4" />
+            Re-review
+          </button>
+        </div>
+      )}
 
       {/* File Changes */}
       <motion.section
