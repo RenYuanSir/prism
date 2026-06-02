@@ -168,3 +168,19 @@ function extractNewContent(patch: string): string {
 
   return newLines.join("\n");
 }
+
+export function filterDiffByFiles(diff: string, targetFiles: string[]): string {
+  if (targetFiles.length === 0) return "";
+  const filesLower = new Set(targetFiles.map((f) => f.toLowerCase()));
+  const lines = diff.split("\n");
+  const result: string[] = [];
+  let include = false;
+  for (const line of lines) {
+    if (line.startsWith("diff --git")) {
+      const m = line.match(/diff --git a\/(.+?) b\/(.+?)$/);
+      include = m ? filesLower.has(m[1].toLowerCase()) : false;
+    }
+    if (include) result.push(line);
+  }
+  return result.join("\n");
+}

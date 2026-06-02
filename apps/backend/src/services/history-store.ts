@@ -97,4 +97,13 @@ export class HistoryStore {
       return null;
     }
   }
+
+  async findByPr(owner: string, repo: string, prNumber: number): Promise<SavedReview | null> {
+    const entries = await this.list();
+    const match = entries.find(
+      (e) => e.owner === owner && e.repo === repo && e.prNumber === prNumber,
+    );
+    if (!match) return null;
+    return this.get(match.id);
+  }
 }

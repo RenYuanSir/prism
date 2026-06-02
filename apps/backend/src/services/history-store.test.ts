@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { HistoryEntry, SavedReview } from "@prism/shared";
@@ -17,6 +17,7 @@ function createMockReview(overrides: Partial<SavedReview> = {}): SavedReview {
       author: "tester",
       branch: "feat/test",
       baseBranch: "main",
+      headSha: "abc123",
     },
     review: {
       summary: { summary: "Test summary text for the PR", stage: "summary" },
@@ -136,5 +137,77 @@ describe("HistoryStore", () => {
       createMockReview({ id: "dup", pr: { ...createMockReview().pr, title: "Second" } }),
     );
     expect((await store.get("dup"))!.pr.title).toBe("Second");
+  });
+});
+
+const TEST_DIR_FP = join(process.cwd(), "data", "test-findbypr");
+
+function makeSavedReview(
+  id: string,
+  owner: string,
+  repo: string,
+  prNumber: number,
+  headSha: string,
+): SavedReview {
+  return {
+    id,
+    pr: {
+      owner,
+      repo,
+      prNumber,
+      title: "T",
+      description: "",
+      author: "a",
+      branch: "f",
+      baseBranch: "m",
+      headSha,
+    },
+    review: {
+      summary: { summary: "s", stage: "summary" },
+      risk: { issues: [], stage: "risk" },
+      consensus: {
+        consensusIssues: [],
+        claudeOnly: [],
+        geminiOnly: [],
+        allAgreeCount: 0,
+        claudeTotal: 0,
+        geminiTotal: 0,
+      },
+      raceConditions: [],
+      suggestion: { suggestions: [], stage: "suggestion" },
+    },
+    semanticDiff: {
+      fileChanges: [],
+      summary: "",
+      totalFiles: 0,
+      totalAdditions: 0,
+      totalDeletions: 0,
+    },
+    createdAt: "2026-06-02T10:00:00.000Z",
+  };
+}
+
+describe("HistoryStore findByPr", () => {
+  let store: HistoryStore;
+  beforeEach(() => {
+    rmSync(TEST_DIR_FP, { recursive: true, force: true });
+    mkdirSync(TEST_DIR_FP, { recursive: true });
+    store = new HistoryStore(TEST_DIR_FP);
+  });
+  afterEach(() => {
+    rmSync(TEST_DIR_FP, { recursive: true, force: true });
+  });
+
+  it("should return the most recent review for a PR", async () => {
+    await store.save(makeSavedReview("r1", "o", "r", 42, "sha1"));
+    await store.save(makeSavedReview("r2", "o", "r", 42, "sha2"));
+    const found = await store.findByPr("o", "r", 42);
+    expect(found).not.toBeNull();
+    expect(found!.id).toBe("r2");
+  });
+
+  it("should return null when no review exists", async () => {
+    const found = await store.findByPr("o", "r", 999);
+    expect(found).toBeNull();
   });
 });
