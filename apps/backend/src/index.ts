@@ -8,6 +8,7 @@ import { analyzeDiff } from "./services/diff-analyzer.js";
 import { GitHubService } from "./services/github.js";
 import { HistoryStore } from "./services/history-store.js";
 import { analyzeImpact } from "./services/impact-analyzer.js";
+import { IncrementalReviewService } from "./services/incremental-review-service.js";
 import {
   clearLLMConfigCache,
   createPipelineClients,
@@ -141,6 +142,72 @@ app.post("/api/review/:owner/:repo/:pullNumber", async (req: Request, res: Respo
     );
     const fileContents = Object.fromEntries(fileContentEntries);
 
+    const isIncremental = req.body?.incremental === true;
+
+    if (isIncremental) {
+      const incrementalService = new IncrementalReviewService({ githubToken: token });
+      await incrementalService.runIncremental(
+        owner,
+        repo,
+        pr,
+        diff,
+        semanticDiff,
+        fileContents,
+        (event) => {
+          if (aborted) return;
+          if (event.type === "summary" && event.summary) collectedSummary = event.summary;
+          if (event.type === "consensus" && event.consensus) collectedConsensus = event.consensus;
+          if (event.type === "suggestion" && event.suggestions)
+            collectedSuggestions = event.suggestions;
+          const data = JSON.stringify(event);
+          res.write(`event: ${event.type}\ndata: ${data}\n\n`);
+        },
+      );
+      // Save review history (same as existing pattern)
+      if (!aborted) {
+        const date = new Date().toISOString().split("T")[0];
+        const id = `${date}-${owner}-${repo}-${prNumber}`;
+        const consensus: AIConsensusResult = collectedConsensus ?? {
+          consensusIssues: [],
+          claudeOnly: [],
+          geminiOnly: [],
+          allAgreeCount: 0,
+          claudeTotal: 0,
+          geminiTotal: 0,
+        };
+        const savedReview: SavedReview = {
+          id,
+          pr: {
+            owner,
+            repo,
+            prNumber,
+            title: pr.title,
+            description: pr.description,
+            author: pr.author,
+            branch: pr.branch,
+            baseBranch: pr.baseBranch,
+            headSha: pr.commits[0]?.sha ?? "",
+          },
+          review: {
+            summary: { summary: collectedSummary, stage: "summary" },
+            risk: { issues: consensus.consensusIssues.map((i) => i.issue), stage: "risk" },
+            consensus,
+            raceConditions: [],
+            suggestion: { suggestions: collectedSuggestions, stage: "suggestion" },
+          },
+          semanticDiff,
+          createdAt: new Date().toISOString(),
+        };
+        try {
+          await new HistoryStore().save(savedReview);
+        } catch (err) {
+          console.error("Failed to save review history:", err);
+        }
+      }
+      if (!aborted) res.end();
+      return;
+    }
+
     const pipeline = new AIReviewPipeline(createPipelineClients(loadLLMConfig()));
     const reviewResult = await pipeline.run(pr, diff, semanticDiff, fileContents);
 
@@ -261,7 +328,7 @@ app.post("/api/review/:owner/:repo/:pullNumber/stream", async (req: Request, res
           author: pr.author,
           branch: pr.branch,
           baseBranch: pr.baseBranch,
-          headSha: pr.headSha,
+          headSha: pr.commits[0]?.sha ?? "",
         },
         review: {
           summary: { summary: collectedSummary, stage: "summary" },

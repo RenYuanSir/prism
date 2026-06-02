@@ -1,4 +1,4 @@
-﻿// Shared types for the PRism application
+// Shared types for the PRism application
 
 export interface PRFile {
   filename: string;
@@ -175,14 +175,6 @@ export interface SavedReview {
   review: AIReviewResult;
   semanticDiff: SemanticDiff;
   createdAt: string;
-}
-
-export interface IncrementalDelta {
-  changedFiles: string[];
-  unchangedFiles: string[];
-  previousReviewId: string;
-  previousHeadSha: string;
-  currentHeadSha: string;
 }
 
 export interface IncrementalDelta {
