@@ -1,4 +1,5 @@
 import type { AIConsensusResult, AIFixSuggestion, SavedReview } from "@prism/shared";
+import type { StreamEvent } from "@prism/shared";
 import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
@@ -223,8 +224,7 @@ app.post("/api/review/:owner/:repo/:pullNumber/stream", async (req: Request, res
     let collectedConsensus: AIConsensusResult | null = null;
     let collectedSuggestions: AIFixSuggestion[] = [];
 
-    const pipeline = new AIReviewPipeline(createPipelineClients(loadLLMConfig()));
-    await pipeline.runStream(pr, diff, semanticDiff, fileContents, (event) => {
+    const handleEvent = (event: StreamEvent) => {
       if (aborted) return;
       if (event.type === "summary" && event.summary) {
         collectedSummary = event.summary;
@@ -237,7 +237,28 @@ app.post("/api/review/:owner/:repo/:pullNumber/stream", async (req: Request, res
       }
       const data = JSON.stringify(event);
       res.write(`event: ${event.type}\ndata: ${data}\n\n`);
-    });
+    };
+
+    const pipelineConfig = createPipelineClients(loadLLMConfig());
+
+    if (req.body?.incremental === true) {
+      const incrementalService = new IncrementalReviewService({
+        githubToken: token,
+        pipelineConfig,
+      });
+      await incrementalService.runIncremental(
+        owner,
+        repo,
+        pr,
+        diff,
+        semanticDiff,
+        fileContents,
+        handleEvent,
+      );
+    } else {
+      const pipeline = new AIReviewPipeline(pipelineConfig);
+      await pipeline.runStream(pr, diff, semanticDiff, fileContents, handleEvent);
+    }
 
     // Auto-save review history (non-blocking)
     if (!aborted) {
