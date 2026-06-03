@@ -4,6 +4,7 @@
 <p align="center"><strong>AI-Powered GitHub Pull Request Code Review Platform</strong></p>
 
 <p align="center">
+  <img src="https://img.shields.io/badge/version-1.0-8b5cf6" alt="v1.0">
   <img src="https://img.shields.io/badge/TypeScript-5.4-blue" alt="TypeScript">
   <img src="https://img.shields.io/badge/React-18-61DAFB" alt="React">
   <img src="https://img.shields.io/badge/Express-4-000000" alt="Express">
@@ -79,22 +80,24 @@ The significance of this strategy: Layer 1 answers "what did this function chang
 ### Future Roadmap
 
 ```
-MVP (Current)
+Current (v1.0)
 ├── Semantic Diff (Tree-sitter AST)
 ├── 4-Model Pipeline (Summary → Risk×2 → Consensus → Suggestion)
 ├── Race Condition Detection + Execution Path Visualization
 ├── Cross-File Impact Heatmap (static dependency analysis)
 ├── SSE Streaming Real-Time Rendering
 ├── Review History Persistence + Settings Management
-└── Light/Dark Theme + Prismatic Spectral Animation
-
-V1 (Near-term)
+├── Light/Dark Theme + Prism WebGL Spectral Background
+├── Liquid Glass UI Components (app-wide glassmorphism)
 ├── Incremental Review (per-push updates, analyze new changes only)
 ├── Historical Similar PR Risk Warning (vector embedding + similarity search)
 ├── Review Quality Self-Scoring & Trend Analysis
 ├── Enhanced Consensus Confidence Visualization
 ├── PR Comment Auto-Post to GitHub (GitHub Suggestion format)
-└── GitLab + Gitee Support
+└── LLM Pipeline Config Panel (6 presets + API key persistence)
+
+V2 (Mid-term Vision)
+├── GitLab + Gitee Support
 
 V2 (Mid-term Vision)
 ├── IDE Plugin (VS Code Extension)
@@ -115,8 +118,13 @@ V2 (Mid-term Vision)
 | **SSE Streaming** | Server-Sent Events progressive rendering — pipeline results stream to frontend as each stage completes |
 | **Review History** | Auto-persist reviews as JSON on completion, instant cached reload for past reviews |
 | **URL Auto-Parse** | Paste a GitHub PR URL to auto-extract owner/repo/number, supporting multiple URL formats |
-| **Light/Dark Theme** | Full dual-color-system, prismatic spectral gradients + glassmorphism + GPU-composited refraction animation |
+| **Light/Dark Theme** | Full dual-color-system, WebGL prism spectral background + liquid glass UI + fixed background (scroll-independent) |
+| **Liquid Glass UI** | App-wide glassmorphism components, RAF-driven CSS backdrop-filter liquid flow animation, dark/light mode adaptive |
 | **LLM Settings** | Four-stage independent Provider config (6 presets + Custom), API Key security masking, backend persistence |
+| **Incremental Review** | Per-push incremental updates, analyze new changes only, historical result cache reuse |
+| **Similar PR Warning** | Vector embedding + cosine similarity search, auto-match historical similar PR risks during review |
+| **Review Score** | Review quality self-scoring (risk, consensus, coverage), trend tracking |
+| **GitHub Comment** | Auto-post review results as GitHub PR comments (GitHub Suggestion format) |
 
 ## Tech Stack
 
@@ -128,7 +136,9 @@ V2 (Mid-term Vision)
 | Frontend | React 18, Vite 5, Tailwind CSS 3, framer-motion |
 | Backend | Express 4, Tree-sitter WASM, Octokit |
 | LLM Abstraction | Unified interface supporting Anthropic / Google / OpenAI / OpenAI-compatible |
-| Testing | Vitest 2 (140 tests / 13 files) |
+| Testing | Vitest 2 (178 tests / 18 files) |
+| WebGL | ogl (lightweight WebGL library, Prism spectral background) |
+| Vector Search | Embedding Service + cosine similarity (historical PR matching) |
 | Lint/Format | Biome |
 | Git Hooks | Husky 9 + lint-staged (pre-commit: format + typecheck + test) |
 | CI/CD | GitHub Actions (Quality → Test → Build) |
@@ -140,7 +150,7 @@ prism/
 ├── apps/
 │   ├── frontend/          # React 18 + Vite 5 + Tailwind CSS
 │   │   ├── src/pages/             # PRList, ReviewResult, HistoryPage, SettingsPage
-│   │   ├── src/components/        # ConsensusView, RaceConditionTimeline, ImpactHeatmap, etc.
+│   │   ├── src/components/        # LiquidGlass, Prism (WebGL), ConsensusView, RaceConditionTimeline, ImpactHeatmap, etc.
 │   │   └── src/api/               # SSE streaming client + REST API
 │   └── backend/           # Node.js + Express
 │       └── src/services/
@@ -154,6 +164,11 @@ prism/
 │           ├── llm-config.ts                # Four-stage Provider config + caching
 │           ├── history-store.ts             # Review result JSON persistence
 │           ├── settings-store.ts            # LLM settings JSON persistence
+│           ├── embedding-service.ts         # Review text vectorization (historical PR matching)
+│           ├── similarity-service.ts        # Cosine similarity search
+│           ├── incremental-review-service.ts # Incremental review (new changes only)
+│           ├── review-scorer.ts             # Review quality self-scoring
+│           ├── pr-comment-service.ts        # Auto-post review comments to GitHub
 │           └── github.ts                    # Octokit REST client
 ├── packages/
 │   └── shared/             # Shared TypeScript types (120+ types) + utilities
@@ -254,7 +269,7 @@ pnpm test -- --watch  # Watch mode
 GitHub Actions runs three quality gates on every PR — all must pass before merge:
 
 1. **Quality** — `pnpm lint` + `pnpm typecheck`
-2. **Test** — `pnpm test` (140 tests / 13 files)
+2. **Test** — `pnpm test` (178 tests / 18 files)
 3. **Build** — `pnpm build`
 
 ## Contributing

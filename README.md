@@ -4,6 +4,7 @@
 <p align="center"><strong>AI 驱动的 GitHub Pull Request 智能代码审查平台</strong></p>
 
 <p align="center">
+  <img src="https://img.shields.io/badge/version-1.0-8b5cf6" alt="v1.0">
   <img src="https://img.shields.io/badge/TypeScript-5.4-blue" alt="TypeScript">
   <img src="https://img.shields.io/badge/React-18-61DAFB" alt="React">
   <img src="https://img.shields.io/badge/Express-4-000000" alt="Express">
@@ -79,22 +80,24 @@ Layer 3: 竞态上下文
 ### 未来扩展方向
 
 ```
-MVP (当前)
+当前 (v1.0)
 ├── 语义化 Diff (Tree-sitter AST)
 ├── 四模型 Pipeline (Summary → Risk×2 → Consensus → Suggestion)
 ├── 竞态条件检测 + 执行路径可视化
 ├── 跨文件影响热力图 (静态依赖分析)
 ├── SSE 流式实时渲染
 ├── 审查历史持久化 + 设置管理
-└── 明暗主题 + 棱镜光谱动效
-
-V1 (近期规划)
+├── 明暗主题 + Prism WebGL 棱镜光谱背景
+├── 液态玻璃 UI 组件 (全站玻璃拟态效果)
 ├── 增量审查 (每次 push 更新，只分析新增变更)
 ├── 历史相似 PR 风险预警 (向量嵌入 + 相似度检索)
 ├── 审查质量自评分与趋势分析
 ├── 双模型共识置信度可视化增强
 ├── PR 评论自动回写 GitHub (GitHub Suggestion 格式)
-└── 支持 GitLab + Gitee
+└── 审查管线 LLM 配置面板 (6 预设 + API Key 持久化)
+
+V2 (中期愿景)
+├── 支持 GitLab + Gitee
 
 V2 (中期愿景)
 ├── IDE 插件 (VS Code Extension)
@@ -115,8 +118,13 @@ V2 (中期愿景)
 | **SSE Streaming** | Server-Sent Events 流式渐进渲染，Pipeline 每阶段结果实时推送至前端 |
 | **Review History** | 审查完成后自动持久化为 JSON 文件，支持历史回看和秒级缓存加载 |
 | **URL Auto-Parse** | 粘贴 GitHub PR 链接自动解析 owner/repo/number，支持多种 URL 格式 |
-| **Light/Dark Theme** | 完整双色彩体系，棱镜光谱渐变 + 玻璃拟态材质 + GPU 合成折射光效动效 |
+| **Light/Dark Theme** | 完整双色彩体系，WebGL 棱镜光谱背景 + 液态玻璃拟态 UI + 固定背景不随滚动 |
+| **Liquid Glass UI** | 全站玻璃拟态组件，RAF 驱动 CSS backdrop-filter 液态流动动画，暗亮双模式适配 |
 | **LLM Settings** | 四阶段独立配置 Provider（6 预设 + Custom），API Key 安全脱敏，后端持久化 |
+| **Incremental Review** | 每次 push 递增更新，只分析新增变更，历史结果缓存复用 |
+| **Similar PR Warning** | 向量嵌入 + 余弦相似度检索，审查时自动匹配历史相似 PR 风险预警 |
+| **Review Score** | 审查质量自评分（风险、共识、覆盖率三维度），趋势追踪 |
+| **GitHub Comment** | 审查结果自动回写 GitHub PR 评论（GitHub Suggestion 格式） |
 
 ## 技术栈
 
@@ -128,7 +136,9 @@ V2 (中期愿景)
 | 前端 | React 18, Vite 5, Tailwind CSS 3, framer-motion |
 | 后端 | Express 4, Tree-sitter WASM, Octokit |
 | LLM 抽象 | 统一接口支持 Anthropic / Google / OpenAI / OpenAI-compatible |
-| 测试 | Vitest 2 (140 tests / 13 文件) |
+| 测试 | Vitest 2 (178 tests / 18 文件) |
+| WebGL | ogl (轻量 WebGL 库，Prism 光谱背景) |
+| 向量检索 | Embedding Service + 余弦相似度 (历史 PR 匹配) |
 | Lint/Format | Biome |
 | Git Hooks | Husky 9 + lint-staged (pre-commit: format + typecheck + test) |
 | CI/CD | GitHub Actions (Quality → Test → Build) |
@@ -140,7 +150,7 @@ prism/
 ├── apps/
 │   ├── frontend/          # React 18 + Vite 5 + Tailwind CSS
 │   │   ├── src/pages/             # PRList, ReviewResult, HistoryPage, SettingsPage
-│   │   ├── src/components/        # ConsensusView, RaceConditionTimeline, ImpactHeatmap 等
+│   │   ├── src/components/        # LiquidGlass, Prism (WebGL), ConsensusView, RaceConditionTimeline, ImpactHeatmap 等
 │   │   └── src/api/               # SSE 流式客户端 + REST API
 │   └── backend/           # Node.js + Express
 │       └── src/services/
@@ -154,6 +164,11 @@ prism/
 │           ├── llm-config.ts                # 四阶段 Provider 配置 + 缓存
 │           ├── history-store.ts             # 审查结果 JSON 文件持久化
 │           ├── settings-store.ts            # LLM 设置 JSON 文件持久化
+│           ├── embedding-service.ts         # 审查文本向量化 (历史相似 PR 匹配)
+│           ├── similarity-service.ts        # 余弦相似度检索服务
+│           ├── incremental-review-service.ts # 增量审查 (只分析新增变更)
+│           ├── review-scorer.ts             # 审查质量自评分 (风险/共识/覆盖率)
+│           ├── pr-comment-service.ts        # PR 评论自动回写 GitHub
 │           └── github.ts                    # Octokit REST 客户端
 ├── packages/
 │   └── shared/             # 共享 TypeScript 类型 (120+ types) + 工具函数
@@ -254,7 +269,7 @@ pnpm test -- --watch  # 监听模式
 GitHub Actions 在每个 PR 上运行三道门禁，全部通过方可合并：
 
 1. **Quality** — `pnpm lint` + `pnpm typecheck`
-2. **Test** — `pnpm test` (140 tests / 13 文件)
+2. **Test** — `pnpm test` (178 tests / 18 文件)
 3. **Build** — `pnpm build`
 
 ## 贡献
