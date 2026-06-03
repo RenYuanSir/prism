@@ -7,6 +7,7 @@ import type {
   ModelFinding,
   ReviewScore,
   SemanticDiff,
+  SimilarPR,
 } from "@prism/shared";
 import type { PipelineStage } from "@prism/shared";
 import { AnimatePresence, motion } from "framer-motion";
@@ -44,6 +45,7 @@ import { PipelineProgress } from "../components/PipelineProgress";
 import { RaceConditionTimeline } from "../components/RaceConditionTimeline";
 import { ReviewScoreCard } from "../components/ReviewScoreCard";
 import { SeverityBadge } from "../components/SeverityBadge";
+import { SimilarPRCard } from "../components/SimilarPRCard";
 import { SuggestionCard } from "../components/SuggestionCard";
 import { computeReviewScore } from "../utils/scoring";
 
@@ -69,6 +71,7 @@ interface PartialResults {
   deltaPreviousReviewId?: string;
   deltaPreservedIssues?: AIRiskIssue[];
   scoreData?: ReviewScore;
+  similarPRs?: SimilarPR[];
 }
 
 type ReviewState =
@@ -78,6 +81,7 @@ type ReviewState =
       data: ReviewResponse;
       impactGraph: ImpactGraph | null;
       score: ReviewScore | null;
+      similarPRs: SimilarPR[] | null;
     }
   | { status: "error"; message: string; partial: PartialResults };
 
@@ -136,6 +140,7 @@ export function ReviewResult() {
               },
               impactGraph: null,
               score: null,
+              similarPRs: null,
             });
           } else {
             setState({
@@ -203,6 +208,11 @@ export function ReviewResult() {
           case "score":
             partial.scoreData = event.score as ReviewScore;
             setState({ status: "loading", partial: { ...partial } });
+            break;
+          case "similar-prs":
+            if (event.similarPRs) {
+              partial.similarPRs = event.similarPRs as SimilarPR[];
+            }
             break;
         }
       },
@@ -278,6 +288,7 @@ export function ReviewResult() {
                   totalDeletions: 0,
                 },
               ),
+              similarPRs: partial.similarPRs ?? null,
             });
           }
         } catch {
@@ -473,6 +484,7 @@ export function ReviewResult() {
               repo={repo!}
               pullNumber={pullNumber!}
               score={state.score}
+              similarPRs={state.similarPRs}
             />
           </motion.div>
         )}
@@ -490,6 +502,7 @@ interface ReviewContentProps {
   repo: string;
   pullNumber: string;
   score: ReviewScore | null;
+  similarPRs: SimilarPR[] | null;
 }
 
 function ReviewContent({
@@ -501,6 +514,7 @@ function ReviewContent({
   repo,
   pullNumber,
   score,
+  similarPRs,
 }: ReviewContentProps) {
   const { t } = useTranslation();
   const criticalCount = review.risk.issues.filter((i) => i.severity === "critical").length;
@@ -534,245 +548,253 @@ function ReviewContent({
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ staggerChildren: 0.1 }}
-      className="space-y-6"
-    >
-      {/* PR Header */}
+    <div className="flex gap-6">
       <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="glass-surface rounded-xl p-6"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ staggerChildren: 0.1 }}
+        className="flex-1 space-y-6 min-w-0"
       >
-        <h1 className="text-[24px] font-weight-510 tracking-tight-custom text-linear-text-primary mb-3">
-          {pr.title}
-        </h1>
-        <div className="flex flex-wrap items-center gap-4 text-[13px] text-linear-text-tertiary">
-          <div className="flex items-center gap-1.5">
-            <User className="h-3.5 w-3.5" />
-            <span>{pr.author}</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <GitBranch className="h-3.5 w-3.5" />
-            <span className="font-mono text-[12px]">
-              {pr.branch} → {pr.baseBranch}
-            </span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <FileText className="h-3.5 w-3.5" />
-            <span>{t("reviewResult.filesChanged", { n: semanticDiff.totalFiles })}</span>
-          </div>
-        </div>
-        {pr.description && (
-          <p className="mt-4 text-[13px] text-linear-text-secondary leading-relaxed border-t border-linear-border-subtle pt-4">
-            {pr.description}
-          </p>
-        )}
-      </motion.div>
-
-      {/* Review Quality Score */}
-      {score && (
+        {/* PR Header */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
+          className="glass-surface rounded-xl p-6"
         >
-          <ReviewScoreCard score={score} />
+          <h1 className="text-[24px] font-weight-510 tracking-tight-custom text-linear-text-primary mb-3">
+            {pr.title}
+          </h1>
+          <div className="flex flex-wrap items-center gap-4 text-[13px] text-linear-text-tertiary">
+            <div className="flex items-center gap-1.5">
+              <User className="h-3.5 w-3.5" />
+              <span>{pr.author}</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <GitBranch className="h-3.5 w-3.5" />
+              <span className="font-mono text-[12px]">
+                {pr.branch} → {pr.baseBranch}
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <FileText className="h-3.5 w-3.5" />
+              <span>{t("reviewResult.filesChanged", { n: semanticDiff.totalFiles })}</span>
+            </div>
+          </div>
+          {pr.description && (
+            <p className="mt-4 text-[13px] text-linear-text-secondary leading-relaxed border-t border-linear-border-subtle pt-4">
+              {pr.description}
+            </p>
+          )}
         </motion.div>
-      )}
 
-      {/* Stats Bar */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="grid grid-cols-4 gap-3"
-      >
-        <StatCard
-          label={t("reviewResult.statFiles")}
-          value={semanticDiff.totalFiles.toString()}
-          icon={FileText}
-          color="neutral"
-        />
-        <StatCard
-          label={t("reviewResult.statAdditions")}
-          value={`+${semanticDiff.totalAdditions}`}
-          icon={CheckCircle2}
-          color="success"
-        />
-        <StatCard
-          label={t("reviewResult.statDeletions")}
-          value={`-${semanticDiff.totalDeletions}`}
-          icon={XCircle}
-          color="danger"
-        />
-        <StatCard
-          label={t("reviewResult.statIssues")}
-          value={review.risk.issues.length.toString()}
-          icon={AlertTriangle}
-          color={criticalCount > 0 ? "danger" : warningCount > 0 ? "warning" : "success"}
-          subtext={
-            criticalCount > 0
-              ? t("reviewResult.criticalCount", { n: criticalCount })
-              : warningCount > 0
-                ? t("reviewResult.warningCount", { n: warningCount })
-                : t("reviewResult.infoCount", { n: infoCount })
-          }
-        />
-      </motion.div>
-
-      {/* Post to GitHub */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-        className="flex items-center justify-end gap-3"
-      >
-        {postState.status === "success" ? (
-          <a
-            href={postState.htmlUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-green-500/10 border border-green-500/30 text-green-400 text-[13px] font-weight-510 hover:bg-green-500/20 transition-colors"
+        {/* Review Quality Score */}
+        {score && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
           >
-            <CheckCircle2 className="h-4 w-4" />
-            {t("reviewResult.postedToGitHub")}
-            <ExternalLink className="h-3.5 w-3.5" />
-          </a>
-        ) : postState.status === "error" ? (
-          <div className="flex items-center gap-2">
-            <span className="text-[12px] text-red-400">{postState.message}</span>
+            <ReviewScoreCard score={score} />
+          </motion.div>
+        )}
+
+        {/* Stats Bar */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="grid grid-cols-4 gap-3"
+        >
+          <StatCard
+            label={t("reviewResult.statFiles")}
+            value={semanticDiff.totalFiles.toString()}
+            icon={FileText}
+            color="neutral"
+          />
+          <StatCard
+            label={t("reviewResult.statAdditions")}
+            value={`+${semanticDiff.totalAdditions}`}
+            icon={CheckCircle2}
+            color="success"
+          />
+          <StatCard
+            label={t("reviewResult.statDeletions")}
+            value={`-${semanticDiff.totalDeletions}`}
+            icon={XCircle}
+            color="danger"
+          />
+          <StatCard
+            label={t("reviewResult.statIssues")}
+            value={review.risk.issues.length.toString()}
+            icon={AlertTriangle}
+            color={criticalCount > 0 ? "danger" : warningCount > 0 ? "warning" : "success"}
+            subtext={
+              criticalCount > 0
+                ? t("reviewResult.criticalCount", { n: criticalCount })
+                : warningCount > 0
+                  ? t("reviewResult.warningCount", { n: warningCount })
+                  : t("reviewResult.infoCount", { n: infoCount })
+            }
+          />
+        </motion.div>
+
+        {/* Post to GitHub */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="flex items-center justify-end gap-3"
+        >
+          {postState.status === "success" ? (
+            <a
+              href={postState.htmlUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-green-500/10 border border-green-500/30 text-green-400 text-[13px] font-weight-510 hover:bg-green-500/20 transition-colors"
+            >
+              <CheckCircle2 className="h-4 w-4" />
+              {t("reviewResult.postedToGitHub")}
+              <ExternalLink className="h-3.5 w-3.5" />
+            </a>
+          ) : postState.status === "error" ? (
+            <div className="flex items-center gap-2">
+              <span className="text-[12px] text-red-400">{postState.message}</span>
+              <button
+                type="button"
+                onClick={handlePostToGitHub}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-linear-brand text-white text-[13px] font-weight-510 hover:bg-linear-accent transition-colors"
+              >
+                <Send className="h-4 w-4" />
+                {t("reviewResult.retryPost")}
+              </button>
+            </div>
+          ) : (
             <button
               type="button"
               onClick={handlePostToGitHub}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-linear-brand text-white text-[13px] font-weight-510 hover:bg-linear-accent transition-colors"
+              disabled={postState.status === "posting"}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-linear-brand text-white text-[13px] font-weight-510 hover:bg-linear-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <Send className="h-4 w-4" />
-              {t("reviewResult.retryPost")}
+              {postState.status === "posting" ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  {t("reviewResult.posting")}
+                </>
+              ) : (
+                <>
+                  <Send className="h-4 w-4" />
+                  {t("reviewResult.postToGitHub")}
+                </>
+              )}
             </button>
-          </div>
-        ) : (
-          <button
-            type="button"
-            onClick={handlePostToGitHub}
-            disabled={postState.status === "posting"}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-linear-brand text-white text-[13px] font-weight-510 hover:bg-linear-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {postState.status === "posting" ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                {t("reviewResult.posting")}
-              </>
-            ) : (
-              <>
-                <Send className="h-4 w-4" />
-                {t("reviewResult.postToGitHub")}
-              </>
-            )}
-          </button>
-        )}
-      </motion.div>
+          )}
+        </motion.div>
 
-      {/* File Changes */}
-      <motion.section
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-      >
-        <SectionHeader
-          icon={FileText}
-          title={t("reviewResult.fileChanges")}
-          count={semanticDiff.fileChanges.length}
-          accent="text-linear-accent"
-        />
-        <div className="space-y-2">
-          {semanticDiff.fileChanges.map((fc, i) => (
-            <motion.div
-              key={fc.filename}
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.3 + i * 0.05 }}
-            >
-              <FileChangeCard fileChange={fc} />
-            </motion.div>
-          ))}
-        </div>
-      </motion.section>
-
-      {/* Impact Heatmap */}
-      {impactGraph && impactGraph.nodes.length > 0 && (
+        {/* File Changes */}
         <motion.section
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
+          transition={{ delay: 0.3 }}
         >
           <SectionHeader
-            icon={Zap}
-            title={t("reviewResult.crossFileImpact")}
+            icon={FileText}
+            title={t("reviewResult.fileChanges")}
+            count={semanticDiff.fileChanges.length}
             accent="text-linear-accent"
           />
-          <div className="glass-surface rounded-xl p-6">
-            <ImpactHeatmap graph={impactGraph} />
-          </div>
-        </motion.section>
-      )}
-
-      {/* Race Conditions */}
-      {review.raceConditions && review.raceConditions.length > 0 && (
-        <motion.section
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-        >
-          <SectionHeader
-            icon={AlertTriangle}
-            title={t("reviewResult.raceConditions")}
-            count={review.raceConditions.length}
-            accent="text-red-400"
-          />
-          <RaceConditionTimeline issues={review.raceConditions} />
-        </motion.section>
-      )}
-
-      {/* Consensus View */}
-      <motion.section
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.6 }}
-      >
-        <ConsensusView consensus={review.consensus} />
-      </motion.section>
-
-      {/* Fix Suggestions */}
-      {review.suggestion.suggestions.length > 0 && (
-        <motion.section
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.7 }}
-        >
-          <SectionHeader
-            icon={Lightbulb}
-            title={t("reviewResult.fixSuggestions")}
-            count={review.suggestion.suggestions.length}
-            accent="text-linear-accent"
-          />
-          <div className="space-y-3">
-            {review.suggestion.suggestions.map((suggestion, i) => (
+          <div className="space-y-2">
+            {semanticDiff.fileChanges.map((fc, i) => (
               <motion.div
-                key={`${suggestion.issue.file}-${suggestion.issue.line}-${i}`}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.7 + i * 0.05 }}
+                key={fc.filename}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.3 + i * 0.05 }}
               >
-                <SuggestionCard suggestion={suggestion} />
+                <FileChangeCard fileChange={fc} />
               </motion.div>
             ))}
           </div>
         </motion.section>
+
+        {/* Impact Heatmap */}
+        {impactGraph && impactGraph.nodes.length > 0 && (
+          <motion.section
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+          >
+            <SectionHeader
+              icon={Zap}
+              title={t("reviewResult.crossFileImpact")}
+              accent="text-linear-accent"
+            />
+            <div className="glass-surface rounded-xl p-6">
+              <ImpactHeatmap graph={impactGraph} />
+            </div>
+          </motion.section>
+        )}
+
+        {/* Race Conditions */}
+        {review.raceConditions && review.raceConditions.length > 0 && (
+          <motion.section
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+          >
+            <SectionHeader
+              icon={AlertTriangle}
+              title={t("reviewResult.raceConditions")}
+              count={review.raceConditions.length}
+              accent="text-red-400"
+            />
+            <RaceConditionTimeline issues={review.raceConditions} />
+          </motion.section>
+        )}
+
+        {/* Consensus View */}
+        <motion.section
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+        >
+          <ConsensusView consensus={review.consensus} />
+        </motion.section>
+
+        {/* Fix Suggestions */}
+        {review.suggestion.suggestions.length > 0 && (
+          <motion.section
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7 }}
+          >
+            <SectionHeader
+              icon={Lightbulb}
+              title={t("reviewResult.fixSuggestions")}
+              count={review.suggestion.suggestions.length}
+              accent="text-linear-accent"
+            />
+            <div className="space-y-3">
+              {review.suggestion.suggestions.map((suggestion, i) => (
+                <motion.div
+                  key={`${suggestion.issue.file}-${suggestion.issue.line}-${i}`}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.7 + i * 0.05 }}
+                >
+                  <SuggestionCard suggestion={suggestion} />
+                </motion.div>
+              ))}
+            </div>
+          </motion.section>
+        )}
+      </motion.div>
+
+      {similarPRs && similarPRs.length > 0 && (
+        <div className="w-72 flex-shrink-0 pt-2">
+          <SimilarPRCard similarPRs={similarPRs} />
+        </div>
       )}
-    </motion.div>
+    </div>
   );
 }
 
