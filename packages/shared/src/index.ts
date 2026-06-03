@@ -107,7 +107,8 @@ export type StreamEvent =
   | { type: "error"; message: string }
   | { type: "incremental:delta"; delta: IncrementalDelta }
   | { type: "incremental:preserved"; issues: AIRiskIssue[]; raceConditions: RaceConditionIssue[] }
-  | { type: "score"; score: ReviewScore };
+  | { type: "score"; score: ReviewScore }
+  | { type: "similar-prs"; similarPRs: SimilarPR[] };
 
 export type AIRiskSeverity = "critical" | "warning" | "info";
 
@@ -159,6 +160,7 @@ export interface HistoryEntry {
   criticalCount: number;
   summarySnippet: string;
   score?: ReviewScore;
+  hasEmbedding?: boolean;
 }
 
 export interface SavedReview {
@@ -178,6 +180,7 @@ export interface SavedReview {
   semanticDiff: SemanticDiff;
   createdAt: string;
   score?: ReviewScore;
+  embedding?: EmbeddingVector;
 }
 
 export interface IncrementalDelta {
@@ -209,6 +212,30 @@ export interface ReviewScore {
   confidence: number;
   specificity: number;
   trend: number | null;
+}
+
+/** Vector embedding of review findings */
+export type EmbeddingVector = number[];
+
+/** A historical PR that is similar to the current review */
+export interface SimilarPR {
+  id: string;
+  owner: string;
+  repo: string;
+  prNumber: number;
+  title: string;
+  createdAt: string;
+  similarity: number; // 0-1 cosine similarity
+  matchedRiskCount: number;
+  summarySnippet: string;
+}
+
+/** Embedding stage configuration (independent from LLM stages) */
+export interface LLMEmbeddingConfig {
+  provider: string; // "openai" | "openai-compatible"
+  model: string; // "text-embedding-3-small" or custom
+  apiKey: string;
+  baseUrl?: string;
 }
 
 export interface ScoreHistoryEntry {
