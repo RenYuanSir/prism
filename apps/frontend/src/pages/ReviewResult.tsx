@@ -41,6 +41,7 @@ import { ConsensusView } from "../components/ConsensusView";
 import { FileChangeCard } from "../components/FileChangeCard";
 import { ImpactHeatmap } from "../components/ImpactHeatmap";
 import { IncrementalDeltaBanner } from "../components/IncrementalDeltaBanner";
+import { LiquidGlass } from "../components/LiquidGlass";
 import { PipelineProgress } from "../components/PipelineProgress";
 import { RaceConditionTimeline } from "../components/RaceConditionTimeline";
 import { ReviewScoreCard } from "../components/ReviewScoreCard";
@@ -355,9 +356,9 @@ export function ReviewResult() {
             title={t("reviewResult.aiSummary")}
             accent="text-linear-accent"
           />
-          <div className="glass-surface rounded-xl p-6">
+          <LiquidGlass className="rounded-xl p-6">
             <p className="text-[14px] text-linear-text-secondary leading-relaxed">{summaryText}</p>
-          </div>
+          </LiquidGlass>
         </motion.section>
       )}
 
@@ -380,7 +381,7 @@ export function ReviewResult() {
               />
             )}
 
-            <div className="glass-surface rounded-xl p-6">
+            <LiquidGlass className="rounded-xl p-6">
               <h2 className="text-[15px] font-weight-510 text-linear-text-primary mb-4">
                 {t("reviewResult.analyzing")}
               </h2>
@@ -389,7 +390,7 @@ export function ReviewResult() {
                   (state.partial.currentStage as PipelineStage | "idle" | "complete") ?? "summary"
                 }
               />
-            </div>
+            </LiquidGlass>
 
             {/* Risk analysis — per-model cards, show individually */}
             {(state.partial.claudeFindings || state.partial.geminiFindings) && (
@@ -447,7 +448,7 @@ export function ReviewResult() {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0 }}
           >
-            <div className="glass-surface rounded-xl p-6 border-red-500/20">
+            <LiquidGlass className="rounded-xl p-6 border-red-500/20">
               <div className="flex items-start gap-3">
                 <XCircle className="h-6 w-6 text-red-400 flex-shrink-0" />
                 <div>
@@ -463,7 +464,7 @@ export function ReviewResult() {
                   </Link>
                 </div>
               </div>
-            </div>
+            </LiquidGlass>
           </motion.div>
         )}
 
@@ -556,35 +557,33 @@ function ReviewContent({
         className="flex-1 space-y-6 min-w-0"
       >
         {/* PR Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="glass-surface rounded-xl p-6"
-        >
-          <h1 className="text-[24px] font-weight-510 tracking-tight-custom text-linear-text-primary mb-3">
-            {pr.title}
-          </h1>
-          <div className="flex flex-wrap items-center gap-4 text-[13px] text-linear-text-tertiary">
-            <div className="flex items-center gap-1.5">
-              <User className="h-3.5 w-3.5" />
-              <span>{pr.author}</span>
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+          <LiquidGlass className="rounded-xl p-6">
+            <h1 className="text-[24px] font-weight-510 tracking-tight-custom text-linear-text-primary mb-3">
+              {pr.title}
+            </h1>
+            <div className="flex flex-wrap items-center gap-4 text-[13px] text-linear-text-tertiary">
+              <div className="flex items-center gap-1.5">
+                <User className="h-3.5 w-3.5" />
+                <span>{pr.author}</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <GitBranch className="h-3.5 w-3.5" />
+                <span className="font-mono text-[12px]">
+                  {pr.branch} → {pr.baseBranch}
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <FileText className="h-3.5 w-3.5" />
+                <span>{t("reviewResult.filesChanged", { n: semanticDiff.totalFiles })}</span>
+              </div>
             </div>
-            <div className="flex items-center gap-1.5">
-              <GitBranch className="h-3.5 w-3.5" />
-              <span className="font-mono text-[12px]">
-                {pr.branch} → {pr.baseBranch}
-              </span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <FileText className="h-3.5 w-3.5" />
-              <span>{t("reviewResult.filesChanged", { n: semanticDiff.totalFiles })}</span>
-            </div>
-          </div>
-          {pr.description && (
-            <p className="mt-4 text-[13px] text-linear-text-secondary leading-relaxed border-t border-linear-border-subtle pt-4">
-              {pr.description}
-            </p>
-          )}
+            {pr.description && (
+              <p className="mt-4 text-[13px] text-linear-text-secondary leading-relaxed border-t border-linear-border-subtle pt-4">
+                {pr.description}
+              </p>
+            )}
+          </LiquidGlass>
         </motion.div>
 
         {/* Review Quality Score */}
@@ -728,9 +727,9 @@ function ReviewContent({
               title={t("reviewResult.crossFileImpact")}
               accent="text-linear-accent"
             />
-            <div className="glass-surface rounded-xl p-6">
+            <LiquidGlass className="rounded-xl p-6">
               <ImpactHeatmap graph={impactGraph} />
-            </div>
+            </LiquidGlass>
           </motion.section>
         )}
 
@@ -801,7 +800,7 @@ function ReviewContent({
 function RiskModelCard({ label, findings }: { label: string; findings?: ModelFinding[] }) {
   const { t } = useTranslation();
   return (
-    <div className="glass-surface rounded-xl p-4">
+    <LiquidGlass className="rounded-xl p-4">
       <h4 className="text-[13px] font-weight-510 text-linear-text-secondary mb-3">
         {findings ? t("reviewResult.modelIssues", { label, count: findings.length }) : label}
       </h4>
@@ -823,7 +822,7 @@ function RiskModelCard({ label, findings }: { label: string; findings?: ModelFin
           </div>
         ))
       )}
-    </div>
+    </LiquidGlass>
   );
 }
 
@@ -877,7 +876,7 @@ function StatCard({
   };
 
   return (
-    <div className={`glass-surface rounded-xl p-4 ${bgStyles[color]}`}>
+    <LiquidGlass className={`rounded-xl p-4 ${bgStyles[color]}`}>
       <div className="flex items-center gap-1.5 mb-1">
         <Icon className="h-3 w-3 text-linear-text-muted" />
         <p className="text-[11px] font-weight-510 text-linear-text-muted tracking-wide uppercase">
@@ -888,6 +887,6 @@ function StatCard({
         {value}
       </p>
       {subtext && <p className="text-[11px] text-linear-text-muted mt-0.5">{subtext}</p>}
-    </div>
+    </LiquidGlass>
   );
 }

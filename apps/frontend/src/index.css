@@ -92,49 +92,6 @@
     background-size: 200% 100%;
     animation: shimmer 2s linear infinite;
   }
-
-  /* ── Prism refraction beam ── */
-  .prism-refraction {
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    transform: translateZ(0);
-    will-change: transform;
-  }
-
-  .prism-refraction::after {
-    content: "";
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: linear-gradient(
-      225deg,
-      rgb(var(--c-prism-red) / calc(0.03 * var(--c-prism-boost))),
-      rgb(var(--c-prism-orange) / calc(0.04 * var(--c-prism-boost))),
-      rgb(var(--c-prism-yellow) / calc(0.05 * var(--c-prism-boost))),
-      rgb(var(--c-prism-green) / calc(0.04 * var(--c-prism-boost))),
-      rgb(var(--c-prism-blue) / calc(0.05 * var(--c-prism-boost))),
-      rgb(var(--c-prism-purple) / calc(0.04 * var(--c-prism-boost))),
-      rgb(var(--c-prism-red) / calc(0.03 * var(--c-prism-boost)))
-    );
-    background-size: 400% 400%;
-    filter: blur(100px);
-    animation: prismFlow 30s ease infinite;
-  }
-
-  @keyframes prismFlow {
-    0% {
-      background-position: 0% 50%;
-    }
-    50% {
-      background-position: 100% 50%;
-    }
-    100% {
-      background-position: 0% 50%;
-    }
-  }
 }
 
 @layer utilities {

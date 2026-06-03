@@ -17,6 +17,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useNavigate } from "react-router-dom";
 import { fetchHistory } from "../api/client";
+import { LiquidGlass } from "../components/LiquidGlass";
 import { formatTime } from "../utils/time";
 
 interface HistoryEntry {
@@ -127,10 +128,10 @@ export function PRList() {
             transition={{ duration: 0.5 }}
             className="text-center mb-10"
           >
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass-surface border border-linear-border text-[11px] font-weight-510 text-linear-text-tertiary mb-6">
+            <LiquidGlass className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-weight-510 text-linear-text-tertiary mb-6">
               <Sparkles className="h-3 w-3 text-linear-accent" />
               {t("prList.title")}
-            </div>
+            </LiquidGlass>
             <h1 className="text-[48px] font-weight-510 tracking-display leading-none text-linear-text-primary mb-4">
               <span
                 className="font-bold"
@@ -159,7 +160,7 @@ export function PRList() {
             onSubmit={handleSubmit}
             className="space-y-4"
           >
-            <div className="glass-surface rounded-xl p-5 space-y-4">
+            <LiquidGlass className="rounded-xl p-5 space-y-4">
               {/* URL Auto-Parse Input */}
               <div>
                 <label
@@ -252,7 +253,7 @@ export function PRList() {
                   className="w-full px-3 py-2.5 bg-linear-black border border-linear-border rounded-md text-[13px] text-linear-text-primary placeholder-linear-text-muted/50 focus:outline-none focus:border-linear-accent/50 transition-colors"
                 />
               </div>
-            </div>
+            </LiquidGlass>
 
             <motion.button
               type="submit"
@@ -291,13 +292,15 @@ export function PRList() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, delay: 0.4 + i * 0.1 }}
-                className="glass-surface rounded-lg p-4 text-center glass-surface-hover transition-all cursor-default"
+                className="cursor-default"
               >
-                <feature.icon className="h-5 w-5 mx-auto mb-2" style={{ color: feature.color }} />
-                <div className="text-[12px] font-weight-510 text-linear-text-secondary">
-                  {feature.label}
-                </div>
-                <div className="text-[11px] text-linear-text-muted mt-0.5">{feature.desc}</div>
+                <LiquidGlass className="rounded-lg p-4 text-center transition-all">
+                  <feature.icon className="h-5 w-5 mx-auto mb-2" style={{ color: feature.color }} />
+                  <div className="text-[12px] font-weight-510 text-linear-text-secondary">
+                    {feature.label}
+                  </div>
+                  <div className="text-[11px] text-linear-text-muted mt-0.5">{feature.desc}</div>
+                </LiquidGlass>
               </motion.div>
             ))}
           </motion.div>
@@ -334,11 +337,13 @@ export function PRList() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.1 }}
-                  className="glass-surface rounded-xl p-4 animate-pulse"
+                  className="animate-pulse"
                 >
-                  <div className="h-3 bg-linear-surface/50 rounded w-36 mb-2" />
-                  <div className="h-4 bg-linear-surface/50 rounded w-full mb-1.5" />
-                  <div className="h-3 bg-linear-surface/50 rounded w-20" />
+                  <LiquidGlass className="rounded-xl p-4">
+                    <div className="h-3 bg-linear-surface/50 rounded w-36 mb-2" />
+                    <div className="h-4 bg-linear-surface/50 rounded w-full mb-1.5" />
+                    <div className="h-3 bg-linear-surface/50 rounded w-20" />
+                  </LiquidGlass>
                 </motion.div>
               ))}
             </div>
@@ -346,10 +351,10 @@ export function PRList() {
 
           {/* Empty state */}
           {recent.status === "empty" && (
-            <div className="glass-surface rounded-xl p-12 text-center">
+            <LiquidGlass className="rounded-xl p-12 text-center">
               <GitPullRequest className="h-10 w-10 text-linear-text-muted/30 mx-auto mb-3" />
               <p className="text-[13px] text-linear-text-muted">{t("prList.emptyHistory")}</p>
-            </div>
+            </LiquidGlass>
           )}
 
           {/* Loaded: review cards (max 5) */}
@@ -367,37 +372,39 @@ export function PRList() {
                       `/review/${entry.owner}/${entry.repo}/${entry.prNumber}?historyId=${entry.id}`,
                     )
                   }
-                  className="w-full text-left glass-surface hover:bg-linear-elevated/50 border border-linear-border-subtle rounded-xl p-4 transition-all group"
+                  className="w-full text-left group transition-all"
                 >
-                  <div className="flex items-center justify-between mb-1.5">
-                    <div className="flex items-center gap-1.5 text-[12px] text-linear-text-secondary font-mono">
-                      <span className="text-linear-accent">{entry.owner}</span>
-                      <span className="text-linear-border">/</span>
-                      <span>{entry.repo}</span>
-                      <span className="text-linear-border">#</span>
-                      <span className="text-linear-accent">{entry.prNumber}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-[11px] text-linear-text-muted/70">
-                      {entry.criticalCount > 0 && (
-                        <span className="flex items-center gap-1 text-red-400">
-                          <AlertTriangle className="h-3 w-3" />
-                          {entry.criticalCount}
+                  <LiquidGlass className="rounded-xl p-4">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <div className="flex items-center gap-1.5 text-[12px] text-linear-text-secondary font-mono">
+                        <span className="text-linear-accent">{entry.owner}</span>
+                        <span className="text-linear-border">/</span>
+                        <span>{entry.repo}</span>
+                        <span className="text-linear-border">#</span>
+                        <span className="text-linear-accent">{entry.prNumber}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-[11px] text-linear-text-muted/70">
+                        {entry.criticalCount > 0 && (
+                          <span className="flex items-center gap-1 text-red-400">
+                            <AlertTriangle className="h-3 w-3" />
+                            {entry.criticalCount}
+                          </span>
+                        )}
+                        {entry.riskCount - entry.criticalCount > 0 && (
+                          <span className="text-yellow-400">
+                            {entry.riskCount - entry.criticalCount} issues
+                          </span>
+                        )}
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {formatTime(entry.createdAt, t)}
                         </span>
-                      )}
-                      {entry.riskCount - entry.criticalCount > 0 && (
-                        <span className="text-yellow-400">
-                          {entry.riskCount - entry.criticalCount} issues
-                        </span>
-                      )}
-                      <span className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        {formatTime(entry.createdAt, t)}
-                      </span>
+                      </div>
                     </div>
-                  </div>
-                  <h3 className="text-[13px] font-weight-510 text-linear-text-primary truncate">
-                    {entry.title}
-                  </h3>
+                    <h3 className="text-[13px] font-weight-510 text-linear-text-primary truncate">
+                      {entry.title}
+                    </h3>
+                  </LiquidGlass>
                 </motion.button>
               ))}
             </div>

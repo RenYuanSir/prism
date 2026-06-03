@@ -26,11 +26,7 @@ export async function findSimilarPRs(
 ): Promise<SimilarPR[]> {
   const entries = await historyStore.list();
   const candidates = entries.filter(
-    (e) =>
-      e.owner === owner &&
-      e.repo === repo &&
-      e.prNumber !== currentPrNumber &&
-      e.hasEmbedding,
+    (e) => e.owner === owner && e.repo === repo && e.prNumber !== currentPrNumber && e.hasEmbedding,
   );
 
   const scored: SimilarPR[] = [];

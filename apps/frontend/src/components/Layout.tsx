@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { GitPullRequest, History, Settings } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
+import Prism from "./Backgrounds/Prism/Prism";
 import { LanguageToggle } from "./LanguageToggle";
 import { ThemeToggle } from "./ThemeToggle";
 
@@ -100,8 +101,19 @@ export function Layout() {
 
         {/* Main content */}
         <main className="flex-1 overflow-auto relative">
-          {/* Prism light refraction — shared across all pages */}
-          <div className="prism-refraction z-0" />
+          {/* Prism WebGL background — fixed, does not scroll */}
+          <div className="fixed top-0 left-[240px] right-0 bottom-0 z-0 pointer-events-none">
+            <Prism
+              animationType="hover"
+              glow={0.7}
+              height={2.8}
+              baseWidth={4.5}
+              noise={0}
+              bloom={0}
+              timeScale={0.3}
+            />
+          </div>
+
           <motion.div
             key={location.pathname}
             initial={{ opacity: 0, y: 8 }}

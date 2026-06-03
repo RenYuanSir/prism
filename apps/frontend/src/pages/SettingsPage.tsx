@@ -13,6 +13,7 @@ import {
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { type LLMSettings, fetchSettings, saveSettings } from "../api/client";
+import { LiquidGlass } from "../components/LiquidGlass";
 
 const PROVIDER_PRESETS: Record<
   string,
@@ -197,10 +198,10 @@ export function SettingsPage() {
     <div className="p-8 max-w-4xl mx-auto">
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass-surface border border-linear-border text-[11px] font-weight-510 text-linear-text-tertiary mb-4">
+        <LiquidGlass className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-weight-510 text-linear-text-tertiary mb-4">
           <Settings className="h-3 w-3" />
           {t("settings.badge")}
-        </div>
+        </LiquidGlass>
         <h1 className="text-[32px] font-weight-510 tracking-tight-custom text-linear-text-primary mb-2">
           {t("settings.title")}
         </h1>
@@ -214,7 +215,7 @@ export function SettingsPage() {
       )}
 
       {loadState === "error" && (
-        <div className="glass-surface rounded-xl p-8 text-center">
+        <LiquidGlass className="rounded-xl p-8 text-center">
           <AlertCircle className="h-8 w-8 text-red-400 mx-auto mb-3" />
           <p className="text-linear-text-secondary mb-2">{t("settings.loadFailed")}</p>
           <button
@@ -224,7 +225,7 @@ export function SettingsPage() {
           >
             {t("history.retry")}
           </button>
-        </div>
+        </LiquidGlass>
       )}
 
       {loadState === "loaded" && (
@@ -242,127 +243,132 @@ export function SettingsPage() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 + i * 0.08 }}
-                className="glass-surface rounded-xl p-6"
               >
-                <div className="flex items-center gap-3 mb-5">
-                  <div className="h-8 w-8 rounded-lg bg-linear-surface flex items-center justify-center border border-linear-border-subtle">
-                    {stage === "embedding" ? (
-                      <Database className="h-4 w-4 text-linear-accent" />
-                    ) : (
-                      <Sparkles className="h-4 w-4 text-linear-accent" />
-                    )}
-                  </div>
-                  <div>
-                    <h3 className="text-[13px] font-weight-510 text-linear-text-secondary">
-                      {stageLabels[stage].name}
-                    </h3>
-                    <p className="text-[11px] text-linear-text-muted">{stageLabels[stage].desc}</p>
-                  </div>
-                </div>
-
-                <div className="pl-11 space-y-4">
-                  {/* Provider dropdown */}
-                  <div>
-                    <label
-                      htmlFor={`${stage}-provider`}
-                      className="block text-[11px] font-weight-510 text-linear-text-muted tracking-wide uppercase mb-1.5"
-                    >
-                      {t("settings.provider")}
-                    </label>
-                    <select
-                      id={`${stage}-provider`}
-                      value={forms[stage].preset}
-                      onChange={(e) => handlePresetChange(stage, e.target.value)}
-                      className="w-full px-3 py-2.5 bg-linear-black border border-linear-border rounded-md text-[13px] text-linear-text-primary focus:outline-none focus:border-linear-accent/50 transition-colors"
-                    >
-                      {Object.entries(PROVIDER_PRESETS).map(([key, cfg]) => (
-                        <option key={key} value={key}>
-                          {cfg.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Model */}
-                  <div>
-                    <label
-                      htmlFor={`${stage}-model`}
-                      className="block text-[11px] font-weight-510 text-linear-text-muted tracking-wide uppercase mb-1.5"
-                    >
-                      {t("settings.model")}
-                    </label>
-                    <input
-                      id={`${stage}-model`}
-                      type="text"
-                      value={forms[stage].model}
-                      onChange={(e) => updateField(stage, "model", e.target.value)}
-                      placeholder={
-                        PROVIDER_PRESETS[forms[stage].preset].defaultModel ||
-                        t("settings.modelPlaceholder")
-                      }
-                      className="w-full px-3 py-2.5 bg-linear-black border border-linear-border rounded-md text-[13px] text-linear-text-primary placeholder-linear-text-muted/50 focus:outline-none focus:border-linear-accent/50 transition-colors"
-                    />
-                  </div>
-
-                  {/* API Key */}
-                  <div>
-                    <label
-                      htmlFor={`${stage}-apikey`}
-                      className="block text-[11px] font-weight-510 text-linear-text-muted tracking-wide uppercase mb-1.5"
-                    >
-                      {t("settings.apiKey")}
-                    </label>
-                    <div className="relative">
-                      <input
-                        id={`${stage}-apikey`}
-                        type={forms[stage].showKey ? "text" : "password"}
-                        value={forms[stage].apiKey}
-                        onChange={(e) => updateField(stage, "apiKey", e.target.value)}
-                        placeholder={
-                          PROVIDER_PRESETS[forms[stage].preset].label === "Google Gemini"
-                            ? "AIza..."
-                            : "sk-..."
-                        }
-                        className="w-full px-3 py-2.5 bg-linear-black border border-linear-border rounded-md text-[13px] text-linear-text-primary placeholder-linear-text-muted/50 focus:outline-none focus:border-linear-accent/50 transition-colors pr-10"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => updateField(stage, "showKey", !forms[stage].showKey)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-linear-text-muted hover:text-linear-text-tertiary"
-                        aria-label={
-                          forms[stage].showKey ? t("settings.hideKey") : t("settings.showKey")
-                        }
-                      >
-                        {forms[stage].showKey ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
-                      </button>
+                <LiquidGlass className="rounded-xl p-6">
+                  <div className="flex items-center gap-3 mb-5">
+                    <div className="h-8 w-8 rounded-lg bg-linear-surface flex items-center justify-center border border-linear-border-subtle">
+                      {stage === "embedding" ? (
+                        <Database className="h-4 w-4 text-linear-accent" />
+                      ) : (
+                        <Sparkles className="h-4 w-4 text-linear-accent" />
+                      )}
+                    </div>
+                    <div>
+                      <h3 className="text-[13px] font-weight-510 text-linear-text-secondary">
+                        {stageLabels[stage].name}
+                      </h3>
+                      <p className="text-[11px] text-linear-text-muted">
+                        {stageLabels[stage].desc}
+                      </p>
                     </div>
                   </div>
 
-                  {/* Base URL — shown when provider uses it */}
-                  {(forms[stage].preset === "custom" ||
-                    PROVIDER_PRESETS[forms[stage].preset].provider === "openai-compatible") && (
+                  <div className="pl-11 space-y-4">
+                    {/* Provider dropdown */}
                     <div>
                       <label
-                        htmlFor={`${stage}-baseurl`}
+                        htmlFor={`${stage}-provider`}
                         className="block text-[11px] font-weight-510 text-linear-text-muted tracking-wide uppercase mb-1.5"
                       >
-                        {t("settings.baseUrl")}
+                        {t("settings.provider")}
+                      </label>
+                      <select
+                        id={`${stage}-provider`}
+                        value={forms[stage].preset}
+                        onChange={(e) => handlePresetChange(stage, e.target.value)}
+                        className="w-full px-3 py-2.5 bg-linear-black border border-linear-border rounded-md text-[13px] text-linear-text-primary focus:outline-none focus:border-linear-accent/50 transition-colors"
+                      >
+                        {Object.entries(PROVIDER_PRESETS).map(([key, cfg]) => (
+                          <option key={key} value={key}>
+                            {cfg.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Model */}
+                    <div>
+                      <label
+                        htmlFor={`${stage}-model`}
+                        className="block text-[11px] font-weight-510 text-linear-text-muted tracking-wide uppercase mb-1.5"
+                      >
+                        {t("settings.model")}
                       </label>
                       <input
-                        id={`${stage}-baseurl`}
+                        id={`${stage}-model`}
                         type="text"
-                        value={forms[stage].baseUrl}
-                        onChange={(e) => updateField(stage, "baseUrl", e.target.value)}
-                        placeholder={PROVIDER_PRESETS[forms[stage].preset].baseUrl || "https://..."}
+                        value={forms[stage].model}
+                        onChange={(e) => updateField(stage, "model", e.target.value)}
+                        placeholder={
+                          PROVIDER_PRESETS[forms[stage].preset].defaultModel ||
+                          t("settings.modelPlaceholder")
+                        }
                         className="w-full px-3 py-2.5 bg-linear-black border border-linear-border rounded-md text-[13px] text-linear-text-primary placeholder-linear-text-muted/50 focus:outline-none focus:border-linear-accent/50 transition-colors"
                       />
                     </div>
-                  )}
-                </div>
+
+                    {/* API Key */}
+                    <div>
+                      <label
+                        htmlFor={`${stage}-apikey`}
+                        className="block text-[11px] font-weight-510 text-linear-text-muted tracking-wide uppercase mb-1.5"
+                      >
+                        {t("settings.apiKey")}
+                      </label>
+                      <div className="relative">
+                        <input
+                          id={`${stage}-apikey`}
+                          type={forms[stage].showKey ? "text" : "password"}
+                          value={forms[stage].apiKey}
+                          onChange={(e) => updateField(stage, "apiKey", e.target.value)}
+                          placeholder={
+                            PROVIDER_PRESETS[forms[stage].preset].label === "Google Gemini"
+                              ? "AIza..."
+                              : "sk-..."
+                          }
+                          className="w-full px-3 py-2.5 bg-linear-black border border-linear-border rounded-md text-[13px] text-linear-text-primary placeholder-linear-text-muted/50 focus:outline-none focus:border-linear-accent/50 transition-colors pr-10"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => updateField(stage, "showKey", !forms[stage].showKey)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-linear-text-muted hover:text-linear-text-tertiary"
+                          aria-label={
+                            forms[stage].showKey ? t("settings.hideKey") : t("settings.showKey")
+                          }
+                        >
+                          {forms[stage].showKey ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Base URL — shown when provider uses it */}
+                    {(forms[stage].preset === "custom" ||
+                      PROVIDER_PRESETS[forms[stage].preset].provider === "openai-compatible") && (
+                      <div>
+                        <label
+                          htmlFor={`${stage}-baseurl`}
+                          className="block text-[11px] font-weight-510 text-linear-text-muted tracking-wide uppercase mb-1.5"
+                        >
+                          {t("settings.baseUrl")}
+                        </label>
+                        <input
+                          id={`${stage}-baseurl`}
+                          type="text"
+                          value={forms[stage].baseUrl}
+                          onChange={(e) => updateField(stage, "baseUrl", e.target.value)}
+                          placeholder={
+                            PROVIDER_PRESETS[forms[stage].preset].baseUrl || "https://..."
+                          }
+                          className="w-full px-3 py-2.5 bg-linear-black border border-linear-border rounded-md text-[13px] text-linear-text-primary placeholder-linear-text-muted/50 focus:outline-none focus:border-linear-accent/50 transition-colors"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </LiquidGlass>
               </motion.div>
             ),
           )}
@@ -425,7 +431,7 @@ function ComingSoonSection({
   comingSoonLabel: string;
 }) {
   return (
-    <div className="glass-surface rounded-xl p-6 opacity-50 pointer-events-none">
+    <LiquidGlass className="rounded-xl p-6 opacity-50 pointer-events-none">
       <div className="flex items-center gap-3 mb-1">
         <div className="h-8 w-8 rounded-lg bg-linear-surface flex items-center justify-center border border-linear-border-subtle" />
         <div>
@@ -438,7 +444,7 @@ function ComingSoonSection({
           <p className="text-[11px] text-linear-text-muted">{description}</p>
         </div>
       </div>
-    </div>
+    </LiquidGlass>
   );
 }
 
