@@ -88,6 +88,17 @@ export interface StreamEvent {
     specificity: number;
     trend: number | null;
   };
+  similarPRs?: Array<{
+    id: string;
+    owner: string;
+    repo: string;
+    prNumber: number;
+    title: string;
+    createdAt: string;
+    similarity: number;
+    matchedRiskCount: number;
+    summarySnippet: string;
+  }>;
 }
 
 function parseSSEChunk(chunk: string): StreamEvent | null {
@@ -254,6 +265,7 @@ export interface LLMSettings {
   risk: LLMStageConfig;
   gemini: LLMStageConfig;
   suggestion: LLMStageConfig;
+  embedding: LLMStageConfig;
 }
 
 export interface SafeLLMSettings {
@@ -261,6 +273,7 @@ export interface SafeLLMSettings {
   risk: Omit<LLMStageConfig, "apiKey">;
   gemini: Omit<LLMStageConfig, "apiKey">;
   suggestion: Omit<LLMStageConfig, "apiKey">;
+  embedding: Omit<LLMStageConfig, "apiKey">;
 }
 
 export async function fetchSettings(): Promise<ApiResponse<SafeLLMSettings | null>> {

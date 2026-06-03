@@ -78,6 +78,7 @@
   "history.emptyHint": "审查结果将自动保存",
   "history.retry": "重试",
   "history.issuesCount": "{{n}} 个问题",
+  "history.embedded": "已嵌入",
 
   "settings.title": "设置",
   "settings.subtitle": "为每个管线阶段配置 LLM 服务商。",
@@ -90,6 +91,8 @@
   "settings.risk2Desc": "辅助风险扫描器，与模型一交叉验证。",
   "settings.suggestions": "修复建议",
   "settings.suggestionsDesc": "为确认的问题生成修复建议，推荐使用强代码模型。",
+  "settings.embedding": "向量嵌入",
+  "settings.embeddingDesc": "用于相似性搜索的向量嵌入。需要 OpenAI 或兼容 API。",
   "settings.provider": "服务商",
   "settings.model": "模型",
   "settings.apiKey": "API Key",
@@ -129,6 +132,11 @@
   "scoring.agreement": "共识率",
   "scoring.confidence": "置信度",
   "scoring.specificity": "具体性",
+
+  "similar.title": "相似历史 PR",
+  "similar.similarity": "相似度",
+  "similar.noHistory": "暂无对比历史",
+  "similar.matchedIssues": "{{n}} 个匹配问题",
 
   "pipeline.summary": "摘要生成",
   "pipeline.riskAnalysis": "风险分析",
