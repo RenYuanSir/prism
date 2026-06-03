@@ -1,4 +1,9 @@
-import type { AIConsensusResult, AIFixSuggestion, SavedReview } from "@prism/shared";
+import type {
+  AIConsensusResult,
+  AIFixSuggestion,
+  AIReviewResult,
+  SavedReview,
+} from "@prism/shared";
 import type { StreamEvent } from "@prism/shared";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -17,6 +22,7 @@ import {
 } from "./services/llm-config.js";
 import type { LLMPipelineConfig } from "./services/llm-config.js";
 import { formatReviewBody } from "./services/pr-comment-service.js";
+import { computeScore, computeTrend } from "./services/review-scorer.js";
 import { SettingsStore } from "./services/settings-store.js";
 
 dotenv.config({ path: "../../.env" });
@@ -272,6 +278,32 @@ app.post("/api/review/:owner/:repo/:pullNumber/stream", async (req: Request, res
         claudeTotal: 0,
         geminiTotal: 0,
       };
+      const reviewResult: AIReviewResult = {
+        summary: { summary: collectedSummary, stage: "summary" },
+        risk: { issues: consensus.consensusIssues.map((i) => i.issue), stage: "risk" },
+        consensus,
+        raceConditions: [],
+        suggestion: { suggestions: collectedSuggestions, stage: "suggestion" },
+      };
+
+      // Compute quality score and trend
+      let scoreData = computeScore(reviewResult, semanticDiff);
+      try {
+        const historyStore = new HistoryStore();
+        const recentScores = (await historyStore.list())
+          .filter((e) => e.score)
+          .map((e) => e.score!.total);
+        const trend = computeTrend(scoreData.total, recentScores);
+        scoreData = { ...scoreData, trend };
+      } catch {
+        // Trend unavailable, use null
+      }
+
+      if (!aborted) {
+        const data = JSON.stringify({ type: "score", score: scoreData });
+        res.write(`event: score\ndata: ${data}\n\n`);
+      }
+
       const savedReview: SavedReview = {
         id,
         pr: {
@@ -285,18 +317,10 @@ app.post("/api/review/:owner/:repo/:pullNumber/stream", async (req: Request, res
           baseBranch: pr.baseBranch,
           headSha: pr.headSha,
         },
-        review: {
-          summary: { summary: collectedSummary, stage: "summary" },
-          risk: {
-            issues: consensus.consensusIssues.map((i) => i.issue),
-            stage: "risk",
-          },
-          consensus,
-          raceConditions: [],
-          suggestion: { suggestions: collectedSuggestions, stage: "suggestion" },
-        },
+        review: reviewResult,
         semanticDiff,
         createdAt: new Date().toISOString(),
+        score: scoreData,
       };
       try {
         await new HistoryStore().save(savedReview);

@@ -124,6 +124,12 @@
   "consensus.severityMismatch": "Severity: {{a}} vs {{b}}",
   "consensus.lineMismatch": "Line offset: {{a}} → {{b}}",
 
+  "scoring.title": "Review Quality Score",
+  "scoring.coverage": "Coverage",
+  "scoring.agreement": "Agreement",
+  "scoring.confidence": "Confidence",
+  "scoring.specificity": "Specificity",
+
   "pipeline.summary": "Summary",
   "pipeline.riskAnalysis": "Risk Analysis",
   "pipeline.suggestions": "Suggestions",

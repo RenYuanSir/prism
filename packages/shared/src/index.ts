@@ -106,7 +106,8 @@ export type StreamEvent =
   | { type: "done" }
   | { type: "error"; message: string }
   | { type: "incremental:delta"; delta: IncrementalDelta }
-  | { type: "incremental:preserved"; issues: AIRiskIssue[]; raceConditions: RaceConditionIssue[] };
+  | { type: "incremental:preserved"; issues: AIRiskIssue[]; raceConditions: RaceConditionIssue[] }
+  | { type: "score"; score: ReviewScore };
 
 export type AIRiskSeverity = "critical" | "warning" | "info";
 
@@ -157,6 +158,7 @@ export interface HistoryEntry {
   riskCount: number;
   criticalCount: number;
   summarySnippet: string;
+  score?: ReviewScore;
 }
 
 export interface SavedReview {
@@ -175,6 +177,7 @@ export interface SavedReview {
   review: AIReviewResult;
   semanticDiff: SemanticDiff;
   createdAt: string;
+  score?: ReviewScore;
 }
 
 export interface IncrementalDelta {
@@ -196,6 +199,26 @@ export interface PostCommentRequest {
 export interface PostCommentResponse {
   htmlUrl: string;
   id: number;
+}
+
+/** Review quality self-scoring */
+export interface ReviewScore {
+  total: number;
+  coverage: number;
+  agreement: number;
+  confidence: number;
+  specificity: number;
+  trend: number | null;
+}
+
+export interface ScoreHistoryEntry {
+  id: string;
+  owner: string;
+  repo: string;
+  prNumber: number;
+  title: string;
+  createdAt: string;
+  score: ReviewScore;
 }
 
 export type ModelName = "claude" | "gemini";

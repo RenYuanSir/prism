@@ -80,6 +80,14 @@ export interface StreamEvent {
     explanation: string;
   }>;
   raceConditions?: unknown[];
+  score?: {
+    total: number;
+    coverage: number;
+    agreement: number;
+    confidence: number;
+    specificity: number;
+    trend: number | null;
+  };
 }
 
 function parseSSEChunk(chunk: string): StreamEvent | null {

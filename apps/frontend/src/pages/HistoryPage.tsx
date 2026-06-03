@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { ArrowRight, Clock, GitPullRequest, History } from "lucide-react";
+import { ArrowRight, BarChart3, Clock, GitPullRequest, History } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
@@ -16,6 +16,7 @@ interface HistoryEntry {
   riskCount: number;
   criticalCount: number;
   summarySnippet: string;
+  score?: { total: number };
 }
 
 type PageState =
@@ -136,6 +137,20 @@ export function HistoryPage() {
                   <span className="text-linear-accent">{entry.prNumber}</span>
                 </div>
                 <div className="flex items-center gap-2">
+                  {entry.score && (
+                    <span
+                      className={`flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium ${
+                        entry.score.total >= 70
+                          ? "bg-linear-success/10 text-linear-success"
+                          : entry.score.total >= 40
+                            ? "bg-yellow-500/10 text-yellow-400"
+                            : "bg-red-500/10 text-red-400"
+                      }`}
+                    >
+                      <BarChart3 className="h-3 w-3" />
+                      {entry.score.total}
+                    </span>
+                  )}
                   {entry.criticalCount > 0 && (
                     <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-red-500/10 text-red-400">
                       {t("reviewResult.criticalCount", { n: entry.criticalCount })}

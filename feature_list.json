@@ -93,8 +93,8 @@
       "name": "Review Quality Self-Scoring",
       "description": "Auto-score review quality per run; trend analysis over time; confidence calibration metrics",
       "dependencies": ["feat-003", "feat-008"],
-      "status": "planned",
-      "evidence": ""
+      "status": "done",
+      "evidence": "4-dimension weighted scoring (coverage/agreement/confidence/specificity); review-scorer.ts backend + scoring.ts frontend; ReviewScoreCard component with animated dimension bars and trend arrow; HistoryPage score badges; 8 new tests; 165 tests, lint/typecheck clean"
     },
     {
       "id": "feat-013",

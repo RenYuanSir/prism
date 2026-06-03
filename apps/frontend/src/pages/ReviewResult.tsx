@@ -5,6 +5,7 @@ import type {
   AIRiskIssue,
   ImpactGraph,
   ModelFinding,
+  ReviewScore,
   SemanticDiff,
 } from "@prism/shared";
 import type { PipelineStage } from "@prism/shared";
@@ -41,8 +42,10 @@ import { ImpactHeatmap } from "../components/ImpactHeatmap";
 import { IncrementalDeltaBanner } from "../components/IncrementalDeltaBanner";
 import { PipelineProgress } from "../components/PipelineProgress";
 import { RaceConditionTimeline } from "../components/RaceConditionTimeline";
+import { ReviewScoreCard } from "../components/ReviewScoreCard";
 import { SeverityBadge } from "../components/SeverityBadge";
 import { SuggestionCard } from "../components/SuggestionCard";
+import { computeReviewScore } from "../utils/scoring";
 
 interface PRInfo {
   id: number;
@@ -65,11 +68,17 @@ interface PartialResults {
   deltaUnchangedFiles?: string[];
   deltaPreviousReviewId?: string;
   deltaPreservedIssues?: AIRiskIssue[];
+  scoreData?: ReviewScore;
 }
 
 type ReviewState =
   | { status: "loading"; partial: PartialResults }
-  | { status: "success"; data: ReviewResponse; impactGraph: ImpactGraph | null }
+  | {
+      status: "success";
+      data: ReviewResponse;
+      impactGraph: ImpactGraph | null;
+      score: ReviewScore | null;
+    }
   | { status: "error"; message: string; partial: PartialResults };
 
 type PostState =
@@ -126,6 +135,7 @@ export function ReviewResult() {
                 review: result.data.review,
               },
               impactGraph: null,
+              score: null,
             });
           } else {
             setState({
@@ -190,6 +200,10 @@ export function ReviewResult() {
             partial.deltaPreservedIssues = (event.issues ?? []) as AIRiskIssue[];
             setState({ status: "loading", partial: { ...partial } });
             break;
+          case "score":
+            partial.scoreData = event.score as ReviewScore;
+            setState({ status: "loading", partial: { ...partial } });
+            break;
         }
       },
       (error) => setState({ status: "error", message: error, partial: { ...partial } }),
@@ -238,6 +252,32 @@ export function ReviewResult() {
                 },
               },
               impactGraph: impactResult.success ? (impactResult.data?.impactGraph ?? null) : null,
+              score: computeReviewScore(
+                {
+                  summary: { summary: partial.summary ?? "", stage: "summary" },
+                  risk: {
+                    issues: (partial.consensus?.consensusIssues ?? []).map((i) => i.issue),
+                    stage: "risk",
+                  },
+                  consensus: partial.consensus ?? {
+                    consensusIssues: [],
+                    claudeOnly: partial.claudeFindings ?? [],
+                    geminiOnly: partial.geminiFindings ?? [],
+                    allAgreeCount: 0,
+                    claudeTotal: 0,
+                    geminiTotal: 0,
+                  },
+                  raceConditions: [],
+                  suggestion: { suggestions: partial.suggestions ?? [], stage: "suggestion" },
+                },
+                prResult.data.semanticDiff || {
+                  fileChanges: [],
+                  summary: "",
+                  totalFiles: 0,
+                  totalAdditions: 0,
+                  totalDeletions: 0,
+                },
+              ),
             });
           }
         } catch {
@@ -432,6 +472,7 @@ export function ReviewResult() {
               owner={owner!}
               repo={repo!}
               pullNumber={pullNumber!}
+              score={state.score}
             />
           </motion.div>
         )}
@@ -448,6 +489,7 @@ interface ReviewContentProps {
   owner: string;
   repo: string;
   pullNumber: string;
+  score: ReviewScore | null;
 }
 
 function ReviewContent({
@@ -458,6 +500,7 @@ function ReviewContent({
   owner,
   repo,
   pullNumber,
+  score,
 }: ReviewContentProps) {
   const { t } = useTranslation();
   const criticalCount = review.risk.issues.filter((i) => i.severity === "critical").length;
@@ -528,6 +571,17 @@ function ReviewContent({
           </p>
         )}
       </motion.div>
+
+      {/* Review Quality Score */}
+      {score && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+        >
+          <ReviewScoreCard score={score} />
+        </motion.div>
+      )}
 
       {/* Stats Bar */}
       <motion.div

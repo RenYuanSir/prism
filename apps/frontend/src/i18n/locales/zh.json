@@ -124,6 +124,12 @@
   "consensus.severityMismatch": "严重度：{{a}} vs {{b}}",
   "consensus.lineMismatch": "行偏移：{{a}} → {{b}}",
 
+  "scoring.title": "审查质量评分",
+  "scoring.coverage": "覆盖率",
+  "scoring.agreement": "共识率",
+  "scoring.confidence": "置信度",
+  "scoring.specificity": "具体性",
+
   "pipeline.summary": "摘要生成",
   "pipeline.riskAnalysis": "风险分析",
   "pipeline.suggestions": "修复建议",
