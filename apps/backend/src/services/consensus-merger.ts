@@ -2,6 +2,7 @@ import type {
   AIConsensusResult,
   AIRiskIssue,
   AIRiskSeverity,
+  ConsensusConfidence,
   ConsensusIssue,
   ModelFinding,
 } from "@prism/shared";
@@ -79,8 +80,17 @@ function createConsensusIssue(claude: ModelFinding, gemini: ModelFinding): Conse
 
   return {
     issue,
-    confidence: "high",
+    confidence: computeConfidence(claude, gemini),
     models: ["claude", "gemini"],
     modelFindings: [claude, gemini],
   };
+}
+
+function computeConfidence(claude: ModelFinding, gemini: ModelFinding): ConsensusConfidence {
+  const lineDiff = Math.abs(claude.line - gemini.line);
+  const sameSeverity = claude.severity === gemini.severity;
+
+  if (lineDiff <= 1 && sameSeverity) return "high";
+  if (lineDiff <= 3 && sameSeverity) return "medium";
+  return "low";
 }

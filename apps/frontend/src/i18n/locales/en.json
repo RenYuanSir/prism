@@ -120,6 +120,9 @@
   "consensus.issuesFound": "issues found",
   "consensus.bothAgree": "both agree",
   "consensus.issue": "Issue",
+  "consensus.disagreementZone": "Model Disagreement Zone",
+  "consensus.severityMismatch": "Severity: {{a}} vs {{b}}",
+  "consensus.lineMismatch": "Line offset: {{a}} → {{b}}",
 
   "pipeline.summary": "Summary",
   "pipeline.riskAnalysis": "Risk Analysis",

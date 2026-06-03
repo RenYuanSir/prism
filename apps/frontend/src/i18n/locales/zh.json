@@ -120,6 +120,9 @@
   "consensus.issuesFound": "个问题",
   "consensus.bothAgree": "双方一致",
   "consensus.issue": "问题",
+  "consensus.disagreementZone": "模型分歧区",
+  "consensus.severityMismatch": "严重度：{{a}} vs {{b}}",
+  "consensus.lineMismatch": "行偏移：{{a}} → {{b}}",
 
   "pipeline.summary": "摘要生成",
   "pipeline.riskAnalysis": "风险分析",

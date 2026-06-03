@@ -81,4 +81,103 @@ describe("mergeConsensus", () => {
     expect(result.consensusIssues).toHaveLength(0);
     expect(result.allAgreeCount).toBe(0);
   });
+
+  it("should assign medium confidence when line diff is 2-3 with same severity", () => {
+    const claude: ModelFinding[] = [
+      {
+        model: "claude",
+        severity: "warning",
+        message: "Issue",
+        file: "src/a.ts",
+        line: 10,
+        explanation: "Test",
+      },
+    ];
+    const gemini: ModelFinding[] = [
+      {
+        model: "gemini",
+        severity: "warning",
+        message: "Issue",
+        file: "src/a.ts",
+        line: 13,
+        explanation: "Test",
+      },
+    ];
+
+    const result = mergeConsensus(claude, gemini);
+    expect(result.consensusIssues).toHaveLength(1);
+    expect(result.consensusIssues[0].confidence).toBe("medium");
+    expect(result.allAgreeCount).toBe(0);
+  });
+
+  it("should assign low confidence when severity differs within compatible range", () => {
+    const claude: ModelFinding[] = [
+      {
+        model: "claude",
+        severity: "critical",
+        message: "Issue",
+        file: "src/a.ts",
+        line: 10,
+        explanation: "Test",
+      },
+    ];
+    const gemini: ModelFinding[] = [
+      {
+        model: "gemini",
+        severity: "warning",
+        message: "Issue",
+        file: "src/a.ts",
+        line: 10,
+        explanation: "Test",
+      },
+    ];
+
+    const result = mergeConsensus(claude, gemini);
+    expect(result.consensusIssues).toHaveLength(1);
+    expect(result.consensusIssues[0].confidence).toBe("low");
+  });
+
+  it("should sort by confidence then severity", () => {
+    const claude: ModelFinding[] = [
+      {
+        model: "claude",
+        severity: "critical",
+        message: "High confidence issue",
+        file: "src/a.ts",
+        line: 10,
+        explanation: "Test",
+      },
+      {
+        model: "claude",
+        severity: "warning",
+        message: "Medium confidence issue",
+        file: "src/b.ts",
+        line: 10,
+        explanation: "Test",
+      },
+    ];
+    const gemini: ModelFinding[] = [
+      {
+        model: "gemini",
+        severity: "critical",
+        message: "High confidence issue",
+        file: "src/a.ts",
+        line: 10,
+        explanation: "Test",
+      },
+      {
+        model: "gemini",
+        severity: "warning",
+        message: "Medium confidence issue",
+        file: "src/b.ts",
+        line: 12,
+        explanation: "Test",
+      },
+    ];
+
+    const result = mergeConsensus(claude, gemini);
+    expect(result.consensusIssues).toHaveLength(2);
+    expect(result.consensusIssues[0].confidence).toBe("high");
+    expect(result.consensusIssues[1].confidence).toBe("medium");
+  });
 });

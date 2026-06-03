@@ -181,6 +181,14 @@ export function authenticate(token: string) {
             explanation:
               "The JWT secret is hardcoded as 'hardcoded-secret'. This is a security vulnerability.",
           },
+          {
+            severity: "warning",
+            message: "No error handling for invalid tokens",
+            file: "src/auth.ts",
+            line: 4,
+            explanation:
+              "jwt.verify throws an error for invalid tokens, but this function doesn't catch it.",
+          },
         ],
       }),
     );
@@ -440,11 +448,12 @@ export function authenticate(token: string) {
       expect(result.summary.summary).toContain("JWT-based authentication");
 
       expect(result.risk.stage).toBe("risk");
-      expect(result.risk.issues).toHaveLength(1);
+      expect(result.risk.issues).toHaveLength(2);
 
       expect(result.consensus).toBeDefined();
-      expect(result.consensus.consensusIssues).toHaveLength(1);
+      expect(result.consensus.consensusIssues).toHaveLength(2);
       expect(result.consensus.consensusIssues[0].confidence).toBe("high");
+      expect(result.consensus.consensusIssues[1].confidence).toBe("high");
 
       expect(result.suggestion.stage).toBe("suggestion");
     });
