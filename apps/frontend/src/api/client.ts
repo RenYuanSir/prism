@@ -65,6 +65,21 @@ export interface StreamEvent {
   consensus?: Record<string, unknown>;
   suggestions?: unknown[];
   message?: string;
+  delta?: {
+    changedFiles: string[];
+    unchangedFiles: string[];
+    previousReviewId: string;
+    previousHeadSha: string;
+    currentHeadSha: string;
+  };
+  issues?: Array<{
+    severity: string;
+    message: string;
+    file: string;
+    line: number;
+    explanation: string;
+  }>;
+  raceConditions?: unknown[];
 }
 
 function parseSSEChunk(chunk: string): StreamEvent | null {
@@ -87,6 +102,7 @@ export async function streamReview(
   owner: string,
   repo: string,
   pullNumber: number,
+  incremental: boolean,
   onEvent: (event: StreamEvent) => void,
   onError: (error: string) => void,
   onDone: () => void,
@@ -94,6 +110,8 @@ export async function streamReview(
   const controller = new AbortController();
   const response = await fetch(`${BASE_URL}/review/${owner}/${repo}/${pullNumber}/stream`, {
     method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ incremental }),
     signal: controller.signal,
   });
   if (!response.ok) throw new Error(`HTTP ${response.status}`);

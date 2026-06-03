@@ -1,4 +1,5 @@
 import type { AIConsensusResult, AIFixSuggestion, SavedReview } from "@prism/shared";
+import type { StreamEvent } from "@prism/shared";
 import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
@@ -8,6 +9,7 @@ import { analyzeDiff } from "./services/diff-analyzer.js";
 import { GitHubService } from "./services/github.js";
 import { HistoryStore } from "./services/history-store.js";
 import { analyzeImpact } from "./services/impact-analyzer.js";
+import { IncrementalReviewService } from "./services/incremental-review-service.js";
 import {
   clearLLMConfigCache,
   createPipelineClients,
@@ -222,8 +224,7 @@ app.post("/api/review/:owner/:repo/:pullNumber/stream", async (req: Request, res
     let collectedConsensus: AIConsensusResult | null = null;
     let collectedSuggestions: AIFixSuggestion[] = [];
 
-    const pipeline = new AIReviewPipeline(createPipelineClients(loadLLMConfig()));
-    await pipeline.runStream(pr, diff, semanticDiff, fileContents, (event) => {
+    const handleEvent = (event: StreamEvent) => {
       if (aborted) return;
       if (event.type === "summary" && event.summary) {
         collectedSummary = event.summary;
@@ -236,7 +237,28 @@ app.post("/api/review/:owner/:repo/:pullNumber/stream", async (req: Request, res
       }
       const data = JSON.stringify(event);
       res.write(`event: ${event.type}\ndata: ${data}\n\n`);
-    });
+    };
+
+    const pipelineConfig = createPipelineClients(loadLLMConfig());
+
+    if (req.body?.incremental === true) {
+      const incrementalService = new IncrementalReviewService({
+        githubToken: token,
+        pipelineConfig,
+      });
+      await incrementalService.runIncremental(
+        owner,
+        repo,
+        pr,
+        diff,
+        semanticDiff,
+        fileContents,
+        handleEvent,
+      );
+    } else {
+      const pipeline = new AIReviewPipeline(pipelineConfig);
+      await pipeline.runStream(pr, diff, semanticDiff, fileContents, handleEvent);
+    }
 
     // Auto-save review history (non-blocking)
     if (!aborted) {
@@ -261,6 +283,7 @@ app.post("/api/review/:owner/:repo/:pullNumber/stream", async (req: Request, res
           author: pr.author,
           branch: pr.branch,
           baseBranch: pr.baseBranch,
+          headSha: pr.headSha,
         },
         review: {
           summary: { summary: collectedSummary, stage: "summary" },
@@ -338,7 +361,7 @@ app.post("/api/impact/:owner/:repo/:pullNumber", async (req: Request, res: Respo
   }
 });
 
-// ── Post Comment to GitHub ──
+// 鈹€鈹€ Post Comment to GitHub 鈹€鈹€
 
 app.post("/api/review/:owner/:repo/:pullNumber/comment", async (req: Request, res: Response) => {
   const { owner, repo, pullNumber } = req.params;
@@ -381,7 +404,7 @@ app.post("/api/review/:owner/:repo/:pullNumber/comment", async (req: Request, re
   }
 });
 
-// ── Settings ──
+// 鈹€鈹€ Settings 鈹€鈹€
 
 app.get("/api/settings", async (_req: Request, res: Response) => {
   try {

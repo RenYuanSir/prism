@@ -77,8 +77,8 @@
       "name": "Incremental Review (per-push)",
       "description": "Update review on each push; analyze only newly changed portions, preserving prior results",
       "dependencies": ["feat-003", "feat-008"],
-      "status": "planned",
-      "evidence": ""
+      "status": "done",
+      "evidence": "IncrementalReviewService orchestrates diff-by-file filtering, preserved findings, and incremental-only pipeline runs; /stream endpoint reads req.body.incremental to choose path; frontend handles incremental:delta/preserved events and renders IncrementalDeltaBanner; 154 tests pass, lint/typecheck clean"
     },
     {
       "id": "feat-011",

@@ -2,6 +2,7 @@ import type {
   AIConsensusResult,
   AIFixSuggestion,
   AIReviewResult,
+  AIRiskIssue,
   ImpactGraph,
   ModelFinding,
   SemanticDiff,
@@ -37,6 +38,7 @@ import {
 import { ConsensusView } from "../components/ConsensusView";
 import { FileChangeCard } from "../components/FileChangeCard";
 import { ImpactHeatmap } from "../components/ImpactHeatmap";
+import { IncrementalDeltaBanner } from "../components/IncrementalDeltaBanner";
 import { PipelineProgress } from "../components/PipelineProgress";
 import { RaceConditionTimeline } from "../components/RaceConditionTimeline";
 import { SeverityBadge } from "../components/SeverityBadge";
@@ -59,6 +61,10 @@ interface PartialResults {
   suggestions?: AIFixSuggestion[];
   currentStage?: string;
   isComplete: boolean;
+  deltaChangedFiles?: string[];
+  deltaUnchangedFiles?: string[];
+  deltaPreviousReviewId?: string;
+  deltaPreservedIssues?: AIRiskIssue[];
 }
 
 type ReviewState =
@@ -148,6 +154,7 @@ export function ReviewResult() {
       owner,
       repo,
       prNum,
+      true,
       (event) => {
         switch (event.type) {
           case "stage:start":
@@ -169,6 +176,18 @@ export function ReviewResult() {
             break;
           case "suggestion":
             partial.suggestions = event.suggestions as AIFixSuggestion[];
+            setState({ status: "loading", partial: { ...partial } });
+            break;
+          case "incremental:delta":
+            if (event.delta) {
+              partial.deltaChangedFiles = event.delta.changedFiles;
+              partial.deltaUnchangedFiles = event.delta.unchangedFiles;
+              partial.deltaPreviousReviewId = event.delta.previousReviewId;
+              setState({ status: "loading", partial: { ...partial } });
+            }
+            break;
+          case "incremental:preserved":
+            partial.deltaPreservedIssues = (event.issues ?? []) as AIRiskIssue[];
             setState({ status: "loading", partial: { ...partial } });
             break;
         }
@@ -301,6 +320,15 @@ export function ReviewResult() {
             exit={{ opacity: 0 }}
             className="space-y-6"
           >
+            {/* Incremental Delta Banner */}
+            {state.partial.deltaChangedFiles && (
+              <IncrementalDeltaBanner
+                changedFiles={state.partial.deltaChangedFiles}
+                unchangedFiles={state.partial.deltaUnchangedFiles ?? []}
+                preservedIssues={state.partial.deltaPreservedIssues ?? []}
+              />
+            )}
+
             <div className="glass-surface rounded-xl p-6">
               <h2 className="text-[15px] font-weight-510 text-linear-text-primary mb-4">
                 {t("reviewResult.analyzing")}

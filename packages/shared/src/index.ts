@@ -23,6 +23,7 @@ export interface PullRequest {
   author: string;
   branch: string;
   baseBranch: string;
+  headSha: string;
   files: PRFile[];
   commits: PRCommit[];
 }
@@ -103,7 +104,9 @@ export type StreamEvent =
   | { type: "consensus"; consensus: AIConsensusResult }
   | { type: "suggestion"; suggestions: AIFixSuggestion[] }
   | { type: "done" }
-  | { type: "error"; message: string };
+  | { type: "error"; message: string }
+  | { type: "incremental:delta"; delta: IncrementalDelta }
+  | { type: "incremental:preserved"; issues: AIRiskIssue[]; raceConditions: RaceConditionIssue[] };
 
 export type AIRiskSeverity = "critical" | "warning" | "info";
 
@@ -167,10 +170,19 @@ export interface SavedReview {
     author: string;
     branch: string;
     baseBranch: string;
+    headSha: string;
   };
   review: AIReviewResult;
   semanticDiff: SemanticDiff;
   createdAt: string;
+}
+
+export interface IncrementalDelta {
+  changedFiles: string[];
+  unchangedFiles: string[];
+  previousReviewId: string;
+  previousHeadSha: string;
+  currentHeadSha: string;
 }
 
 /** Request body for posting review results as a GitHub PR Review */

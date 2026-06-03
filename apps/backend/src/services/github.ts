@@ -26,6 +26,7 @@ export class GitHubService {
       description: pr.body ?? "",
       author: pr.user?.login ?? "unknown",
       branch: pr.head.ref,
+      headSha: pr.head.sha,
       baseBranch: pr.base.ref,
       files,
       commits,
@@ -94,6 +95,17 @@ export class GitHubService {
     throw new Error(`Cannot get content for ${path}`);
   }
 
+  async compareCommits(
+    owner: string,
+    repo: string,
+    base: string,
+    head: string,
+  ): Promise<{ files: Array<{ filename: string; status: string }> }> {
+    const { data } = await this.octokit.repos.compareCommits({ owner, repo, base, head });
+    return {
+      files: (data.files ?? []).map((f) => ({ filename: f.filename, status: f.status })),
+    };
+  }
   async createReview(
     owner: string,
     repo: string,

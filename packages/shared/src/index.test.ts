@@ -10,6 +10,7 @@ describe("shared types", () => {
       author: "test-user",
       branch: "feat/test",
       baseBranch: "main",
+      headSha: "abc123",
       files: [],
       commits: [],
     };
