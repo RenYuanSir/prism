@@ -117,8 +117,8 @@
       "name": "Consensus Confidence Visualization",
       "description": "Enhanced dual-model agreement visualization; per-issue confidence bars; model disagreement zone highlighting",
       "dependencies": ["feat-003", "feat-007"],
-      "status": "planned",
-      "evidence": ""
+      "status": "done",
+      "evidence": "Real confidence scoring in consensus-merger based on line diff/severity match; ConsensusStats shows confidence distribution bar; ConsensusIssueCard has 3-segment confidence bars and model disagreement zone (GitCompare icon); 3 new i18n keys; 157 tests pass, lint/typecheck clean"
     },
     {
       "id": "feat-016",
