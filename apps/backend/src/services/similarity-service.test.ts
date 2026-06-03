@@ -1,6 +1,6 @@
+import type { EmbeddingVector, HistoryEntry, SavedReview } from "@prism/shared";
 import { describe, expect, it } from "vitest";
 import { cosineSimilarity, findSimilarPRs } from "./similarity-service.js";
-import type { EmbeddingVector, HistoryEntry, SavedReview } from "@prism/shared";
 
 describe("cosineSimilarity", () => {
   it("returns 1 for identical vectors", () => {
@@ -38,20 +38,43 @@ describe("findSimilarPRs", () => {
       createdAt: "2025-01-01T00:00:00Z",
       riskCount: 2,
       criticalCount: 1,
-      summarySnippet: "Summary of " + id,
+      summarySnippet: `Summary of ${id}`,
       hasEmbedding: embedding != null,
     };
     const review: SavedReview = {
       id,
-      pr: { owner, repo, prNumber, title: entry.title, description: "", author: "test", branch: "main", baseBranch: "main", headSha: "abc123" },
+      pr: {
+        owner,
+        repo,
+        prNumber,
+        title: entry.title,
+        description: "",
+        author: "test",
+        branch: "main",
+        baseBranch: "main",
+        headSha: "abc123",
+      },
       review: {
         summary: { summary: "", stage: "summary" },
         risk: { issues: [], stage: "risk" },
-        consensus: { consensusIssues: [], claudeOnly: [], geminiOnly: [], allAgreeCount: 0, claudeTotal: 0, geminiTotal: 0 },
+        consensus: {
+          consensusIssues: [],
+          claudeOnly: [],
+          geminiOnly: [],
+          allAgreeCount: 0,
+          claudeTotal: 0,
+          geminiTotal: 0,
+        },
         raceConditions: [],
         suggestion: { suggestions: [], stage: "suggestion" },
       },
-      semanticDiff: { fileChanges: [], summary: "", totalFiles: 0, totalAdditions: 0, totalDeletions: 0 },
+      semanticDiff: {
+        fileChanges: [],
+        summary: "",
+        totalFiles: 0,
+        totalAdditions: 0,
+        totalDeletions: 0,
+      },
       createdAt: "2025-01-01T00:00:00Z",
       embedding,
     };
