@@ -17,6 +17,7 @@ interface HistoryEntry {
   criticalCount: number;
   summarySnippet: string;
   score?: { total: number };
+  hasEmbedding?: boolean;
 }
 
 type PageState =
@@ -149,6 +150,11 @@ export function HistoryPage() {
                     >
                       <BarChart3 className="h-3 w-3" />
                       {entry.score.total}
+                    </span>
+                  )}
+                  {entry.hasEmbedding && (
+                    <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-purple-500/10 text-purple-400">
+                      {t("history.embedded")}
                     </span>
                   )}
                   {entry.criticalCount > 0 && (
