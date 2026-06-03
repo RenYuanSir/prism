@@ -85,8 +85,8 @@
       "name": "Historical Similar PR Risk Warning",
       "description": "Vector embedding of review findings; similarity search against history; alert on recurring risk patterns across PRs",
       "dependencies": ["feat-008"],
-      "status": "planned",
-      "evidence": ""
+      "status": "done",
+      "evidence": "embedding-service.ts + similarity-service.ts for vector embedding/cosine-similarity search; 5th embedding stage in LLM Settings; SimilarPRCard sidebar component; 178 tests pass, lint/typecheck/build clean"
     },
     {
       "id": "feat-012",
