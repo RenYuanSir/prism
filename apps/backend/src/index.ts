@@ -2,7 +2,10 @@ import type {
   AIConsensusResult,
   AIFixSuggestion,
   AIReviewResult,
+  EmbeddingVector,
+  LLMEmbeddingConfig,
   SavedReview,
+  SimilarPR,
 } from "@prism/shared";
 import type { StreamEvent } from "@prism/shared";
 import cors from "cors";
@@ -11,6 +14,7 @@ import express from "express";
 import type { Request, Response } from "express";
 import { AIReviewPipeline } from "./services/ai-review-pipeline.js";
 import { analyzeDiff } from "./services/diff-analyzer.js";
+import { buildReviewText, generateEmbedding } from "./services/embedding-service.js";
 import { GitHubService } from "./services/github.js";
 import { HistoryStore } from "./services/history-store.js";
 import { analyzeImpact } from "./services/impact-analyzer.js";
@@ -24,6 +28,7 @@ import type { LLMPipelineConfig } from "./services/llm-config.js";
 import { formatReviewBody } from "./services/pr-comment-service.js";
 import { computeScore, computeTrend } from "./services/review-scorer.js";
 import { SettingsStore } from "./services/settings-store.js";
+import { findSimilarPRs } from "./services/similarity-service.js";
 
 dotenv.config({ path: "../../.env" });
 
@@ -176,6 +181,29 @@ app.post("/api/review/:owner/:repo/:pullNumber", async (req: Request, res: Respo
   }
 });
 
+async function findSimilarPRsIfHistoryExists(
+  reviewText: string,
+  owner: string,
+  repo: string,
+  prNumber: number,
+  embeddingConfig: LLMEmbeddingConfig | undefined,
+): Promise<SimilarPR[]> {
+  if (!embeddingConfig?.apiKey) return [];
+  const store = new HistoryStore();
+  const allEntries = await store.list();
+  const repoWithEmbeddings = allEntries.filter(
+    (e) => e.owner === owner && e.repo === repo && e.hasEmbedding,
+  );
+  if (repoWithEmbeddings.length < 2) return [];
+  try {
+    const embedding = await generateEmbedding(reviewText, embeddingConfig);
+    return await findSimilarPRs(embedding, owner, repo, prNumber, store, 3);
+  } catch (err) {
+    console.warn("Similar PR search failed:", err);
+    return [];
+  }
+}
+
 app.post("/api/review/:owner/:repo/:pullNumber/stream", async (req: Request, res: Response) => {
   const { owner, repo, pullNumber } = req.params;
   const prNumber = Number(pullNumber);
@@ -304,6 +332,31 @@ app.post("/api/review/:owner/:repo/:pullNumber/stream", async (req: Request, res
         res.write(`event: score\ndata: ${data}\n\n`);
       }
 
+      // Generate embedding for similarity search
+      const embeddingConfig = loadLLMConfig().embedding;
+      let embedding: EmbeddingVector | undefined;
+      let similarPRs: SimilarPR[] = [];
+
+      if (embeddingConfig?.apiKey) {
+        const reviewText = buildReviewText(reviewResult);
+        try {
+          const [emb, similars] = await Promise.all([
+            generateEmbedding(reviewText, embeddingConfig),
+            findSimilarPRsIfHistoryExists(reviewText, owner, repo, prNumber, embeddingConfig),
+          ]);
+          embedding = emb;
+          similarPRs = similars;
+        } catch (err) {
+          console.warn("Embedding/similarity search failed:", err);
+        }
+      }
+
+      // Send similar-prs event if found
+      if (!aborted && similarPRs.length > 0) {
+        const similarData = JSON.stringify({ type: "similar-prs", similarPRs });
+        res.write(`event: similar-prs\ndata: ${similarData}\n\n`);
+      }
+
       const savedReview: SavedReview = {
         id,
         pr: {
@@ -321,6 +374,7 @@ app.post("/api/review/:owner/:repo/:pullNumber/stream", async (req: Request, res
         semanticDiff,
         createdAt: new Date().toISOString(),
         score: scoreData,
+        embedding,
       };
       try {
         await new HistoryStore().save(savedReview);
@@ -456,6 +510,11 @@ app.get("/api/settings", async (_req: Request, res: Response) => {
           provider: config.suggestion.provider,
           model: config.suggestion.model,
           baseUrl: config.suggestion.baseUrl,
+        },
+        embedding: {
+          provider: config.embedding?.provider ?? "openai",
+          model: config.embedding?.model ?? "text-embedding-3-small",
+          baseUrl: config.embedding?.baseUrl ?? "https://api.openai.com/v1",
         },
       };
       res.json({ success: true, data: safe });
