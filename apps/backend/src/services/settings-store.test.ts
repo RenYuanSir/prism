@@ -37,6 +37,7 @@ describe("SettingsStore", () => {
         model: "deepseek-v4",
         baseUrl: "https://api.deepseek.com/v1",
       },
+      embedding: { provider: "openai", model: "text-embedding-3-small", apiKey: "key-emb" },
     };
     store.save(config);
     const loaded = await store.load();
@@ -55,6 +56,7 @@ describe("SettingsStore", () => {
       risk: { provider: "anthropic" as const, apiKey: "old-key", model: "old-model" },
       gemini: { provider: "google" as const, apiKey: "old-key", model: "old-model" },
       suggestion: { provider: "anthropic" as const, apiKey: "old-key", model: "old-model" },
+      embedding: { provider: "openai", model: "text-embedding-3-small", apiKey: "key-emb" },
     };
     store.save(config1);
     const config2 = {
@@ -62,6 +64,7 @@ describe("SettingsStore", () => {
       risk: { provider: "openai" as const, apiKey: "new-key", model: "new-model" },
       gemini: { provider: "openai" as const, apiKey: "new-key", model: "new-model" },
       suggestion: { provider: "openai" as const, apiKey: "new-key", model: "new-model" },
+      embedding: { provider: "openai", model: "text-embedding-3-small", apiKey: "key-emb" },
     };
     store.save(config2);
     const loaded = await store.load();
@@ -75,6 +78,7 @@ describe("SettingsStore", () => {
       risk: { provider: "anthropic" as const, apiKey: "k2", model: "m2" },
       gemini: { provider: "google" as const, apiKey: "k2b", model: "m2b" },
       suggestion: { provider: "openai" as const, apiKey: "k3", model: "m3" },
+      embedding: { provider: "openai", model: "text-embedding-3-small", apiKey: "key-emb" },
     };
     store.save(config);
     const loaded = await store.load();

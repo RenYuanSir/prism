@@ -1,3 +1,4 @@
+import type { LLMEmbeddingConfig } from "@prism/shared";
 import type { LLMClient, LLMProviderConfig } from "./llm-client.js";
 import { createLLMClient } from "./llm-client.js";
 import { SettingsStore } from "./settings-store.js";
@@ -7,6 +8,7 @@ export interface LLMPipelineConfig {
   risk: LLMProviderConfig;
   gemini: LLMProviderConfig;
   suggestion: LLMProviderConfig;
+  embedding: LLMEmbeddingConfig;
 }
 
 function getEnvConfig(
@@ -44,6 +46,12 @@ function getEnvDefaults(): LLMPipelineConfig {
       provider: "anthropic",
       model: "claude-3-5-sonnet-20241022",
     }),
+    embedding: {
+      provider: (process.env.EMBEDDING_PROVIDER as string) || "openai",
+      model: process.env.EMBEDDING_MODEL || "text-embedding-3-small",
+      apiKey: process.env.EMBEDDING_API_KEY || "",
+      baseUrl: process.env.EMBEDDING_BASE_URL || "https://api.openai.com/v1",
+    },
   };
 }
 

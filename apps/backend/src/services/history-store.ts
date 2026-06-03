@@ -17,6 +17,8 @@ function makeEntry(review: SavedReview): HistoryEntry {
     riskCount: allIssues.length,
     criticalCount: allIssues.filter((i) => i.severity === "critical").length,
     summarySnippet: review.review.summary.summary.slice(0, 120),
+    score: review.score,
+    hasEmbedding: Array.isArray(review.embedding) && review.embedding.length > 0,
   };
 }
 
