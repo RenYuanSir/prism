@@ -5,6 +5,7 @@ import type {
   AIRiskIssue,
   ImpactGraph,
   ModelFinding,
+  RaceConditionIssue,
   ReviewScore,
   SemanticDiff,
   SimilarPR,
@@ -65,6 +66,7 @@ interface PartialResults {
   geminiFindings?: ModelFinding[];
   consensus?: AIConsensusResult;
   suggestions?: AIFixSuggestion[];
+  raceConditions?: RaceConditionIssue[];
   currentStage?: string;
   isComplete: boolean;
   deltaChangedFiles?: string[];
@@ -206,6 +208,10 @@ export function ReviewResult() {
             partial.deltaPreservedIssues = (event.issues ?? []) as AIRiskIssue[];
             setState({ status: "loading", partial: { ...partial } });
             break;
+          case "race-conditions":
+            partial.raceConditions = event.raceConditions as RaceConditionIssue[];
+            setState({ status: "loading", partial: { ...partial } });
+            break;
           case "score":
             partial.scoreData = event.score as ReviewScore;
             setState({ status: "loading", partial: { ...partial } });
@@ -258,7 +264,7 @@ export function ReviewResult() {
                     claudeTotal: 0,
                     geminiTotal: 0,
                   },
-                  raceConditions: [],
+                  raceConditions: partial.raceConditions ?? [],
                   suggestion: { suggestions: partial.suggestions ?? [], stage: "suggestion" },
                 },
               },
@@ -278,7 +284,7 @@ export function ReviewResult() {
                     claudeTotal: 0,
                     geminiTotal: 0,
                   },
-                  raceConditions: [],
+                  raceConditions: partial.raceConditions ?? [],
                   suggestion: { suggestions: partial.suggestions ?? [], stage: "suggestion" },
                 },
                 prResult.data.semanticDiff || {
@@ -411,6 +417,19 @@ export function ReviewResult() {
             {state.partial.consensus && (
               <motion.section initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
                 <ConsensusView consensus={state.partial.consensus} />
+              </motion.section>
+            )}
+
+            {/* Race Conditions */}
+            {state.partial.raceConditions && state.partial.raceConditions.length > 0 && (
+              <motion.section initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                <SectionHeader
+                  icon={AlertTriangle}
+                  title={t("reviewResult.raceConditions")}
+                  count={state.partial.raceConditions.length}
+                  accent="text-red-400"
+                />
+                <RaceConditionTimeline issues={state.partial.raceConditions} />
               </motion.section>
             )}
 

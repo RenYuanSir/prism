@@ -107,6 +107,7 @@ export type StreamEvent =
   | { type: "error"; message: string }
   | { type: "incremental:delta"; delta: IncrementalDelta }
   | { type: "incremental:preserved"; issues: AIRiskIssue[]; raceConditions: RaceConditionIssue[] }
+  | { type: "race-conditions"; raceConditions: RaceConditionIssue[] }
   | { type: "score"; score: ReviewScore }
   | { type: "similar-prs"; similarPRs: SimilarPR[] };
 

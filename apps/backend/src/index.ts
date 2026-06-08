@@ -220,15 +220,25 @@ app.post("/api/review/:owner/:repo/:pullNumber/stream", async (req: Request, res
   }
 
   // SSE headers
-  res.setHeader("Content-Type", "text/event-stream");
-  res.setHeader("Cache-Control", "no-cache");
-  res.setHeader("Connection", "keep-alive");
-  res.setHeader("X-Accel-Buffering", "no");
-  res.flushHeaders();
+  res.writeHead(200, {
+    "Content-Type": "text/event-stream",
+    "Cache-Control": "no-cache",
+    Connection: "keep-alive",
+    "X-Accel-Buffering": "no",
+  });
+  // Disable Nagle's algorithm — ensures each write() flushes immediately
+  // under chunked transfer encoding on Windows+Node 22.
+  res.socket?.setNoDelay(true);
+  // Write an SSE comment to establish the connection (some proxies/protocols
+  // expect the first byte within ~15s).
+  res.write(":ok\n\n");
 
-  // Track client disconnect
+  // Track client disconnect via response close — res.on("close") correctly
+  // fires only when the underlying connection is actually closed by the client.
+  // req.on("close") fires prematurely on Windows+Node 22 when the request body
+  // is consumed, which would drop all SSE events.
   let aborted = false;
-  req.on("close", () => {
+  res.on("close", () => {
     aborted = true;
   });
 

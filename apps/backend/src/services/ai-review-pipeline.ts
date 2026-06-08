@@ -154,6 +154,15 @@ export class AIReviewPipeline {
       const consensus = mergeConsensus(claudeResult.findings, geminiResult.findings);
       onEvent({ type: "consensus", consensus });
 
+      // Merge race conditions from both models and emit
+      const mergedRaceConditions = this.mergeRaceConditions(
+        claudeResult.raceConditions,
+        geminiResult.raceConditions,
+      );
+      if (mergedRaceConditions.length > 0) {
+        onEvent({ type: "race-conditions", raceConditions: mergedRaceConditions });
+      }
+
       // Stage 4: Suggestions
       const issuesForSuggestion = consensus.consensusIssues
         .filter((i) => i.confidence !== "low")
