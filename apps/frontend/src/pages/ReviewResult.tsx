@@ -113,6 +113,7 @@ export function ReviewResult() {
   // (React.StrictMode) don't overwrite state.
   const runIdRef = useRef(0);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: t from useTranslation is a stable ref
   useEffect(() => {
     if (!owner || !repo || !pullNumber) return;
     const prNum = Number(pullNumber);
@@ -326,7 +327,7 @@ export function ReviewResult() {
       ++runIdRef.current; // Invalidate this run's callbacks
       abortController.abort();
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [owner, repo, pullNumber, historyId]);
 
   if (!owner || !repo || !pullNumber) {
