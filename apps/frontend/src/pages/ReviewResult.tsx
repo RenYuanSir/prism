@@ -28,7 +28,7 @@ import {
   XCircle,
   Zap,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import {
@@ -109,6 +109,10 @@ export function ReviewResult() {
     partial: { isComplete: false },
   });
 
+  // Track the current effect run so stale callbacks from double-mounts
+  // (React.StrictMode) don't overwrite state.
+  const runIdRef = useRef(0);
+
   useEffect(() => {
     if (!owner || !repo || !pullNumber) return;
     const prNum = Number(pullNumber);
@@ -127,22 +131,23 @@ export function ReviewResult() {
         try {
           const result = await fetchHistoryDetail(historyId!);
           if (result.success && result.data) {
+            const saved = result.data;
             setState({
               status: "success",
               data: {
                 pr: {
-                  id: result.data.pr.id,
-                  title: result.data.pr.title,
-                  description: result.data.pr.description,
-                  author: result.data.pr.author,
-                  branch: result.data.pr.branch,
-                  baseBranch: result.data.pr.baseBranch,
+                  id: saved.pr.id,
+                  title: saved.pr.title,
+                  description: saved.pr.description,
+                  author: saved.pr.author,
+                  branch: saved.pr.branch,
+                  baseBranch: saved.pr.baseBranch,
                 },
-                semanticDiff: result.data.semanticDiff,
-                review: result.data.review,
+                semanticDiff: saved.semanticDiff,
+                review: saved.review,
               },
               impactGraph: null,
-              score: null,
+              score: saved.score ?? null,
               similarPRs: null,
             });
           } else {
@@ -164,9 +169,13 @@ export function ReviewResult() {
       return; // Skip streaming flow
     }
 
+    const runId = ++runIdRef.current;
     const partial: PartialResults = { isComplete: false };
 
-    let streamController: AbortController | null = null;
+    // Create AbortController synchronously so cleanup can abort immediately,
+    // even before streamReview resolves. This prevents StrictMode double-mount
+    // from leaking two concurrent SSE streams.
+    const abortController = new AbortController();
 
     streamReview(
       owner,
@@ -174,6 +183,7 @@ export function ReviewResult() {
       prNum,
       true,
       (event) => {
+        if (runIdRef.current !== runId) return;
         switch (event.type) {
           case "stage:start":
             partial.currentStage = event.stage;
@@ -223,8 +233,12 @@ export function ReviewResult() {
             break;
         }
       },
-      (error) => setState({ status: "error", message: error, partial: { ...partial } }),
+      (error) => {
+        if (runIdRef.current !== runId) return;
+        setState({ status: "error", message: error, partial: { ...partial } });
+      },
       async () => {
+        if (runIdRef.current !== runId) return;
         // Stream done — fetch impact and transition to success
         try {
           const [prResult, impactResult] = await Promise.all([
@@ -302,14 +316,18 @@ export function ReviewResult() {
           /* PR info fetch is non-critical */
         }
       },
-    ).then((c) => {
-      streamController = c;
+      abortController.signal,
+    ).catch(() => {
+      // Aborted or network error — expected when component unmounts or
+      // StrictMode double-mount causes cleanup to abort the stream.
     });
 
     return () => {
-      streamController?.abort();
+      ++runIdRef.current; // Invalidate this run's callbacks
+      abortController.abort();
     };
-  }, [owner, repo, pullNumber, historyId, t]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [owner, repo, pullNumber, historyId]);
 
   if (!owner || !repo || !pullNumber) {
     return (

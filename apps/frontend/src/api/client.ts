@@ -3,6 +3,7 @@ import type {
   ApiResponse,
   ImpactGraph,
   PullRequest,
+  ReviewScore,
   SemanticDiff,
 } from "@prism/shared";
 
@@ -23,6 +24,7 @@ export interface ReviewResponse {
   };
   semanticDiff: SemanticDiff;
   review: AIReviewResult;
+  score?: ReviewScore;
 }
 
 export interface ImpactResponse {
@@ -125,8 +127,14 @@ export async function streamReview(
   onEvent: (event: StreamEvent) => void,
   onError: (error: string) => void,
   onDone: () => void,
+  externalSignal?: AbortSignal,
 ): Promise<AbortController> {
   const controller = new AbortController();
+  // Forward external abort to internal controller so fetch is cancelled
+  if (externalSignal) {
+    if (externalSignal.aborted) throw new DOMException("Aborted", "AbortError");
+    externalSignal.addEventListener("abort", () => controller.abort(), { once: true });
+  }
   const response = await fetch(`${BASE_URL}/review/${owner}/${repo}/${pullNumber}/stream`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
